@@ -10,13 +10,14 @@ const generateSchema = z.object({
     prompt: z.string().min(1, 'Prompt is required'),
     niche: z.string().min(1, 'Niche is required'),
     archetype: z.string().min(1, 'Archetype is required'),
-    aspectRatio: z.enum(['16:9', '9:16']).default('16:9')
+    aspectRatio: z.enum(['16:9', '9:16']).default('16:9'),
+    image: z.string().optional()
 });
 generateRouter.post('/', optionalAuth, rateLimiter('expensive'), cacheMiddleware('generate'), validate(generateSchema), async (req, res, next) => {
     try {
-        const { prompt, niche, archetype, aspectRatio } = req.body;
+        const { prompt, niche, archetype, aspectRatio, image } = req.body;
         const userId = req.user?.id;
-        const result = await generateImage({ prompt, niche, archetype, aspectRatio, userId });
+        const result = await generateImage({ prompt, niche, archetype, aspectRatio, userId, image });
         res.json(result);
     }
     catch (error) {

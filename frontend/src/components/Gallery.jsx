@@ -1,12 +1,11 @@
 'use strict';
 
 import React, { useState } from 'react';
-import { Eye, Download, Edit3, Image as ImageIcon, Sparkles, RefreshCw, Monitor, Tablet, User, ThumbsUp, ThumbsDown, MessageSquare, Share2, CheckCircle2, Cloud } from 'lucide-react';
+import { Eye, Download, Image as ImageIcon, Sparkles, RefreshCw, Monitor, Tablet, User, ThumbsUp, ThumbsDown, MessageSquare, Share2, CheckCircle2, Cloud } from 'lucide-react';
 
 export default function Gallery({ 
   imageUrl, 
   isGenerating, 
-  onEdit, 
   onAnalyze, 
   originalImageUrl, 
   provider,
@@ -318,15 +317,6 @@ export default function Gallery({
             </>
           )}
         </button>
-        
-        <button 
-          onClick={onEdit}
-          className="btn btn-primary"
-          style={styles.actionBtn}
-        >
-          <Edit3 size={16} />
-          Edit & Add Text
-        </button>
       </div>
     </div>
   );
@@ -491,7 +481,7 @@ const styles = {
   },
   actionGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr 1fr',
+    gridTemplateColumns: '1fr 1fr',
     gap: '12px',
   },
   actionBtn: {

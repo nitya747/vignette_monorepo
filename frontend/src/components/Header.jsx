@@ -102,7 +102,7 @@ const styles = {
     background: 'rgba(245, 243, 235, 0.85)',
     backdropFilter: 'blur(20px)',
     borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
-    height: '80px',
+    height: '10vh',
     display: 'flex',
     alignItems: 'center',
     width: '100%',

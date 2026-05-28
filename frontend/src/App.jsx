@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Sparkles, 
   FolderClosed, 
@@ -32,6 +33,7 @@ import YoutubePreview from './components/YoutubePreview';
 import ThreeMascot from './components/ThreeMascot';
 import AuthModal from './components/AuthModal';
 import LibraryPanel from './components/LibraryPanel';
+import LandingPage from './components/LandingPage';
 
 // Supabase client instance
 import { supabase } from './lib/supabase';
@@ -74,8 +76,46 @@ const PRESET_LOFI_CRITIQUE = {
 };
 
 export default function Home() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Map pathname to activeTab ID
+  const getActiveTabFromPath = (path) => {
+    switch (path) {
+      case '/dashboard': return 'maker';
+      case '/projects': return 'gallery';
+      case '/roast': return 'roast';
+      case '/editor': return 'editor';
+      case '/preview': return 'simulator';
+      case '/upload': return 'upgrade';
+      case '/titles': return 'titles';
+      case '/analytics': return 'analytics';
+      case '/':
+      default:
+        return 'landing';
+    }
+  };
+
+  const activeTab = getActiveTabFromPath(location.pathname);
+
+  const setActiveTab = (tabId) => {
+    switch (tabId) {
+      case 'maker': navigate('/dashboard'); break;
+      case 'gallery': navigate('/projects'); break;
+      case 'roast': navigate('/roast'); break;
+      case 'editor': navigate('/editor'); break;
+      case 'simulator': navigate('/preview'); break;
+      case 'upgrade': navigate('/upload'); break;
+      case 'titles': navigate('/titles'); break;
+      case 'analytics': navigate('/analytics'); break;
+      case 'landing':
+      default:
+        navigate('/');
+        break;
+    }
+  };
+
   // 1. Centralized SPA Workspace States
-  const [activeTab, setActiveTab] = useState('maker'); // 'maker', 'gallery', 'roast', 'simulator', 'upgrade', 'titles', 'analytics'
   const [inputs, setInputs] = useState({ 
     title: 'An ambient thumbnail for my lofi playlist', 
     topic: 'Relaxed cozy loft window view at sunset with city skyscrapers', 
@@ -146,7 +186,7 @@ export default function Home() {
       setSession(null);
     }
     showToast('Signed out successfully.', 'info');
-    setActiveTab('maker');
+    setActiveTab('landing');
   };
 
   const handleAuthSuccess = (newSession) => {
@@ -196,10 +236,6 @@ export default function Home() {
 
   // User Photo Upload (use-your-photo feature)
   const [userPhotoUrl, setUserPhotoUrl] = useState(null);
-  const [photoPosition, setPhotoPosition] = useState('right'); // 'left', 'right', 'full'
-  const [showTextOverlay, setShowTextOverlay] = useState(true);
-  const [photoBgColor, setPhotoBgColor] = useState('#1a1a2e');
-  const [photoHoverEffect, setPhotoHoverEffect] = useState(false);
   const userPhotoInputRef = useRef(null);
 
   // DOM ref to scroll focus to input
@@ -230,7 +266,10 @@ export default function Home() {
     setIsSaved(false);
     setAnalysisError(null);
     
-    const learningMod = compileLearningModifiers(selectedNiche);
+    let learningMod = compileLearningModifiers(selectedNiche);
+    if (userPhotoUrl) {
+      learningMod += " Incorporate the user's provided subject photo naturally as the main focal subject, applying professional edge highlights and matching lighting tones of the niche.";
+    }
     
     const prompt = compilePrompt({
       title: inputs.title,
@@ -243,7 +282,7 @@ export default function Home() {
     });
 
     try {
-      const result = await generateThumbnailImage(prompt, selectedNiche, selectedArchetype, aspectRatio);
+      const result = await generateThumbnailImage(prompt, selectedNiche, selectedArchetype, aspectRatio, userPhotoUrl);
       setImageUrl(result.imageUrl);
       setProvider(result.provider);
       
@@ -277,6 +316,11 @@ export default function Home() {
     setIsOptimizing(true);
     setIsSaved(false);
     
+    let learningModifiersStr = 'Boost primary subject color saturation by 25%. Zoom in on human face macro elements to occupy 60% of frame width. Ensure background details are completely blurred for extreme bokeh depth separation.';
+    if (userPhotoUrl) {
+      learningModifiersStr += " Blend the user's uploaded subject photo into the design naturally as the main foreground element, color-correcting it to merge with the background lighting.";
+    }
+
     const optimizedPrompt = compilePrompt({
       title: inputs.title,
       topic: inputs.topic,
@@ -284,11 +328,11 @@ export default function Home() {
       niche: selectedNiche,
       archetype: selectedArchetype,
       aspectRatio: aspectRatio,
-      learningModifiers: 'Boost primary subject color saturation by 25%. Zoom in on human face macro elements to occupy 60% of frame width. Ensure background details are completely blurred for extreme bokeh depth separation.'
+      learningModifiers: learningModifiersStr
     });
 
     try {
-      const result = await generateThumbnailImage(optimizedPrompt, selectedNiche, selectedArchetype, aspectRatio);
+      const result = await generateThumbnailImage(optimizedPrompt, selectedNiche, selectedArchetype, aspectRatio, userPhotoUrl);
       
       setImageUrl(result.imageUrl);
       setProvider(result.provider);
@@ -509,21 +553,13 @@ export default function Home() {
     const reader = new FileReader();
     reader.onload = (event) => {
       setUserPhotoUrl(event.target.result);
-      // Also set imageUrl so CTR roast can analyze it
-      setImageUrl(event.target.result);
-      setProvider('User Photo');
-      setIsOptimized(false);
-      setAnalysisError(null);
-      showToast('Photo uploaded! Customize your thumbnail below.', 'success');
+      showToast('Subject photo selected! Click "Generate" to let AI design the final thumbnail.', 'success');
     };
     reader.readAsDataURL(file);
   };
 
   const handleClearUserPhoto = () => {
     setUserPhotoUrl(null);
-    setImageUrl(PRESET_LOFI_IMAGE);
-    setAnalysis(PRESET_LOFI_CRITIQUE);
-    setProvider('Vignette Preset');
   };
 
   // Thumbnail rewrite catalog upload (Task 2.3)
@@ -715,14 +751,70 @@ export default function Home() {
     { id: 'analytics', label: 'Analytics', icon: TrendingUp, subText: 'Analytics' },
   ];
 
+  if (activeTab === 'landing') {
+    return (
+      <div style={styles.appContainer}>
+        <LandingPage 
+          user={user} 
+          onStartCreating={(title) => {
+            if (title) {
+              setInputs(prev => ({
+                ...prev,
+                title: title,
+                topic: title
+              }));
+            }
+            setActiveTab('maker');
+          }}
+          setIsAuthOpen={setIsAuthOpen}
+          setActiveTab={setActiveTab}
+        />
+        <AuthModal 
+          isOpen={isAuthOpen} 
+          onClose={() => setIsAuthOpen(false)} 
+          onAuthSuccess={handleAuthSuccess} 
+        />
+        {notification.show && (
+          <div style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 9999,
+            background: notification.type === 'success' 
+              ? 'rgba(16, 185, 129, 0.9)' 
+              : notification.type === 'error' 
+                ? 'rgba(239, 68, 68, 0.9)' 
+                : 'rgba(99, 102, 241, 0.9)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            color: '#ffffff',
+            fontFamily: "'Outfit', sans-serif",
+            fontSize: '14px',
+            fontWeight: 700,
+            padding: '12px 24px',
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            animation: 'slideUpFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}>
+            <CheckCircle size={16} />
+            <span>{notification.message}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div style={styles.appContainer}>
+    <div style={{ ...styles.appContainer, height: '100vh', overflow: 'hidden' }}>
       
       {/* 1. HORIZONTAL TOP HEADER NAV (Quillbot Inspired Layout) */}
       <header style={styles.header}>
         <div style={styles.headerContainer}>
           {/* Logo group */}
-          <div style={styles.logoGroup} onClick={() => { setActiveTab('maker'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+          <div style={styles.logoGroup} onClick={() => { setActiveTab('landing'); }}>
             <div style={styles.logoIcon}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M2 22C2 22 8 20 12 16C16 12 22 6 22 2C22 2 16 2 12 6C8 10 2 16 2 22Z"></path>
@@ -1360,260 +1452,43 @@ export default function Home() {
                   <div style={{ flex: 0.9, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
 
                     {userPhotoUrl ? (
-                      /* === INTERACTIVE PHOTO THUMBNAIL PREVIEW === */
-                      <div style={{ width: '100%', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '14px', animation: 'dropdownFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-
-                        {/* Live Thumbnail Mockup */}
-                        <div
-                          onMouseEnter={() => setPhotoHoverEffect(true)}
-                          onMouseLeave={() => setPhotoHoverEffect(false)}
-                          style={{
-                            position: 'relative',
-                            aspectRatio: aspectRatio === '9:16' ? '9/16' : '16/9',
-                            borderRadius: '12px',
-                            overflow: 'hidden',
-                            background: photoBgColor,
-                            boxShadow: photoHoverEffect
-                              ? '0 24px 60px rgba(99, 102, 241, 0.28), 0 0 0 2px var(--color-primary)'
-                              : '0 16px 40px rgba(0,0,0,0.25)',
-                            transition: 'box-shadow 0.3s ease, transform 0.3s ease',
-                            transform: photoHoverEffect ? 'translateY(-4px) scale(1.01)' : 'translateY(0) scale(1)',
-                            cursor: 'pointer',
-                          }}
-                          onClick={() => userPhotoInputRef.current?.click()}
-                          title="Click to change photo"
-                        >
-                          {/* Background gradient/color layer */}
-                          <div style={{
-                            position: 'absolute', inset: 0,
-                            background: `linear-gradient(135deg, ${photoBgColor} 0%, ${photoBgColor}cc 100%)`,
-                            zIndex: 0
-                          }} />
-
-                          {/* Photo placement */}
-                          <img
-                            src={userPhotoUrl}
-                            alt="Your thumbnail photo"
-                            style={{
-                              position: 'absolute',
-                              top: 0,
-                              right: photoPosition === 'left' ? 'auto' : 0,
-                              left: photoPosition === 'right' ? 'auto' : 0,
-                              width: photoPosition === 'full' ? '100%' : '62%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              objectPosition: 'top center',
-                              zIndex: 1,
-                              filter: photoHoverEffect ? 'brightness(1.05) contrast(1.03)' : 'none',
-                              transition: 'filter 0.3s ease'
-                            }}
-                          />
-
-                          {/* Gradient overlay for text readability */}
-                          {showTextOverlay && photoPosition !== 'full' && (
-                            <div style={{
-                              position: 'absolute', inset: 0,
-                              background: photoPosition === 'right'
-                                ? `linear-gradient(90deg, ${photoBgColor}f5 0%, ${photoBgColor}cc 38%, transparent 60%)`
-                                : `linear-gradient(270deg, ${photoBgColor}f5 0%, ${photoBgColor}cc 38%, transparent 60%)`,
-                              zIndex: 2
-                            }} />
-                          )}
-
-                          {/* Text Overlay */}
-                          {showTextOverlay && (
-                            <div style={{
-                              position: 'absolute',
-                              top: 0, bottom: 0,
-                              left: photoPosition === 'left' ? 'auto' : 0,
-                              right: photoPosition === 'left' ? 0 : 'auto',
-                              width: photoPosition === 'full' ? '100%' : '52%',
-                              zIndex: 3,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              justifyContent: 'center',
-                              padding: photoPosition === 'full' ? '16px' : '16px 10px',
-                              background: photoPosition === 'full' ? 'linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 60%)' : 'transparent',
-                              justifyContent: photoPosition === 'full' ? 'flex-end' : 'center',
-                            }}>
-                              {/* AI badge */}
-                              <div style={{
-                                display: 'inline-flex',
-                                alignSelf: 'flex-start',
-                                background: 'rgba(255, 200, 0, 0.9)',
-                                color: '#000',
-                                fontSize: '7px',
-                                fontWeight: 900,
-                                padding: '3px 7px',
-                                borderRadius: '4px',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.05em',
-                                marginBottom: '6px',
-                                fontFamily: 'Outfit, sans-serif'
-                              }}>
-                                🔥 AI REPLIES TO INSTAGRAM DMs
-                              </div>
-                              <h3 style={{
-                                fontFamily: 'Outfit, sans-serif',
-                                fontSize: 'clamp(11px, 2.5vw, 18px)',
-                                fontWeight: 900,
-                                color: '#ffffff',
-                                lineHeight: 1.2,
-                                textShadow: '0 2px 8px rgba(0,0,0,0.5)',
-                                margin: 0
-                              }}>
-                                {inputs.title || 'Your Video Title Here'}
-                              </h3>
-                              <div style={{
-                                marginTop: '8px',
-                                fontSize: '8px',
-                                fontWeight: 700,
-                                color: 'rgba(255,255,255,0.5)',
-                                fontFamily: 'Inter, sans-serif'
-                              }}>
-                                Click thumbnail to change photo
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Duration badge (YouTube style) */}
-                          <div style={{
-                            position: 'absolute',
-                            bottom: '8px',
-                            right: '8px',
-                            background: 'rgba(0,0,0,0.85)',
-                            color: '#fff',
-                            fontSize: '10px',
-                            fontWeight: 700,
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            zIndex: 5,
-                            fontFamily: 'Inter, sans-serif',
-                            letterSpacing: '0.02em'
-                          }}>
-                            12:34
-                          </div>
-
-                          {/* Hover: change photo hint */}
-                          {photoHoverEffect && (
-                            <div style={{
-                              position: 'absolute',
-                              top: '50%', left: '50%',
-                              transform: 'translate(-50%,-50%)',
-                              background: 'rgba(0,0,0,0.55)',
-                              backdropFilter: 'blur(6px)',
-                              borderRadius: '10px',
-                              padding: '8px 14px',
-                              zIndex: 10,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              color: '#fff',
-                              pointerEvents: 'none'
-                            }}>
-                              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                              Change Photo
-                            </div>
-                          )}
+                      /* === USER PHOTO SELECTION PREVIEW === */
+                      <div className="card-glass" style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '20px', padding: '28px', textAlign: 'center', animation: 'dropdownFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffbe0b', animation: 'pulse 1.5s infinite' }}></div>
+                          <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Outfit, sans-serif' }}>Subject Photo Loaded</span>
                         </div>
 
-                        {/* Interactive Controls */}
-                        <div style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '10px',
-                          background: 'rgba(255,255,255,0.9)',
-                          backdropFilter: 'blur(16px)',
-                          border: '1px solid rgba(99,102,241,0.1)',
-                          borderRadius: '12px',
-                          padding: '14px'
-                        }}>
-                          {/* Photo Position */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', fontFamily: 'Outfit, sans-serif' }}>Photo Position:</span>
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                              {[['left','←Left'],['right','Right→'],['full','⊡ Full']].map(([pos, label]) => (
-                                <button
-                                  key={pos}
-                                  onClick={() => setPhotoPosition(pos)}
-                                  style={{
-                                    fontSize: '10px', fontWeight: 700, padding: '4px 10px', borderRadius: '8px',
-                                    border: '1px solid',
-                                    borderColor: photoPosition === pos ? 'var(--color-primary)' : 'var(--border-subtle)',
-                                    background: photoPosition === pos ? 'var(--color-primary)' : 'transparent',
-                                    color: photoPosition === pos ? '#fff' : 'var(--text-secondary)',
-                                    cursor: 'pointer', transition: 'all 0.15s'
-                                  }}
-                                >{label}</button>
-                              ))}
-                            </div>
-                          </div>
+                        <div style={{ position: 'relative', width: '160px', height: '160px', borderRadius: '24px', overflow: 'hidden', margin: '0 auto', border: '3px solid var(--color-primary-glow)', boxShadow: '0 12px 28px rgba(99, 102, 241, 0.15)' }}>
+                          <img 
+                            src={userPhotoUrl} 
+                            alt="Uploaded subject" 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          />
+                        </div>
 
-                          {/* Background Color */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', fontFamily: 'Outfit, sans-serif' }}>Background:</span>
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                              {['#1a1a2e','#0a0a0a','#ffc300','#e63946','#06d6a0','#4361ee'].map(color => (
-                                <button
-                                  key={color}
-                                  onClick={() => setPhotoBgColor(color)}
-                                  style={{
-                                    width: '22px', height: '22px', borderRadius: '50%',
-                                    background: color, border: `2px solid ${photoBgColor === color ? 'var(--color-primary)' : 'transparent'}`,
-                                    cursor: 'pointer', transition: 'all 0.15s',
-                                    boxShadow: photoBgColor === color ? '0 0 0 2px #fff, 0 0 0 4px var(--color-primary)' : 'none'
-                                  }}
-                                />
-                              ))}
-                            </div>
-                          </div>
+                        <div>
+                          <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>AI Composite Source Active</h4>
+                          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
+                            Vignette AI will seamlessly extract this subject, apply professional rim lighting, and compose a premium high-CTR thumbnail layout.
+                          </p>
+                        </div>
 
-                          {/* Text overlay toggle + action buttons */}
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', paddingTop: '4px', borderTop: '1px solid var(--border-subtle)' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)' }}>
-                              <div
-                                onClick={() => setShowTextOverlay(!showTextOverlay)}
-                                style={{
-                                  width: '28px', height: '16px', borderRadius: '10px',
-                                  background: showTextOverlay ? 'var(--color-primary)' : 'var(--bg-surface-elevated)',
-                                  border: '1px solid var(--border-subtle)',
-                                  position: 'relative', cursor: 'pointer', transition: 'background 0.2s'
-                                }}
-                              >
-                                <div style={{
-                                  position: 'absolute', top: '2px',
-                                  left: showTextOverlay ? '13px' : '2px',
-                                  width: '10px', height: '10px',
-                                  borderRadius: '50%', background: '#fff',
-                                  transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                                }} />
-                              </div>
-                              Title Overlay
-                            </label>
-
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                              <button
-                                onClick={() => setActiveTab('roast')}
-                                style={{
-                                  fontSize: '11px', fontWeight: 700, padding: '5px 12px', borderRadius: '8px',
-                                  border: '1px solid var(--border-subtle)',
-                                  background: 'transparent', color: 'var(--color-accent-hover)',
-                                  cursor: 'pointer'
-                                }}
-                              >Roast CTR →</button>
-                              <button
-                                onClick={handleClearUserPhoto}
-                                style={{
-                                  fontSize: '11px', fontWeight: 700, padding: '5px 10px', borderRadius: '8px',
-                                  border: '1px solid rgba(239,68,68,0.2)',
-                                  background: 'rgba(239,68,68,0.04)', color: 'var(--color-danger)',
-                                  cursor: 'pointer'
-                                }}
-                              >✕ Remove</button>
-                            </div>
-                          </div>
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px' }}>
+                          <button
+                            onClick={() => userPhotoInputRef.current?.click()}
+                            className="btn btn-secondary"
+                            style={{ fontSize: '12px', padding: '8px 16px' }}
+                          >
+                            Change Photo
+                          </button>
+                          <button
+                            onClick={handleClearUserPhoto}
+                            className="btn btn-danger"
+                            style={{ fontSize: '12px', padding: '8px 16px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.04)', color: 'var(--color-danger)' }}
+                          >
+                            ✕ Remove
+                          </button>
                         </div>
                       </div>
                     ) : (
@@ -2221,7 +2096,7 @@ export default function Home() {
                     </div>
                   ) : (
                     /* Standard Success State with split columns */
-                    <div style={{ ...styles.roastFlexGrid, minHeight: isDesktop ? 'calc(100vh - 210px)' : 'auto', alignItems: 'center' }}>
+                    <div style={{ ...styles.roastFlexGrid, minHeight: isDesktop ? 'calc(90vh - 140px)' : 'auto', alignItems: 'center' }}>
                       
                       {/* Left Column: Visual Preview */}
                       <div style={{ flex: 1, minWidth: '280px' }}>
@@ -2330,7 +2205,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div style={{ ...styles.upgradeFlexGrid, minHeight: isDesktop ? 'calc(100vh - 210px)' : 'auto', alignItems: 'center' }}>
+                  <div style={{ ...styles.upgradeFlexGrid, minHeight: isDesktop ? 'calc(90vh - 140px)' : 'auto', alignItems: 'center' }}>
                     
                     {/* File Pick Area */}
                     <div style={{ flex: 1, minWidth: '300px' }}>
@@ -2449,7 +2324,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div style={{ ...styles.titlesFlexGrid, minHeight: isDesktop ? 'calc(100vh - 210px)' : 'auto', alignItems: 'center' }}>
+                  <div style={{ ...styles.titlesFlexGrid, minHeight: isDesktop ? 'calc(90vh - 140px)' : 'auto', alignItems: 'center' }}>
                     
                     {/* Left Column: Visual Pairing Simulator */}
                     <div style={{ flex: 1.2, minWidth: '300px' }} className="card-glass">
@@ -2514,7 +2389,7 @@ export default function Home() {
                 <div style={styles.analyticsWorkspace}>
                   
                   {/* Visual A/B Spotlight Section */}
-                  <div style={{ ...styles.analyticsFlexGrid, minHeight: isDesktop ? 'calc(100vh - 210px)' : 'auto', alignItems: 'center' }}>
+                  <div style={{ ...styles.analyticsFlexGrid, minHeight: isDesktop ? 'calc(90vh - 140px)' : 'auto', alignItems: 'center' }}>
                     
                     {/* Left: Text Audit info */}
                     <div style={{ flex: 1, minWidth: '280px' }}>
@@ -2731,7 +2606,7 @@ const styles = {
     zIndex: 100,
     background: 'var(--bg-surface)',
     borderBottom: '1px solid var(--border-subtle)',
-    height: '70px',
+    height: '10vh',
     display: 'flex',
     alignItems: 'center',
     width: '100%',
@@ -2822,14 +2697,19 @@ const styles = {
   dashboardBody: {
     display: 'flex',
     flex: 1,
+    height: '90vh',
     width: '100%',
     maxWidth: '1440px',
     margin: '0 auto',
+    padding: '0 24px',
+    overflow: 'hidden',
   },
   sidebar: {
     width: '96px',
     background: 'var(--bg-surface)',
-    borderRight: '1px solid var(--border-subtle)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: '24px',
+    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.03)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -2837,6 +2717,8 @@ const styles = {
     paddingBottom: '24px',
     gap: '8px',
     flexShrink: 0,
+    marginTop: '16px',
+    marginBottom: '16px',
   },
   sidebarItem: {
     width: '84px',
@@ -2886,10 +2768,11 @@ const styles = {
   },
   workspace: {
     flex: 1,
-    padding: '16px 24px',
+    padding: '16px 0 16px 24px',
     display: 'flex',
     flexDirection: 'column',
     overflowY: 'auto',
+    minHeight: 0,
   },
   mainCard: {
     background: 'var(--bg-surface)',
@@ -2898,7 +2781,8 @@ const styles = {
     boxShadow: '0 10px 30px rgba(0, 0, 0, 0.03)',
     padding: '28px 36px',
     width: '100%',
-    minHeight: 'calc(100vh - 150px)',
+    minHeight: 'calc(90vh - 100px)',
+    flex: 1,
     display: 'flex',
     flexDirection: 'column',
   },
@@ -3243,18 +3127,6 @@ const styles = {
     fontSize: '12px',
     color: 'var(--text-primary)',
     fontFamily: "'Outfit', sans-serif",
-  },
-
-  // Editor View
-  editorContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    width: '100%',
-  },
-  editorWrapper: {
-    display: 'flex',
-    justifyContent: 'center',
-    width: '100%',
   },
 
   // Simulator View
@@ -3772,9 +3644,9 @@ const styles = {
 
   // Footer section
   footer: {
-    borderTop: '1px solid var(--border-subtle)',
-    background: 'var(--bg-surface)',
-    height: '70px',
+    borderTop: 'none',
+    background: 'transparent',
+    height: '50px',
     display: 'flex',
     alignItems: 'center',
     width: '100%',

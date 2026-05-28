@@ -1,10 +1,10 @@
 import { getMockImageUrl } from '../../prompts/thumbnail-v1.js';
 import { getMockCTRScore } from '../../prompts/ctr-analysis-v1.js';
 export class MockProvider {
-    async generate({ prompt, niche, archetype, aspectRatio = '16:9' }) {
+    async generate({ prompt, niche, archetype, aspectRatio = '16:9', image }) {
         console.log(`[MockProvider] Generating high-fidelity mock image for niche: ${niche}, archetype: ${archetype}`);
         return {
-            imageUrl: getMockImageUrl(niche, archetype, aspectRatio),
+            imageUrl: image || getMockImageUrl(niche, archetype, aspectRatio),
             revisedPrompt: prompt,
             provider: 'Mock Engine (Auto-Fallback)'
         };

@@ -11,13 +11,13 @@ const MOCK_MODE = false;
 /**
  * Interface function to handle secure backend image generation
  */
-export async function generateThumbnailImage(prompt, niche, archetype, aspectRatio = '16:9') {
+export async function generateThumbnailImage(prompt, niche, archetype, aspectRatio = '16:9', image = null) {
   // If Mock Mode is active (Phases 1-3), return immediately with custom local stock presets
   if (MOCK_MODE) {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({
-          imageUrl: getMockImageUrl(niche, archetype, aspectRatio),
+          imageUrl: image || getMockImageUrl(niche, archetype, aspectRatio),
           revisedPrompt: prompt,
           provider: 'Mock Engine (nanobanana 2 flash representation)'
         });
@@ -32,7 +32,7 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ prompt, niche, archetype, aspectRatio }),
+      body: JSON.stringify({ prompt, niche, archetype, aspectRatio, image }),
     });
 
     if (!response.ok) {
@@ -48,7 +48,7 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
   } catch (error) {
     console.error('Failed to generate image via live API, falling back to mock:', error);
     return {
-      imageUrl: getMockImageUrl(niche, archetype, aspectRatio),
+      imageUrl: image || getMockImageUrl(niche, archetype, aspectRatio),
       revisedPrompt: prompt,
       provider: 'API Error Fallback (Mock)'
     };

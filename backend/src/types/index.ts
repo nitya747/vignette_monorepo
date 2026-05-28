@@ -31,6 +31,7 @@ export interface ImageGenerationPayload {
   archetype: string;
   aspectRatio?: '16:9' | '9:16';
   userId?: string;
+  image?: string;
 }
 
 export interface ImageGenerationResponse {
