@@ -959,3 +959,38 @@ h1, h2, h3, h4, h5, h6 {
     padding: 16px;
   }
 }
+
+/* Projects card hover for showing and styling delete buttons elegantly */
+.library-card-hover:hover .library-card-delete-btn {
+  opacity: 1 !important;
+  transform: scale(1.05);
+}
+.library-card-delete-btn:hover {
+  background: var(--color-danger) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* ==========================================================================
+   User Photo Upload Button
+   ========================================================================== */
+.user-photo-upload-btn {
+  transition: all var(--transition-fast) !important;
+}
+
+.user-photo-upload-btn:hover {
+  background: var(--color-primary-glow) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+}
+
+@keyframes photoUploadPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+
+.user-photo-upload-btn:active {
+  transform: scale(0.97);
+}

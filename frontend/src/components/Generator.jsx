@@ -18,6 +18,17 @@ import { savePerformanceRecord, compileLearningModifiers, getNicheInsights } fro
 const PRESET_LOFI_IMAGE = 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&q=80&w=1280&h=720';
 const PRESET_LOFI_CRITIQUE = {
   score: 88,
+  strengths: [
+    'Excellent retro color theme. Cozy sunset palette creates an instant warm mood.',
+    'Clear safe zone allocation. Primary visual elements are well-separated from boundaries.'
+  ],
+  weaknesses: [
+    'Subtle background noise from skyscrapers silhouette limits center separation.',
+  ],
+  suggestions: [
+    'Add slight depth blur to distant city light points to maximize window focus.',
+    'Keep graphical highlights free from standard bottom-right duration badge overlap.'
+  ],
   roast: [
     'Excellent! The cozy retro sunset color palette creates an instant clickability mood.',
     'Legibility safety: The primary visual elements are well-separated from safe zones.',
@@ -97,6 +108,16 @@ export default function Generator() {
       setImageUrl('https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=1280&h=720');
       setAnalysis({
         score: 76,
+        strengths: [
+          'High grit dynamic athletic pose provides strong kinetic energy.',
+          'Snowy white backdrop provides high-contrast negative space for header text overlays.'
+        ],
+        weaknesses: [
+          'Subject framing blends too much with white snow or sky details in the background.'
+        ],
+        suggestions: [
+          'Add a bright orange rim light to separate the skier from the white background details.'
+        ],
         roast: [
           'High grit dynamic athletic pose provides strong kinetic energy.',
           'Snowy white backdrop provides high-contrast negative space for header text overlays.',
@@ -127,6 +148,16 @@ export default function Generator() {
       setImageUrl('https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=1280&h=720');
       setAnalysis({
         score: 82,
+        strengths: [
+          'Outstanding high-tech glass highlights. The metal reflections look extremely premium.',
+          'The vertical split provides a brilliant comparison outline for a before/after recipe showcase.'
+        ],
+        weaknesses: [
+          'Minor detail safe-zone warning: Bottom-right quadrant has negative elements near duration badges.'
+        ],
+        suggestions: [
+          'Mobile safe-zone: Keep the bottom-right quadrant as negative space, free of duration badges.'
+        ],
         roast: [
           'Outstanding high-tech glass highlights. The metal reflections look extremely premium.',
           'The vertical split provides a brilliant comparison outline for a before/after recipe showcase.',

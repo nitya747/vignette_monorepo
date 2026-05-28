@@ -1,7 +1,7 @@
 'use strict';
 
 import React, { useState } from 'react';
-import { Eye, Download, Edit3, Image as ImageIcon, Sparkles, RefreshCw, Monitor, Tablet, User, ThumbsUp, ThumbsDown, MessageSquare, Share2, CheckCircle2 } from 'lucide-react';
+import { Eye, Download, Edit3, Image as ImageIcon, Sparkles, RefreshCw, Monitor, Tablet, User, ThumbsUp, ThumbsDown, MessageSquare, Share2, CheckCircle2, Cloud } from 'lucide-react';
 
 export default function Gallery({ 
   imageUrl, 
@@ -12,7 +12,9 @@ export default function Gallery({
   provider,
   isOptimized,
   aspectRatio = '16:9',
-  title = 'An ambient thumbnail for my lofi playlist'
+  title = 'An ambient thumbnail for my lofi playlist',
+  onSaveToLibrary,
+  isSaved = false
 }) {
   const [showOriginal, setShowOriginal] = useState(false);
   const [previewScale, setPreviewScale] = useState('desktop'); // 'desktop' or 'mobile'
@@ -294,6 +296,28 @@ export default function Gallery({
           <Eye size={16} color="var(--color-primary)" />
           CTR Vision Critique
         </button>
+
+        <button 
+          onClick={onSaveToLibrary}
+          className={isSaved ? "btn btn-success" : "btn btn-secondary"}
+          style={{
+            ...styles.actionBtn,
+            ...(isSaved ? { borderColor: '#10b981', color: '#10b981', background: 'rgba(16, 185, 129, 0.05)', cursor: 'default' } : {})
+          }}
+          disabled={isSaved}
+        >
+          {isSaved ? (
+            <>
+              <CheckCircle2 size={16} color="#10b981" />
+              Saved to Account
+            </>
+          ) : (
+            <>
+              <Cloud size={16} color="var(--color-primary)" />
+              Save to Library
+            </>
+          )}
+        </button>
         
         <button 
           onClick={onEdit}
@@ -467,7 +491,7 @@ const styles = {
   },
   actionGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: '1fr 1fr 1fr',
     gap: '12px',
   },
   actionBtn: {

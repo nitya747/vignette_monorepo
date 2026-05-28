@@ -1,0 +1,391 @@
+[
+  {
+    "id": "1iz9q9c6yn5i5437wmi9i2e",
+    "userId": "mock-sandbox-user-id",
+    "videoId": null,
+    "title": "cdsvdfbgfhuikuo",
+    "prompt": "cdsvdfbgfhuikuo",
+    "promptVer": "thumbnail-v1",
+    "imageUrl": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=1280&h=720",
+    "niche": "documentary",
+    "archetype": "question",
+    "aspectRatio": "16:9",
+    "provider": "Mock Engine (Auto-Fallback)",
+    "createdAt": "2026-05-28T09:13:18.740Z",
+    "analysis": {
+      "id": "analysis-1iz9q9c6yn5i5437wmi9i2e",
+      "score": 70,
+      "strengths": [
+        "Superb cinematic mood. High-contrast side-lighting creates deep narrative intrigue.",
+        "High curiosity gap. Symmetrical glowing outline shape effectively triggers search interest."
+      ],
+      "weaknesses": [
+        "Title is critically short. Fails to establish clear context or intrigue."
+      ],
+      "suggestions": [
+        "Align main subject on the left third to leave negative space for bold, descriptive keywords.",
+        "Add 1-2 curiosity-inducing words or active verbs to complete the sentence."
+      ],
+      "attentionHierarchy": [
+        "Primary: Glowing abstract central silhouette symbol",
+        "Secondary: Moody fog and deep background shadows"
+      ],
+      "suggestedTitles": [
+        "The Mysterious Rise and Fall of Cdsvdfbgfhuikuo",
+        "Why Nobody Talks About the Cdsvdfbgfhuikuo Incident...",
+        "How Cdsvdfbgfhuikuo Changed the World Forever"
+      ]
+    }
+  },
+  {
+    "id": "w1b2x0rifin801xvph4z29",
+    "userId": "mock-sandbox-user-id",
+    "videoId": null,
+    "title": "An ambient thumbnail for my lofi playlist",
+    "prompt": "Relaxed cozy loft window view at sunset with city skyscrapers",
+    "promptVer": "thumbnail-v1",
+    "imageUrl": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=1280&h=720",
+    "niche": "documentary",
+    "archetype": "question",
+    "aspectRatio": "16:9",
+    "provider": "Mock Engine (Auto-Fallback)",
+    "createdAt": "2026-05-28T09:12:43.239Z",
+    "analysis": {
+      "id": "analysis-w1b2x0rifin801xvph4z29",
+      "score": 80,
+      "strengths": [
+        "Superb cinematic mood. High-contrast side-lighting creates deep narrative intrigue.",
+        "High curiosity gap. Symmetrical glowing outline shape effectively triggers search interest.",
+        "Optimal title length. Title is highly scanable at standard YouTube homepage speeds."
+      ],
+      "weaknesses": [
+        "Minor detail safe-zone warning: Bottom-right quadrant has negative elements near duration badges."
+      ],
+      "suggestions": [
+        "Align main subject on the left third to leave negative space for bold, descriptive keywords.",
+        "Keep key graphical details clear of the standard bottom-right duration badge area."
+      ],
+      "attentionHierarchy": [
+        "Primary: Glowing abstract central silhouette symbol",
+        "Secondary: Moody fog and deep background shadows"
+      ],
+      "suggestedTitles": [
+        "This Cozy Lofi Sunset Beats playlist will cure your anxiety...",
+        "1 Hour of Relaxing Lofi Sunset Beats to Study or Relax",
+        "The Perfect Lofi Sunset Beats mix for late night driving"
+      ]
+    }
+  },
+  {
+    "id": "l8rwilpgny5e37ni2pzvv",
+    "userId": "mock-sandbox-user-id",
+    "videoId": null,
+    "title": "An ambient thumbnail for my lofi playlist",
+    "prompt": "Relaxed cozy loft window view at sunset with city skyscrapers",
+    "promptVer": "thumbnail-v1",
+    "imageUrl": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=1280&h=720",
+    "niche": "documentary",
+    "archetype": "question",
+    "aspectRatio": "16:9",
+    "provider": "Mock Engine (Auto-Fallback)",
+    "createdAt": "2026-05-28T08:59:15.381Z",
+    "analysis": {
+      "id": "analysis-l8rwilpgny5e37ni2pzvv",
+      "score": 80,
+      "strengths": [
+        "Superb cinematic mood. High-contrast side-lighting creates deep narrative intrigue.",
+        "High curiosity gap. Symmetrical glowing outline shape effectively triggers search interest.",
+        "Optimal title length. Title is highly scanable at standard YouTube homepage speeds."
+      ],
+      "weaknesses": [
+        "Minor detail safe-zone warning: Bottom-right quadrant has negative elements near duration badges."
+      ],
+      "suggestions": [
+        "Align main subject on the left third to leave negative space for bold, descriptive keywords.",
+        "Keep key graphical details clear of the standard bottom-right duration badge area."
+      ],
+      "attentionHierarchy": [
+        "Primary: Glowing abstract central silhouette symbol",
+        "Secondary: Moody fog and deep background shadows"
+      ],
+      "suggestedTitles": [
+        "This Cozy Lofi Sunset Beats playlist will cure your anxiety...",
+        "1 Hour of Relaxing Lofi Sunset Beats to Study or Relax",
+        "The Perfect Lofi Sunset Beats mix for late night driving"
+      ]
+    }
+  },
+  {
+    "id": "j3ux6jyhsn1tvglrzi9j4h",
+    "userId": "mock-sandbox-user-id",
+    "videoId": null,
+    "title": "An ambient thumbnail for my lofi playlist",
+    "prompt": "Relaxed cozy loft window view at sunset with city skyscrapers",
+    "promptVer": "thumbnail-v1",
+    "imageUrl": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=1280&h=720",
+    "niche": "documentary",
+    "archetype": "question",
+    "aspectRatio": "16:9",
+    "provider": "Mock Engine (Auto-Fallback)",
+    "createdAt": "2026-05-28T08:54:35.729Z",
+    "analysis": {
+      "id": "analysis-j3ux6jyhsn1tvglrzi9j4h",
+      "score": 80,
+      "strengths": [
+        "Superb cinematic mood. High-contrast side-lighting creates deep narrative intrigue.",
+        "High curiosity gap. Symmetrical glowing outline shape effectively triggers search interest.",
+        "Optimal title length. Title is highly scanable at standard YouTube homepage speeds."
+      ],
+      "weaknesses": [
+        "Minor detail safe-zone warning: Bottom-right quadrant has negative elements near duration badges."
+      ],
+      "suggestions": [
+        "Align main subject on the left third to leave negative space for bold, descriptive keywords.",
+        "Keep key graphical details clear of the standard bottom-right duration badge area."
+      ],
+      "attentionHierarchy": [
+        "Primary: Glowing abstract central silhouette symbol",
+        "Secondary: Moody fog and deep background shadows"
+      ],
+      "suggestedTitles": [
+        "This Cozy Lofi Sunset Beats playlist will cure your anxiety...",
+        "1 Hour of Relaxing Lofi Sunset Beats to Study or Relax",
+        "The Perfect Lofi Sunset Beats mix for late night driving"
+      ]
+    }
+  },
+  {
+    "id": "0uw6nqowgz23mc4ms2wym5",
+    "userId": "mock-sandbox-user-id",
+    "videoId": null,
+    "title": "An ambient thumbnail for my lofi playlist",
+    "prompt": "Relaxed cozy loft window view at sunset with city skyscrapers",
+    "promptVer": "thumbnail-v1",
+    "imageUrl": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=1280&h=720",
+    "niche": "documentary",
+    "archetype": "question",
+    "aspectRatio": "16:9",
+    "provider": "Mock Engine (Auto-Fallback)",
+    "createdAt": "2026-05-28T08:53:44.036Z",
+    "analysis": {
+      "id": "analysis-0uw6nqowgz23mc4ms2wym5",
+      "score": 80,
+      "strengths": [
+        "Superb cinematic mood. High-contrast side-lighting creates deep narrative intrigue.",
+        "High curiosity gap. Symmetrical glowing outline shape effectively triggers search interest.",
+        "Optimal title length. Title is highly scanable at standard YouTube homepage speeds."
+      ],
+      "weaknesses": [
+        "Minor detail safe-zone warning: Bottom-right quadrant has negative elements near duration badges."
+      ],
+      "suggestions": [
+        "Align main subject on the left third to leave negative space for bold, descriptive keywords.",
+        "Keep key graphical details clear of the standard bottom-right duration badge area."
+      ],
+      "attentionHierarchy": [
+        "Primary: Glowing abstract central silhouette symbol",
+        "Secondary: Moody fog and deep background shadows"
+      ],
+      "suggestedTitles": [
+        "This Cozy Lofi Sunset Beats playlist will cure your anxiety...",
+        "1 Hour of Relaxing Lofi Sunset Beats to Study or Relax",
+        "The Perfect Lofi Sunset Beats mix for late night driving"
+      ]
+    }
+  },
+  {
+    "id": "oumridq3vj0g2mzpi9shsd",
+    "userId": "mock-sandbox-user-id",
+    "videoId": null,
+    "title": "An ambient thumbnail for my lofi playlist",
+    "prompt": "Relaxed cozy loft window view at sunset with city skyscrapers",
+    "promptVer": "thumbnail-v1",
+    "imageUrl": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=1280&h=720",
+    "niche": "documentary",
+    "archetype": "question",
+    "aspectRatio": "16:9",
+    "provider": "Mock Engine (Auto-Fallback)",
+    "createdAt": "2026-05-28T07:37:05.800Z",
+    "analysis": {
+      "id": "analysis-oumridq3vj0g2mzpi9shsd",
+      "score": 80,
+      "strengths": [
+        "Superb cinematic mood. High-contrast side-lighting creates deep narrative intrigue.",
+        "High curiosity gap. Symmetrical glowing outline shape effectively triggers search interest.",
+        "Optimal title length. Title is highly scanable at standard YouTube homepage speeds."
+      ],
+      "weaknesses": [
+        "Minor detail safe-zone warning: Bottom-right quadrant has negative elements near duration badges."
+      ],
+      "suggestions": [
+        "Align main subject on the left third to leave negative space for bold, descriptive keywords.",
+        "Keep key graphical details clear of the standard bottom-right duration badge area."
+      ],
+      "attentionHierarchy": [
+        "Primary: Glowing abstract central silhouette symbol",
+        "Secondary: Moody fog and deep background shadows"
+      ],
+      "suggestedTitles": [
+        "This Cozy Lofi Sunset Beats playlist will cure your anxiety...",
+        "1 Hour of Relaxing Lofi Sunset Beats to Study or Relax",
+        "The Perfect Lofi Sunset Beats mix for late night driving"
+      ]
+    }
+  },
+  {
+    "id": "hq00pf2zp1rt86exd1px8m",
+    "userId": "mock-sandbox-user-id",
+    "videoId": null,
+    "title": "An ambient thumbnail for my lofi playlist",
+    "prompt": "Relaxed cozy loft window view at sunset with city skyscrapers",
+    "promptVer": "thumbnail-v1",
+    "imageUrl": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=1280&h=720",
+    "niche": "documentary",
+    "archetype": "question",
+    "aspectRatio": "16:9",
+    "provider": "Mock Engine (Auto-Fallback)",
+    "createdAt": "2026-05-28T07:35:19.099Z",
+    "analysis": {
+      "id": "analysis-hq00pf2zp1rt86exd1px8m",
+      "score": 80,
+      "strengths": [
+        "Superb cinematic mood. High-contrast side-lighting creates deep narrative intrigue.",
+        "High curiosity gap. Symmetrical glowing outline shape effectively triggers search interest.",
+        "Optimal title length. Title is highly scanable at standard YouTube homepage speeds."
+      ],
+      "weaknesses": [
+        "Minor detail safe-zone warning: Bottom-right quadrant has negative elements near duration badges."
+      ],
+      "suggestions": [
+        "Align main subject on the left third to leave negative space for bold, descriptive keywords.",
+        "Keep key graphical details clear of the standard bottom-right duration badge area."
+      ],
+      "attentionHierarchy": [
+        "Primary: Glowing abstract central silhouette symbol",
+        "Secondary: Moody fog and deep background shadows"
+      ],
+      "suggestedTitles": [
+        "This Cozy Lofi Sunset Beats playlist will cure your anxiety...",
+        "1 Hour of Relaxing Lofi Sunset Beats to Study or Relax",
+        "The Perfect Lofi Sunset Beats mix for late night driving"
+      ]
+    }
+  },
+  {
+    "id": "xvormpjmmbg2jaudw22vyt",
+    "userId": "mock-sandbox-user-id",
+    "videoId": null,
+    "title": "An ambient thumbnail for my lofi playlist",
+    "prompt": "Relaxed cozy loft window view at sunset with city skyscrapers",
+    "promptVer": "thumbnail-v1",
+    "imageUrl": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=1280&h=720",
+    "niche": "documentary",
+    "archetype": "question",
+    "aspectRatio": "16:9",
+    "provider": "Mock Engine (Auto-Fallback)",
+    "createdAt": "2026-05-28T07:27:52.147Z",
+    "analysis": {
+      "id": "analysis-xvormpjmmbg2jaudw22vyt",
+      "score": 80,
+      "strengths": [
+        "Superb cinematic mood. High-contrast side-lighting creates deep narrative intrigue.",
+        "High curiosity gap. Symmetrical glowing outline shape effectively triggers search interest.",
+        "Optimal title length. Title is highly scanable at standard YouTube homepage speeds."
+      ],
+      "weaknesses": [
+        "Minor detail safe-zone warning: Bottom-right quadrant has negative elements near duration badges."
+      ],
+      "suggestions": [
+        "Align main subject on the left third to leave negative space for bold, descriptive keywords.",
+        "Keep key graphical details clear of the standard bottom-right duration badge area."
+      ],
+      "attentionHierarchy": [
+        "Primary: Glowing abstract central silhouette symbol",
+        "Secondary: Moody fog and deep background shadows"
+      ],
+      "suggestedTitles": [
+        "This Cozy Lofi Sunset Beats playlist will cure your anxiety...",
+        "1 Hour of Relaxing Lofi Sunset Beats to Study or Relax",
+        "The Perfect Lofi Sunset Beats mix for late night driving"
+      ]
+    }
+  },
+  {
+    "id": "bjbbps48fsv9yh3puha7bm",
+    "userId": "mock-sandbox-user-id",
+    "videoId": null,
+    "title": "An ambient thumbnail for my lofi playlist",
+    "prompt": "Relaxed cozy loft window view at sunset with city skyscrapers",
+    "promptVer": "thumbnail-v1",
+    "imageUrl": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=1280&h=720",
+    "niche": "documentary",
+    "archetype": "question",
+    "aspectRatio": "16:9",
+    "provider": "Mock Engine (Auto-Fallback)",
+    "createdAt": "2026-05-28T07:27:24.385Z",
+    "analysis": {
+      "id": "analysis-bjbbps48fsv9yh3puha7bm",
+      "score": 80,
+      "strengths": [
+        "Superb cinematic mood. High-contrast side-lighting creates deep narrative intrigue.",
+        "High curiosity gap. Symmetrical glowing outline shape effectively triggers search interest.",
+        "Optimal title length. Title is highly scanable at standard YouTube homepage speeds."
+      ],
+      "weaknesses": [
+        "Minor detail safe-zone warning: Bottom-right quadrant has negative elements near duration badges."
+      ],
+      "suggestions": [
+        "Align main subject on the left third to leave negative space for bold, descriptive keywords.",
+        "Keep key graphical details clear of the standard bottom-right duration badge area."
+      ],
+      "attentionHierarchy": [
+        "Primary: Glowing abstract central silhouette symbol",
+        "Secondary: Moody fog and deep background shadows"
+      ],
+      "suggestedTitles": [
+        "This Cozy Lofi Sunset Beats playlist will cure your anxiety...",
+        "1 Hour of Relaxing Lofi Sunset Beats to Study or Relax",
+        "The Perfect Lofi Sunset Beats mix for late night driving"
+      ]
+    }
+  },
+  {
+    "id": "wp7b42d6kcjlul9al1me",
+    "userId": "mock-sandbox-user-id",
+    "videoId": null,
+    "title": "An ambient thumbnail for my lofi playlist",
+    "prompt": "Relaxed cozy loft window view at sunset with city skyscrapers",
+    "promptVer": "thumbnail-v1",
+    "imageUrl": "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=1280&h=720",
+    "niche": "documentary",
+    "archetype": "question",
+    "aspectRatio": "16:9",
+    "provider": "Mock Engine (Auto-Fallback)",
+    "createdAt": "2026-05-28T07:27:12.545Z",
+    "analysis": {
+      "id": "analysis-wp7b42d6kcjlul9al1me",
+      "score": 80,
+      "strengths": [
+        "Superb cinematic mood. High-contrast side-lighting creates deep narrative intrigue.",
+        "High curiosity gap. Symmetrical glowing outline shape effectively triggers search interest.",
+        "Optimal title length. Title is highly scanable at standard YouTube homepage speeds."
+      ],
+      "weaknesses": [
+        "Minor detail safe-zone warning: Bottom-right quadrant has negative elements near duration badges."
+      ],
+      "suggestions": [
+        "Align main subject on the left third to leave negative space for bold, descriptive keywords.",
+        "Keep key graphical details clear of the standard bottom-right duration badge area."
+      ],
+      "attentionHierarchy": [
+        "Primary: Glowing abstract central silhouette symbol",
+        "Secondary: Moody fog and deep background shadows"
+      ],
+      "suggestedTitles": [
+        "This Cozy Lofi Sunset Beats playlist will cure your anxiety...",
+        "1 Hour of Relaxing Lofi Sunset Beats to Study or Relax",
+        "The Perfect Lofi Sunset Beats mix for late night driving"
+      ]
+    }
+  }
+]

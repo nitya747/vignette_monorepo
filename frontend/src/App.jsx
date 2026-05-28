@@ -22,16 +22,19 @@ import {
   CheckCircle,
   Video,
   Download,
-  Eye,
-  Edit3
+  Eye
 } from 'lucide-react';
 
 // Subcomponents
 import Gallery from './components/Gallery';
-import CanvasEditor from './components/CanvasEditor';
 import CTRAnalysisPanel from './components/CTRAnalysisPanel';
 import YoutubePreview from './components/YoutubePreview';
 import ThreeMascot from './components/ThreeMascot';
+import AuthModal from './components/AuthModal';
+import LibraryPanel from './components/LibraryPanel';
+
+// Supabase client instance
+import { supabase } from './lib/supabase';
 
 // Library utilities
 import { compilePrompt } from './lib/prompts';
@@ -72,7 +75,7 @@ const PRESET_LOFI_CRITIQUE = {
 
 export default function Home() {
   // 1. Centralized SPA Workspace States
-  const [activeTab, setActiveTab] = useState('maker'); // 'maker', 'gallery', 'roast', 'editor', 'simulator', 'upgrade', 'titles', 'analytics'
+  const [activeTab, setActiveTab] = useState('maker'); // 'maker', 'gallery', 'roast', 'simulator', 'upgrade', 'titles', 'analytics'
   const [inputs, setInputs] = useState({ 
     title: 'An ambient thumbnail for my lofi playlist', 
     topic: 'Relaxed cozy loft window view at sunset with city skyscrapers', 
@@ -93,6 +96,80 @@ export default function Home() {
   const [showCritique, setShowCritique] = useState(true);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [analysisError, setAnalysisError] = useState(null);
+
+  // Supabase Auth and History States
+  const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authCallback, setAuthCallback] = useState(null);
+  const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Sync Supabase Auth listener
+  useEffect(() => {
+    if (!supabase) {
+      // Sandbox Mode: Check if there's a cached mock user session
+      const savedUser = localStorage.getItem('vignette_mock_user');
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser);
+          setUser(parsed);
+          setSession({ access_token: 'sandbox-jwt-token-secret-123456789', user: parsed });
+        } catch (e) {
+          console.error('[Auth Sandbox] Failed to parse saved mock user:', e);
+        }
+      }
+      return;
+    }
+
+    // Set initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user || null);
+    });
+
+    // Listen for session updates
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    if (supabase) {
+      await supabase.auth.signOut();
+    } else {
+      localStorage.removeItem('vignette_mock_user');
+      setUser(null);
+      setSession(null);
+    }
+    showToast('Signed out successfully.', 'info');
+    setActiveTab('maker');
+  };
+
+  const handleAuthSuccess = (newSession) => {
+    setSession(newSession);
+    setUser(newSession.user);
+    if (!supabase) {
+      localStorage.setItem('vignette_mock_user', JSON.stringify(newSession.user));
+    }
+    showToast('Welcome to Vignette.ai!', 'success');
+    
+    // Execute pending callback
+    if (authCallback) {
+      authCallback(newSession);
+      setAuthCallback(null);
+    }
+  };
+
+  const showToast = (message, type = 'success') => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, show: false }));
+    }, 4000);
+  };
 
   // Custom Dropdown Menu States
   const [showDropdown, setShowDropdown] = useState(false);
@@ -116,6 +193,14 @@ export default function Home() {
   const [isUrlLoading, setIsUrlLoading] = useState(false);
   const [isSearchUrlLoading, setIsSearchUrlLoading] = useState(false);
   const [urlError, setUrlError] = useState('');
+
+  // User Photo Upload (use-your-photo feature)
+  const [userPhotoUrl, setUserPhotoUrl] = useState(null);
+  const [photoPosition, setPhotoPosition] = useState('right'); // 'left', 'right', 'full'
+  const [showTextOverlay, setShowTextOverlay] = useState(true);
+  const [photoBgColor, setPhotoBgColor] = useState('#1a1a2e');
+  const [photoHoverEffect, setPhotoHoverEffect] = useState(false);
+  const userPhotoInputRef = useRef(null);
 
   // DOM ref to scroll focus to input
   const inputRef = useRef(null);
@@ -142,6 +227,7 @@ export default function Home() {
     
     setIsGenerating(true);
     setIsOptimized(false);
+    setIsSaved(false);
     setAnalysisError(null);
     
     const learningMod = compileLearningModifiers(selectedNiche);
@@ -189,6 +275,7 @@ export default function Home() {
     if (!analysis) return;
     
     setIsOptimizing(true);
+    setIsSaved(false);
     
     const optimizedPrompt = compilePrompt({
       title: inputs.title,
@@ -240,6 +327,98 @@ export default function Home() {
       console.error('Optimizing failure:', error);
     } finally {
       setIsOptimizing(false);
+    }
+  };
+
+  const handleSaveToLibrary = async (currentSession = session, customPayload = null) => {
+    // If the first argument is a React/DOM event, ignore it and use the actual session state
+    const isEvent = currentSession && (currentSession.preventDefault || currentSession.target || currentSession.nativeEvent);
+    const activeSession = isEvent ? session : (currentSession || session);
+    const activeUser = activeSession?.user || user;
+    
+    // If not logged in, prompt AuthModal and store a callback to save once auth is successful
+    if (!activeUser) {
+      if (!customPayload) {
+        setAuthCallback(() => (newSession) => handleSaveToLibrary(newSession));
+      } else {
+        setAuthCallback(() => (newSession) => handleSaveToLibrary(newSession, customPayload));
+      }
+      setIsAuthOpen(true);
+      showToast('Please sign in to save this project to your library.', 'info');
+      return;
+    }
+
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      const token = activeSession?.access_token || 'sandbox-jwt-token-secret-123456789';
+      headers['Authorization'] = `Bearer ${token}`;
+
+      const targetAnalysis = customPayload ? customPayload.analysis : analysis;
+
+      // Sanitize analysis object to guarantee all required Zod schema properties are present
+      const sanitizedAnalysis = {
+        score: targetAnalysis?.score ?? 70,
+        strengths: Array.isArray(targetAnalysis?.strengths) ? targetAnalysis.strengths : [],
+        weaknesses: Array.isArray(targetAnalysis?.weaknesses) ? targetAnalysis.weaknesses : [],
+        suggestions: Array.isArray(targetAnalysis?.suggestions) ? targetAnalysis.suggestions : [],
+        roast: Array.isArray(targetAnalysis?.roast) ? targetAnalysis.roast : [],
+        attentionHierarchy: Array.isArray(targetAnalysis?.attentionHierarchy) ? targetAnalysis.attentionHierarchy : [],
+        suggestedTitles: Array.isArray(targetAnalysis?.suggestedTitles) ? targetAnalysis.suggestedTitles : []
+      };
+
+      // Fallback parsing if strengths/weaknesses/suggestions are empty but roast is present
+      if (sanitizedAnalysis.strengths.length === 0 && sanitizedAnalysis.weaknesses.length === 0 && sanitizedAnalysis.suggestions.length === 0 && sanitizedAnalysis.roast.length > 0) {
+        sanitizedAnalysis.roast.forEach(bullet => {
+          const lower = bullet.toLowerCase();
+          if (lower.includes('excellent') || lower.includes('great') || lower.includes('fantastic') || lower.includes('good') || lower.includes('perfect') || lower.includes('proven') || lower.includes('optimal') || lower.includes('vibrancy') || lower.includes('vibrant')) {
+            sanitizedAnalysis.strengths.push(bullet);
+          } else if (lower.includes('low') || lower.includes('obstructed') || lower.includes('wordy') || lower.includes('clash') || lower.includes('vague') || lower.includes('clutter') || lower.includes('warning') || lower.includes('conflict') || lower.includes('truncat') || lower.includes('exceed')) {
+            sanitizedAnalysis.weaknesses.push(bullet);
+          } else {
+            sanitizedAnalysis.suggestions.push(bullet);
+          }
+        });
+
+        if (sanitizedAnalysis.strengths.length === 0 && sanitizedAnalysis.weaknesses.length === 0 && sanitizedAnalysis.suggestions.length === 0) {
+          sanitizedAnalysis.strengths = [sanitizedAnalysis.roast[0]];
+          if (sanitizedAnalysis.roast[1]) sanitizedAnalysis.weaknesses = [sanitizedAnalysis.roast[1]];
+          if (sanitizedAnalysis.roast[2]) sanitizedAnalysis.suggestions = [sanitizedAnalysis.roast[2]];
+        }
+      }
+
+      const payload = {
+        imageUrl: customPayload ? customPayload.imageUrl : imageUrl,
+        prompt: customPayload ? customPayload.prompt : (inputs.topic || inputs.title),
+        title: customPayload ? customPayload.title : inputs.title,
+        niche: customPayload ? customPayload.niche : selectedNiche,
+        archetype: customPayload ? customPayload.archetype : selectedArchetype,
+        aspectRatio: customPayload ? customPayload.aspectRatio : aspectRatio,
+        provider: customPayload ? customPayload.provider : provider,
+        analysis: sanitizedAnalysis
+      };
+
+      const response = await fetch('/api/history', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save to library');
+      }
+
+      setIsSaved(true);
+      if (customPayload) {
+        showToast('Project created and automatically saved to library!', 'success');
+      } else {
+        showToast('Project saved successfully to library!', 'success');
+      }
+    } catch (err) {
+      console.error('[Save to Library Error]', err);
+      showToast('Failed to save project. Please try again.', 'error');
     }
   };
 
@@ -324,6 +503,29 @@ export default function Home() {
     }
   };
 
+  // Handle user self-photo upload for thumbnail maker
+  const handleUserPhotoUpload = (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setUserPhotoUrl(event.target.result);
+      // Also set imageUrl so CTR roast can analyze it
+      setImageUrl(event.target.result);
+      setProvider('User Photo');
+      setIsOptimized(false);
+      setAnalysisError(null);
+      showToast('Photo uploaded! Customize your thumbnail below.', 'success');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearUserPhoto = () => {
+    setUserPhotoUrl(null);
+    setImageUrl(PRESET_LOFI_IMAGE);
+    setAnalysis(PRESET_LOFI_CRITIQUE);
+    setProvider('Vignette Preset');
+  };
+
   // Thumbnail rewrite catalog upload (Task 2.3)
   const handleExistingUpload = (file) => {
     if (!file) return;
@@ -395,11 +597,6 @@ export default function Home() {
     }
   };
 
-  // Handle saving edits from Snap-Grid Canvas Editor
-  const handleEditorSave = (editedDataUrl) => {
-    setImageUrl(editedDataUrl);
-    setActiveTab('maker');
-  };
 
   const handleReset = () => {
     setInputs({ title: '', topic: '', keywords: '' });
@@ -437,6 +634,16 @@ export default function Home() {
       setImageUrl('https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=1280&h=720');
       setAnalysis({
         score: 76,
+        strengths: [
+          'High grit dynamic athletic pose provides strong kinetic energy.',
+          'Snowy white backdrop provides high-contrast negative space for header text overlays.'
+        ],
+        weaknesses: [
+          'Subject framing blends too much with white snow or sky details in the background.'
+        ],
+        suggestions: [
+          'Add a bright orange rim light to separate the skier from the white background details.'
+        ],
         roast: [
           'High grit dynamic athletic pose provides strong kinetic energy.',
           'Snowy white backdrop provides high-contrast negative space for header text overlays.',
@@ -467,6 +674,16 @@ export default function Home() {
       setImageUrl('https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=1280&h=720');
       setAnalysis({
         score: 82,
+        strengths: [
+          'Outstanding high-tech glass highlights. The metal reflections look extremely premium.',
+          'The vertical split provides a brilliant comparison outline for a before/after recipe showcase.'
+        ],
+        weaknesses: [
+          'Minor detail safe-zone warning: Bottom-right quadrant has negative elements near duration badges.'
+        ],
+        suggestions: [
+          'Mobile safe-zone: Keep the bottom-right quadrant as negative space, free of duration badges.'
+        ],
         roast: [
           'Outstanding high-tech glass highlights. The metal reflections look extremely premium.',
           'The vertical split provides a brilliant comparison outline for a before/after recipe showcase.',
@@ -492,7 +709,6 @@ export default function Home() {
   const sidebarTabs = [
     { id: 'gallery', label: 'Projects', icon: FolderClosed, subText: 'Projects' },
     { id: 'roast', label: 'CTR Roast', icon: Flame, subText: 'CTR Roast' },
-    { id: 'editor', label: 'Snap Editor', icon: Edit3, subText: 'Editor' },
     { id: 'simulator', label: 'Feed Preview', icon: Eye, subText: 'Preview' },
     { id: 'upgrade', label: 'Upload & Audit', icon: UploadCloud, subText: 'Upload' },
     { id: 'titles', label: 'Title Pairing', icon: TextQuote, subText: 'Titles' },
@@ -535,13 +751,6 @@ export default function Home() {
                 CTR Roast
               </a>
               <a 
-                href="#editor" 
-                onClick={(e) => { e.preventDefault(); setActiveTab('editor'); }} 
-                style={{ ...styles.navLink, ...(activeTab === 'editor' ? styles.navLinkActive : {}) }}
-              >
-                Editor
-              </a>
-              <a 
                 href="#simulator" 
                 onClick={(e) => { e.preventDefault(); setActiveTab('simulator'); }} 
                 style={{ ...styles.navLink, ...(activeTab === 'simulator' ? styles.navLinkActive : {}) }}
@@ -569,12 +778,133 @@ export default function Home() {
               </svg>
               Upgrade to Premium
             </button>
-            <div style={styles.profileAvatar} title="User Profile: Nitya">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#57636c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
+            
+            {user ? (
+              /* Logged In View: Profile Avatar with dropdown */
+              <div ref={dropdownRef} style={{ position: 'relative' }}>
+                <button 
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    borderRadius: '8px',
+                    transition: 'background 0.2s',
+                  }}
+                >
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: "'Outfit', sans-serif",
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    boxShadow: '0 2px 8px rgba(255, 129, 56, 0.2)'
+                  }}>
+                    {user.email ? user.email.charAt(0).toUpperCase() : 'G'}
+                  </div>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.2s', transform: showDropdown ? 'rotate(180deg)' : 'rotate(0)' }}>
+                    <path d="m6 9 6 6 6-6"></path>
+                  </svg>
+                </button>
+
+                {showDropdown && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '42px',
+                    right: 0,
+                    width: '200px',
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    border: '1px solid rgba(0, 0, 0, 0.08)',
+                    boxShadow: '0 12px 32px rgba(0, 0, 0, 0.1)',
+                    borderRadius: '14px',
+                    backdropFilter: 'blur(10px)',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    zIndex: 1000
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '4px 8px', textAlign: 'left' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>{user.email}</span>
+                      <span style={{ fontSize: '9px', color: 'var(--color-primary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Authenticated</span>
+                    </div>
+                    <div style={{ height: '1px', background: 'rgba(0, 0, 0, 0.05)', margin: '4px 0' }}></div>
+                    <button 
+                      onClick={() => { handleSignOut(); setShowDropdown(false); }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        background: 'none',
+                        border: 'none',
+                        fontFamily: "'Outfit', sans-serif",
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: 'var(--text-secondary)',
+                        padding: '8px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.2s',
+                        width: '100%'
+                      }}
+                      className="dropdown-item-hover"
+                    >
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                      </svg>
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Guest View: Sign In & Join CTAs */
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <button 
+                  onClick={() => setIsAuthOpen(true)} 
+                  style={{
+                    fontFamily: "'Outfit', sans-serif",
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: 'var(--text-secondary)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '8px 12px',
+                    transition: 'color 0.2s',
+                  }}
+                >
+                  Sign In
+                </button>
+                <button 
+                  onClick={() => setIsAuthOpen(true)}
+                  className="btn btn-primary"
+                  style={{
+                    fontFamily: "'Outfit', sans-serif",
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Join Free
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -903,6 +1233,41 @@ export default function Home() {
                           )}
                         </button>
 
+                        {/* Use Your Photo button */}
+                        <label
+                          title="Upload your own photo to use as thumbnail"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            background: userPhotoUrl ? 'rgba(99, 102, 241, 0.08)' : 'var(--bg-surface)',
+                            border: `1px solid ${userPhotoUrl ? 'var(--color-primary)' : 'var(--border-subtle)'}`,
+                            borderRadius: '10px',
+                            padding: '12px 16px',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            color: userPhotoUrl ? 'var(--color-primary)' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0
+                          }}
+                          className="user-photo-upload-btn"
+                        >
+                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                          </svg>
+                          {userPhotoUrl ? 'Photo Added ✓' : 'Use My Photo'}
+                          <input
+                            ref={userPhotoInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => e.target.files && handleUserPhotoUpload(e.target.files[0])}
+                            style={{ display: 'none' }}
+                          />
+                        </label>
+
                       </div>
                     </div>
 
@@ -991,49 +1356,311 @@ export default function Home() {
 
                   </div>
 
-                  {/* Right Column: Giant Dynamic 3D Mascot - scaled down to support rather than dominate */}
+                  {/* Right Column: Interactive Thumbnail Preview or 3D Mascot */}
                   <div style={{ flex: 0.9, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-                    
-                    {/* Premium glassmorphic speech bubble - lower contrast, softer background, darker text */}
-                    <div 
-                      className="floating-speech-bubble"
-                      style={{
-                        position: 'absolute',
-                        top: '10px',
-                        left: isDesktop ? '-20px' : '10px',
-                        zIndex: 10,
-                        background: 'rgba(239, 241, 249, 0.85)',
-                        backdropFilter: 'blur(20px)',
-                        border: '1px solid rgba(99, 102, 241, 0.12)',
-                        borderRadius: '20px 20px 4px 20px',
-                        padding: '12px 18px',
-                        maxWidth: '220px',
-                        boxShadow: '0 8px 24px rgba(99, 102, 241, 0.05)',
-                        pointerEvents: 'none'
-                      }}
-                    >
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)', display: 'block', lineHeight: '1.4', fontFamily: 'Inter, sans-serif' }}>
-                        <strong style={{ color: 'var(--color-primary)' }}>Vigi:</strong> "Describe your video topic on the left and let's craft high-CTR art!"
-                      </span>
-                      {/* Little tail pointing towards the left */}
-                      <div style={{
-                        position: 'absolute',
-                        bottom: '12px',
-                        left: '-8px',
-                        width: '16px',
-                        height: '16px',
-                        background: '#eff1f9',
-                        borderLeft: '1px solid rgba(99, 102, 241, 0.12)',
-                        borderBottom: '1px solid rgba(99, 102, 241, 0.12)',
-                        transform: 'rotate(45deg)',
-                        zIndex: -1
-                      }}></div>
-                    </div>
 
-                    {/* The 3D Canvas mascot wrapper - scaled to 380px for high-end supporting visual balance */}
-                    <div style={{ zIndex: 2, position: 'relative', width: '100%', maxWidth: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <ThreeMascot />
-                    </div>
+                    {userPhotoUrl ? (
+                      /* === INTERACTIVE PHOTO THUMBNAIL PREVIEW === */
+                      <div style={{ width: '100%', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '14px', animation: 'dropdownFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+
+                        {/* Live Thumbnail Mockup */}
+                        <div
+                          onMouseEnter={() => setPhotoHoverEffect(true)}
+                          onMouseLeave={() => setPhotoHoverEffect(false)}
+                          style={{
+                            position: 'relative',
+                            aspectRatio: aspectRatio === '9:16' ? '9/16' : '16/9',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            background: photoBgColor,
+                            boxShadow: photoHoverEffect
+                              ? '0 24px 60px rgba(99, 102, 241, 0.28), 0 0 0 2px var(--color-primary)'
+                              : '0 16px 40px rgba(0,0,0,0.25)',
+                            transition: 'box-shadow 0.3s ease, transform 0.3s ease',
+                            transform: photoHoverEffect ? 'translateY(-4px) scale(1.01)' : 'translateY(0) scale(1)',
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => userPhotoInputRef.current?.click()}
+                          title="Click to change photo"
+                        >
+                          {/* Background gradient/color layer */}
+                          <div style={{
+                            position: 'absolute', inset: 0,
+                            background: `linear-gradient(135deg, ${photoBgColor} 0%, ${photoBgColor}cc 100%)`,
+                            zIndex: 0
+                          }} />
+
+                          {/* Photo placement */}
+                          <img
+                            src={userPhotoUrl}
+                            alt="Your thumbnail photo"
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              right: photoPosition === 'left' ? 'auto' : 0,
+                              left: photoPosition === 'right' ? 'auto' : 0,
+                              width: photoPosition === 'full' ? '100%' : '62%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              objectPosition: 'top center',
+                              zIndex: 1,
+                              filter: photoHoverEffect ? 'brightness(1.05) contrast(1.03)' : 'none',
+                              transition: 'filter 0.3s ease'
+                            }}
+                          />
+
+                          {/* Gradient overlay for text readability */}
+                          {showTextOverlay && photoPosition !== 'full' && (
+                            <div style={{
+                              position: 'absolute', inset: 0,
+                              background: photoPosition === 'right'
+                                ? `linear-gradient(90deg, ${photoBgColor}f5 0%, ${photoBgColor}cc 38%, transparent 60%)`
+                                : `linear-gradient(270deg, ${photoBgColor}f5 0%, ${photoBgColor}cc 38%, transparent 60%)`,
+                              zIndex: 2
+                            }} />
+                          )}
+
+                          {/* Text Overlay */}
+                          {showTextOverlay && (
+                            <div style={{
+                              position: 'absolute',
+                              top: 0, bottom: 0,
+                              left: photoPosition === 'left' ? 'auto' : 0,
+                              right: photoPosition === 'left' ? 0 : 'auto',
+                              width: photoPosition === 'full' ? '100%' : '52%',
+                              zIndex: 3,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'center',
+                              padding: photoPosition === 'full' ? '16px' : '16px 10px',
+                              background: photoPosition === 'full' ? 'linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 60%)' : 'transparent',
+                              justifyContent: photoPosition === 'full' ? 'flex-end' : 'center',
+                            }}>
+                              {/* AI badge */}
+                              <div style={{
+                                display: 'inline-flex',
+                                alignSelf: 'flex-start',
+                                background: 'rgba(255, 200, 0, 0.9)',
+                                color: '#000',
+                                fontSize: '7px',
+                                fontWeight: 900,
+                                padding: '3px 7px',
+                                borderRadius: '4px',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                marginBottom: '6px',
+                                fontFamily: 'Outfit, sans-serif'
+                              }}>
+                                🔥 AI REPLIES TO INSTAGRAM DMs
+                              </div>
+                              <h3 style={{
+                                fontFamily: 'Outfit, sans-serif',
+                                fontSize: 'clamp(11px, 2.5vw, 18px)',
+                                fontWeight: 900,
+                                color: '#ffffff',
+                                lineHeight: 1.2,
+                                textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                                margin: 0
+                              }}>
+                                {inputs.title || 'Your Video Title Here'}
+                              </h3>
+                              <div style={{
+                                marginTop: '8px',
+                                fontSize: '8px',
+                                fontWeight: 700,
+                                color: 'rgba(255,255,255,0.5)',
+                                fontFamily: 'Inter, sans-serif'
+                              }}>
+                                Click thumbnail to change photo
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Duration badge (YouTube style) */}
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '8px',
+                            right: '8px',
+                            background: 'rgba(0,0,0,0.85)',
+                            color: '#fff',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            zIndex: 5,
+                            fontFamily: 'Inter, sans-serif',
+                            letterSpacing: '0.02em'
+                          }}>
+                            12:34
+                          </div>
+
+                          {/* Hover: change photo hint */}
+                          {photoHoverEffect && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '50%', left: '50%',
+                              transform: 'translate(-50%,-50%)',
+                              background: 'rgba(0,0,0,0.55)',
+                              backdropFilter: 'blur(6px)',
+                              borderRadius: '10px',
+                              padding: '8px 14px',
+                              zIndex: 10,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              color: '#fff',
+                              pointerEvents: 'none'
+                            }}>
+                              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                              Change Photo
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Interactive Controls */}
+                        <div style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '10px',
+                          background: 'rgba(255,255,255,0.9)',
+                          backdropFilter: 'blur(16px)',
+                          border: '1px solid rgba(99,102,241,0.1)',
+                          borderRadius: '12px',
+                          padding: '14px'
+                        }}>
+                          {/* Photo Position */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', fontFamily: 'Outfit, sans-serif' }}>Photo Position:</span>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              {[['left','←Left'],['right','Right→'],['full','⊡ Full']].map(([pos, label]) => (
+                                <button
+                                  key={pos}
+                                  onClick={() => setPhotoPosition(pos)}
+                                  style={{
+                                    fontSize: '10px', fontWeight: 700, padding: '4px 10px', borderRadius: '8px',
+                                    border: '1px solid',
+                                    borderColor: photoPosition === pos ? 'var(--color-primary)' : 'var(--border-subtle)',
+                                    background: photoPosition === pos ? 'var(--color-primary)' : 'transparent',
+                                    color: photoPosition === pos ? '#fff' : 'var(--text-secondary)',
+                                    cursor: 'pointer', transition: 'all 0.15s'
+                                  }}
+                                >{label}</button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Background Color */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                            <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', fontFamily: 'Outfit, sans-serif' }}>Background:</span>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              {['#1a1a2e','#0a0a0a','#ffc300','#e63946','#06d6a0','#4361ee'].map(color => (
+                                <button
+                                  key={color}
+                                  onClick={() => setPhotoBgColor(color)}
+                                  style={{
+                                    width: '22px', height: '22px', borderRadius: '50%',
+                                    background: color, border: `2px solid ${photoBgColor === color ? 'var(--color-primary)' : 'transparent'}`,
+                                    cursor: 'pointer', transition: 'all 0.15s',
+                                    boxShadow: photoBgColor === color ? '0 0 0 2px #fff, 0 0 0 4px var(--color-primary)' : 'none'
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Text overlay toggle + action buttons */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', paddingTop: '4px', borderTop: '1px solid var(--border-subtle)' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                              <div
+                                onClick={() => setShowTextOverlay(!showTextOverlay)}
+                                style={{
+                                  width: '28px', height: '16px', borderRadius: '10px',
+                                  background: showTextOverlay ? 'var(--color-primary)' : 'var(--bg-surface-elevated)',
+                                  border: '1px solid var(--border-subtle)',
+                                  position: 'relative', cursor: 'pointer', transition: 'background 0.2s'
+                                }}
+                              >
+                                <div style={{
+                                  position: 'absolute', top: '2px',
+                                  left: showTextOverlay ? '13px' : '2px',
+                                  width: '10px', height: '10px',
+                                  borderRadius: '50%', background: '#fff',
+                                  transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                                }} />
+                              </div>
+                              Title Overlay
+                            </label>
+
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                onClick={() => setActiveTab('roast')}
+                                style={{
+                                  fontSize: '11px', fontWeight: 700, padding: '5px 12px', borderRadius: '8px',
+                                  border: '1px solid var(--border-subtle)',
+                                  background: 'transparent', color: 'var(--color-accent-hover)',
+                                  cursor: 'pointer'
+                                }}
+                              >Roast CTR →</button>
+                              <button
+                                onClick={handleClearUserPhoto}
+                                style={{
+                                  fontSize: '11px', fontWeight: 700, padding: '5px 10px', borderRadius: '8px',
+                                  border: '1px solid rgba(239,68,68,0.2)',
+                                  background: 'rgba(239,68,68,0.04)', color: 'var(--color-danger)',
+                                  cursor: 'pointer'
+                                }}
+                              >✕ Remove</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      /* === DEFAULT 3D MASCOT === */
+                      <>
+                        {/* Premium glassmorphic speech bubble */}
+                        <div 
+                          className="floating-speech-bubble"
+                          style={{
+                            position: 'absolute',
+                            top: '10px',
+                            left: isDesktop ? '-20px' : '10px',
+                            zIndex: 10,
+                            background: 'rgba(239, 241, 249, 0.85)',
+                            backdropFilter: 'blur(20px)',
+                            border: '1px solid rgba(99, 102, 241, 0.12)',
+                            borderRadius: '20px 20px 4px 20px',
+                            padding: '12px 18px',
+                            maxWidth: '220px',
+                            boxShadow: '0 8px 24px rgba(99, 102, 241, 0.05)',
+                            pointerEvents: 'none'
+                          }}
+                        >
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)', display: 'block', lineHeight: '1.4', fontFamily: 'Inter, sans-serif' }}>
+                            <strong style={{ color: 'var(--color-primary)' }}>Vigi:</strong> "Describe your video topic on the left and let's craft high-CTR art!"
+                          </span>
+                          {/* Little tail pointing towards the left */}
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '12px',
+                            left: '-8px',
+                            width: '16px',
+                            height: '16px',
+                            background: '#eff1f9',
+                            borderLeft: '1px solid rgba(99, 102, 241, 0.12)',
+                            borderBottom: '1px solid rgba(99, 102, 241, 0.12)',
+                            transform: 'rotate(45deg)',
+                            zIndex: -1
+                          }}></div>
+                        </div>
+
+                        {/* The 3D Canvas mascot wrapper */}
+                        <div style={{ zIndex: 2, position: 'relative', width: '100%', maxWidth: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <ThreeMascot />
+                        </div>
+                      </>
+                    )}
 
                   </div>
 
@@ -1101,7 +1728,34 @@ export default function Home() {
                     setSelectedNiche('gaming');
                     setSelectedArchetype('hero');
                     setImageUrl('https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=1280&h=720');
-                    setAnalysis({ score: 85, roast: ['Fantastic saturated neon backlighting.', 'Centralized focal subject provides strong clarity.', 'Aspect check: left-biased elements remain clear of duration overlay badges.'], attentionHierarchy: ['Primary: Saturated glowing center controllers', 'Secondary: Atmospheric desk setups'], suggestedTitles: ['I Built the Ultimate 3D Retro Gaming Hub', 'Is this Cyberpunk Setup Worth $5000?', 'The Future of Retro Video Games'] });
+                    setAnalysis({
+                      score: 85,
+                      strengths: [
+                        'Fantastic saturated neon backlighting.',
+                        'Centralized focal subject provides strong clarity.'
+                      ],
+                      weaknesses: [
+                        'High visual noise may cause background clutter at smaller smartphone scales.'
+                      ],
+                      suggestions: [
+                        'Aspect check: Keep left-biased elements clear of duration overlay badges.'
+                      ],
+                      roast: [
+                        'Fantastic saturated neon backlighting.',
+                        'Centralized focal subject provides strong clarity.',
+                        'Aspect check: left-biased elements remain clear of duration overlay badges.'
+                      ],
+                      attentionHierarchy: [
+                        'Primary: Saturated glowing center controllers',
+                        'Secondary: Atmospheric desk setups'
+                      ],
+                      suggestedTitles: [
+                        'I Built the Ultimate 3D Retro Gaming Hub',
+                        'Is this Cyberpunk Setup Worth $5000?',
+                        'The Future of Retro Video Games'
+                      ]
+                    });
+
                     setShowCritique(true);
                     setIsOptimized(false);
                     setProvider('Vignette Preset');
@@ -1124,7 +1778,34 @@ export default function Home() {
                     setSelectedNiche('finance');
                     setSelectedArchetype('question');
                     setImageUrl('https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&q=80&w=1280&h=720');
-                    setAnalysis({ score: 80, roast: ['Premium gold wealth elements build quick credibility.', 'Minimal grid backgrounds pop correctly.', 'Check: Keep overlay keywords simple to boost scannability.'], attentionHierarchy: ['Primary: Gold growth line highlights', 'Secondary: Atmospheric chart backing details'], suggestedTitles: ['The Stock Market investing secret they hide from you...', 'How I Made $10,000 investing as a complete beginner', 'The Ultimate 2026 growth market guide'] });
+                    setAnalysis({
+                      score: 80,
+                      strengths: [
+                        'Premium gold wealth elements build quick credibility.',
+                        'Minimal grid backgrounds pop correctly.'
+                      ],
+                      weaknesses: [
+                        'Typography overlays might exceed optimal size bounds.'
+                      ],
+                      suggestions: [
+                        'Check: Keep overlay keywords simple to boost scannability.'
+                      ],
+                      roast: [
+                        'Premium gold wealth elements build quick credibility.',
+                        'Minimal grid backgrounds pop correctly.',
+                        'Check: Keep overlay keywords simple to boost scannability.'
+                      ],
+                      attentionHierarchy: [
+                        'Primary: Gold growth line highlights',
+                        'Secondary: Atmospheric chart backing details'
+                      ],
+                      suggestedTitles: [
+                        'The Stock Market investing secret they hide from you...',
+                        'How I Made $10,000 investing as a complete beginner',
+                        'The Ultimate 2026 growth market guide'
+                      ]
+                    });
+
                     setShowCritique(true);
                     setIsOptimized(false);
                     setProvider('Vignette Preset');
@@ -1276,40 +1957,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Card 4: Snap Canvas */}
-                  <div 
-                    onClick={() => setActiveTab('editor')}
-                    style={{
-                      background: '#ffffff',
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: '16px',
-                      padding: '28px',
-                      textAlign: 'left',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      position: 'relative'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
-                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.08)', display: 'flex', alignItems: 'center', justifyItems: 'center', padding: '8px' }}>
-                      <Type size={20} color="var(--color-gold)" />
-                    </div>
-                    <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>Snap-Grid editor</h4>
-                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                      Add robust typography snapped perfectly across 6 safe-zones, avoiding standard duration badge obstruction.
-                    </p>
-                    <div style={{ marginTop: 'auto', alignSelf: 'flex-start', width: '24px', height: '24px', borderRadius: '50%', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="var(--text-secondary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="7" y1="17" x2="17" y2="7"></line>
-                        <polyline points="7 7 17 7 17 17"></polyline>
-                      </svg>
-                    </div>
-                  </div>
-
                 </div>
               </div>
 
@@ -1426,28 +2073,29 @@ export default function Home() {
                 TAB 2: GALLERY / PROJECTS (Task 1.4 Grid Output)
                 ============================================================== */}
             {activeTab === 'gallery' && (
-              <div style={styles.mainCard}>
-                <div style={styles.galleryContainer}>
-                  <div style={styles.workspaceHeader}>
-                    <h2 style={styles.workspaceTitle}>My Generated Projects</h2>
-                    <p style={styles.workspaceDesc}>
-                      Access all your active design assets, quick download them, add text layers, or analyze their clickability roasts.
-                    </p>
-                  </div>
-                  
-                  <Gallery 
-                    imageUrl={imageUrl} 
-                    isGenerating={isGenerating} 
-                    onEdit={() => setActiveTab('editor')}
-                    onAnalyze={() => setActiveTab('roast')}
-                    originalImageUrl={originalImageUrl}
-                    provider={provider}
-                    isOptimized={isOptimized}
-                    aspectRatio={aspectRatio}
-                    title={inputs.title}
-                  />
-                </div>
-              </div>
+              <LibraryPanel 
+                session={session} 
+                onSelect={(item) => {
+                  // Restore workspace states
+                  setImageUrl(item.imageUrl);
+                  setInputs({ 
+                    title: item.title || 'Untitled Generation', 
+                    topic: item.prompt || item.title || '', 
+                    keywords: '' 
+                  });
+                  setSelectedNiche(item.niche || 'gaming');
+                  setSelectedArchetype(item.archetype || 'reaction');
+                  setAspectRatio(item.aspectRatio || '16:9');
+                  setProvider(item.provider || 'AI Engine');
+                  if (item.analysis) {
+                    setAnalysis(item.analysis);
+                  }
+                  setIsSaved(true);
+                  setActiveTab('roast');
+                  showToast('Project restored successfully.', 'success');
+                }}
+                onOpenAuth={() => setIsAuthOpen(true)}
+              />
             )}
 
             {/* ==============================================================
@@ -1577,33 +2225,18 @@ export default function Home() {
                       
                       {/* Left Column: Visual Preview */}
                       <div style={{ flex: 1, minWidth: '280px' }}>
-                        <div className="card-glass" style={{ padding: '16px' }}>
-                          <div style={{
-                            ...styles.roastPreviewWrapper,
-                            aspectRatio: aspectRatio === '9:16' ? '9/16' : '16/9',
-                            maxHeight: aspectRatio === '9:16' ? '450px' : 'none',
-                            width: aspectRatio === '9:16' ? '253px' : '100%',
-                            margin: '0 auto'
-                          }}>
-                            <img src={imageUrl} alt="Active Layout" style={styles.roastImage} />
-                            {isOptimized && (
-                              <div style={styles.roastOptimizedBadge}>
-                                <Sparkles size={10} />
-                                CTR Tuned
-                              </div>
-                            )}
-                          </div>
-                          <div style={styles.roastMetaRow}>
-                            <div>
-                              <span style={styles.roastMetaLabel}>Niche Theme:</span>
-                              <strong style={styles.roastMetaVal}>{selectedNiche.toUpperCase()}</strong>
-                            </div>
-                            <div>
-                              <span style={styles.roastMetaLabel}>Archetype:</span>
-                              <strong style={styles.roastMetaVal}>{selectedArchetype.toUpperCase()}</strong>
-                            </div>
-                          </div>
-                        </div>
+                        <Gallery 
+                          imageUrl={imageUrl} 
+                          isGenerating={isGenerating} 
+                          onAnalyze={() => setActiveTab('roast')}
+                          originalImageUrl={originalImageUrl}
+                          provider={provider}
+                          isOptimized={isOptimized}
+                          aspectRatio={aspectRatio}
+                          title={inputs.title}
+                          onSaveToLibrary={handleSaveToLibrary}
+                          isSaved={isSaved}
+                        />
                       </div>
 
                       {/* Right Column: Roast critique panel */}
@@ -1626,31 +2259,6 @@ export default function Home() {
 
                     </div>
                   )}
-                </div>
-              </div>
-            )}
-
-            {/* ==============================================================
-                TAB 4: SNAP EDITOR (Task 3.3 Canvas Overlays Editor)
-                ============================================================== */}
-            {activeTab === 'editor' && (
-              <div style={styles.mainCard}>
-                <div style={styles.editorContainer}>
-                  <div style={styles.workspaceHeader}>
-                    <h2 style={styles.workspaceTitle}>Snap-Grid Typography Canvas</h2>
-                    <p style={styles.workspaceDesc}>
-                      Add high-CTR sans-serif text overlays snapped safely across 6 responsive safe quadrants to avoid YouTube badge overlap.
-                    </p>
-                  </div>
-
-                  <div style={styles.editorWrapper}>
-                    <CanvasEditor 
-                      imageUrl={imageUrl}
-                      onCancel={() => setActiveTab('maker')}
-                      onSave={handleEditorSave}
-                      aspectRatio={aspectRatio}
-                    />
-                  </div>
                 </div>
               </div>
             )}
@@ -1702,31 +2310,7 @@ export default function Home() {
                         Check that all text overlay letters remain fully readable even at the smallest postage-stamp scale on mobile feeds!
                       </p>
 
-                      <button 
-                        onClick={() => setActiveTab('editor')}
-                        className="btn btn-secondary"
-                        style={{ 
-                          width: '100%', 
-                          marginTop: '16px',
-                          border: '1.5px solid var(--color-primary)',
-                          color: 'var(--color-primary)',
-                          background: 'transparent',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'var(--color-primary-glow)';
-                          e.currentTarget.style.transform = 'translateY(-1.5px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.12)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'transparent';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
-                      >
-                        <Type size={14} />
-                        Adjust Text Overlays
-                      </button>
+
                     </div>
                   </div>
                 </div>
@@ -2087,6 +2671,44 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* 5. AUTHENTICATION DIALOG (AuthModal) */}
+      <AuthModal 
+        isOpen={isAuthOpen} 
+        onClose={() => setIsAuthOpen(false)} 
+        onAuthSuccess={handleAuthSuccess} 
+      />
+
+      {/* Toast Notification Banner */}
+      {notification.show && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          zIndex: 9999,
+          background: notification.type === 'success' 
+            ? 'rgba(16, 185, 129, 0.9)' 
+            : notification.type === 'error' 
+              ? 'rgba(239, 68, 68, 0.9)' 
+              : 'rgba(99, 102, 241, 0.9)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          color: '#ffffff',
+          fontFamily: "'Outfit', sans-serif",
+          fontSize: '14px',
+          fontWeight: 700,
+          padding: '12px 24px',
+          borderRadius: '12px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          animation: 'slideUpFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}>
+          <CheckCircle size={16} />
+          <span>{notification.message}</span>
+        </div>
+      )}
 
     </div>
   );
