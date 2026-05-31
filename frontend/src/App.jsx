@@ -144,6 +144,86 @@ export default function Home() {
   const [authCallback, setAuthCallback] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
   const [isSaved, setIsSaved] = useState(false);
+  const [credits, setCredits] = useState(() => {
+    const saved = localStorage.getItem('vignette_credits');
+    return saved !== null ? parseInt(saved, 10) : 1;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('vignette_credits', credits.toString());
+  }, [credits]);
+
+  const [guestId, setGuestId] = useState(() => {
+    let id = localStorage.getItem('vignette_guest_id');
+    if (!id) {
+      id = 'guest-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('vignette_guest_id', id);
+    }
+    return id;
+  });
+
+  const fetchCreditsIdRef = useRef(0);
+
+  const fetchUserCredits = async (currentSession) => {
+    const activeSession = currentSession || session;
+    const token = activeSession?.access_token || guestId;
+    if (!token) return;
+
+    // Track request ID to prevent async race conditions
+    const requestId = ++fetchCreditsIdRef.current;
+
+    // Direct Frontend Query Fallback: If user is authenticated and supabase is initialized,
+    // fetch the exact real credits directly from the database, so UI is instantly accurate.
+    if (supabase && activeSession?.user) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('credits')
+          .eq('id', activeSession.user.id)
+          .single();
+        if (!error && data && data.credits !== undefined) {
+          if (requestId === fetchCreditsIdRef.current) {
+            console.log('[Supabase Frontend] Directly fetched user credits:', data.credits);
+            setCredits(data.credits);
+          }
+        } else if (error) {
+          console.error('[Supabase Frontend] Direct credit fetch failed:', error);
+        }
+      } catch (directErr) {
+        console.error('[Supabase Frontend] Direct credit fetch error:', directErr);
+      }
+    }
+
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+
+      // If user is authenticated, pass guestId as query param to link/migrate spent credits
+      const url = activeSession?.user
+        ? `/api/history/credits?guestId=${guestId}&t=${Date.now()}`
+        : `/api/history/credits?t=${Date.now()}`;
+
+      const res = await fetch(url, { 
+        headers,
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Guard against race conditions: only update if this request is still active
+        if (requestId === fetchCreditsIdRef.current) {
+          setCredits(data.credits);
+        } else {
+          console.warn('[Credits Fetch] Ignored stale response from request ID:', requestId);
+        }
+      }
+    } catch (err) {
+      if (requestId === fetchCreditsIdRef.current) {
+        console.error('[Credits Fetch Error]', err);
+      }
+    }
+  };
 
   // Sync Supabase Auth listener
   useEffect(() => {
@@ -177,6 +257,44 @@ export default function Home() {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    fetchUserCredits(session);
+  }, [user, session, guestId]);
+
+  // Real-time subscription to user credits in profiles table
+  useEffect(() => {
+    if (!supabase || !user) return;
+
+    console.log('[Supabase Realtime] Subscribing to credit updates for user:', user.id);
+
+    const profileChannel = supabase
+      .channel(`profile-credits-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('[Supabase Realtime] Received profile update:', payload);
+          if (payload.new && payload.new.credits !== undefined) {
+            setCredits(payload.new.credits);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log(`[Supabase Realtime] Subscription status for user ${user.id}:`, status);
+      });
+
+    return () => {
+      console.log('[Supabase Realtime] Unsubscribing from credit updates for user:', user.id);
+      supabase.removeChannel(profileChannel);
+    };
+  }, [user]);
+
+
   const handleSignOut = async () => {
     if (supabase) {
       await supabase.auth.signOut();
@@ -185,6 +303,8 @@ export default function Home() {
       setUser(null);
       setSession(null);
     }
+    // Fetch and reset credits to guest level
+    fetchUserCredits(null);
     showToast('Signed out successfully.', 'info');
     setActiveTab('landing');
   };
@@ -197,6 +317,9 @@ export default function Home() {
     }
     showToast('Welcome to Vignette.ai!', 'success');
     
+    // Fetch credits immediately upon auth success
+    fetchUserCredits(newSession);
+
     // Execute pending callback
     if (authCallback) {
       authCallback(newSession);
@@ -212,13 +335,19 @@ export default function Home() {
   };
 
   // Custom Dropdown Menu States
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef(null);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const profileDropdownRef = useRef(null);
+
+  const [showNicheDropdown, setShowNicheDropdown] = useState(false);
+  const nicheDropdownRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setShowProfileDropdown(false);
+      }
+      if (nicheDropdownRef.current && !nicheDropdownRef.current.contains(event.target)) {
+        setShowNicheDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -228,11 +357,7 @@ export default function Home() {
   // Drag and drop / secondary upload rewrite state
   const [dragActive, setDragActive] = useState(false);
   
-  // URL Input State specifically for Maker workspace
-  const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [isUrlLoading, setIsUrlLoading] = useState(false);
-  const [isSearchUrlLoading, setIsSearchUrlLoading] = useState(false);
-  const [urlError, setUrlError] = useState('');
+  // (Removed YouTube URL inputs/loading states)
 
   // User Photo Upload (use-your-photo feature)
   const [userPhotoUrl, setUserPhotoUrl] = useState(null);
@@ -260,6 +385,10 @@ export default function Home() {
   // Compile and generate thumbnail image based on prompt state (Task 1.3 / 1.4)
   const handleGenerate = async () => {
     if (!inputs.title.trim()) return;
+    if (credits < 1) {
+      showToast(user ? 'Insufficient credits. Please upgrade your plan or top up to generate more thumbnails.' : 'Insufficient credits. Please sign in or register to get 4 additional credits!', 'error');
+      return;
+    }
     
     setIsGenerating(true);
     setIsOptimized(false);
@@ -282,9 +411,35 @@ export default function Home() {
     });
 
     try {
-      const result = await generateThumbnailImage(prompt, selectedNiche, selectedArchetype, aspectRatio, userPhotoUrl);
+      const result = await generateThumbnailImage(prompt, selectedNiche, selectedArchetype, aspectRatio, userPhotoUrl, session?.access_token || guestId);
       setImageUrl(result.imageUrl);
       setProvider(result.provider);
+      
+      if (result.remainingCredits !== undefined) {
+        setCredits(result.remainingCredits);
+        if (result.remainingCredits === 0) {
+          showToast('You have used your last thumbnail credit!', 'warning');
+        }
+      } else {
+        // Fallback: Decrement locally and directly update Supabase from frontend if logged in
+        setCredits(prev => {
+          const next = Math.max(0, prev - 1);
+          if (supabase && user) {
+            supabase
+              .from('profiles')
+              .update({ credits: next })
+              .eq('id', user.id)
+              .then(({ error }) => {
+                if (error) console.error('[Supabase Frontend] Direct credit decrement failed:', error);
+                else console.log('[Supabase Frontend] Direct credit decrement succeeded. New balance:', next);
+              });
+          }
+          if (next === 0) {
+            showToast('You have used your last thumbnail credit!', 'warning');
+          }
+          return next;
+        });
+      }
       
       const critique = await analyzeThumbnailCTR(
         result.imageUrl, 
@@ -303,7 +458,12 @@ export default function Home() {
       }, 800);
     } catch (error) {
       console.error('Generation pipeline failure:', error);
-      setAnalysisError('Vignette\'s visual intelligence network failed to complete the layout scan. The server reported a rate limit or API connection error.');
+      if (error.message.includes('credits') || error.message.includes('Insufficient') || error.message.includes('top up')) {
+        showToast(error.message, 'error');
+        setCredits(0);
+      } else {
+        setAnalysisError('Vignette\'s visual intelligence network failed to complete the layout scan. The server reported a rate limit or API connection error.');
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -312,6 +472,10 @@ export default function Home() {
   // One-click clickability optimizer (Task 2.4)
   const handleOptimize = async () => {
     if (!analysis) return;
+    if (credits < 1) {
+      showToast(user ? 'Insufficient credits. Please upgrade your plan or top up to optimize thumbnails.' : 'Insufficient credits. Please sign in or register to optimize thumbnails!', 'error');
+      return;
+    }
     
     setIsOptimizing(true);
     setIsSaved(false);
@@ -332,11 +496,37 @@ export default function Home() {
     });
 
     try {
-      const result = await generateThumbnailImage(optimizedPrompt, selectedNiche, selectedArchetype, aspectRatio, userPhotoUrl);
+      const result = await generateThumbnailImage(optimizedPrompt, selectedNiche, selectedArchetype, aspectRatio, userPhotoUrl, session?.access_token || guestId);
       
       setImageUrl(result.imageUrl);
       setProvider(result.provider);
       setIsOptimized(true);
+
+      if (result.remainingCredits !== undefined) {
+        setCredits(result.remainingCredits);
+        if (result.remainingCredits === 0) {
+          showToast('You have used your last thumbnail credit!', 'warning');
+        }
+      } else {
+        // Fallback: Decrement locally and directly update Supabase from frontend if logged in
+        setCredits(prev => {
+          const next = Math.max(0, prev - 1);
+          if (supabase && user) {
+            supabase
+              .from('profiles')
+              .update({ credits: next })
+              .eq('id', user.id)
+              .then(({ error }) => {
+                if (error) console.error('[Supabase Frontend] Direct credit decrement failed:', error);
+                else console.log('[Supabase Frontend] Direct credit decrement succeeded. New balance:', next);
+              });
+          }
+          if (next === 0) {
+            showToast('You have used your last thumbnail credit!', 'warning');
+          }
+          return next;
+        });
+      }
       
       const originalScore = analysis.score;
       const optimizedScore = Math.min(94, Math.round(originalScore + (100 - originalScore) * 0.45));
@@ -369,6 +559,10 @@ export default function Home() {
       
     } catch (error) {
       console.error('Optimizing failure:', error);
+      if (error.message.includes('credits') || error.message.includes('Insufficient') || error.message.includes('top up')) {
+        showToast(error.message, 'error');
+        setCredits(0);
+      }
     } finally {
       setIsOptimizing(false);
     }
@@ -466,85 +660,10 @@ export default function Home() {
     }
   };
 
-  // Auto fill details from URL Import (Task 1.2)
-  const handleUrlFetch = async (e) => {
-    e.preventDefault();
-    setUrlError('');
-    setIsUrlLoading(true);
-
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-    const match = youtubeUrl.match(regex);
-
-    if (!match) {
-      setUrlError('Invalid YouTube URL. Please enter a standard video link.');
-      setIsUrlLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch('/api/extract', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: youtubeUrl }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to extract video details');
-      }
-
-      const data = await response.json();
-      
-      setInputs({
-        title: data.title,
-        topic: data.topic,
-        keywords: data.keywords
-      });
-      
-      setIsUrlLoading(false);
-      setYoutubeUrl('');
-    } catch (err) {
-      console.error('Failed to extract YouTube details:', err);
-      setUrlError(err.message || 'An unexpected error occurred during URL extraction.');
-      setIsUrlLoading(false);
-    }
-  };
-
-  // Intercept and auto-extract YouTube links pasted directly into the top search bar
-  const handleSearchInputChange = async (e) => {
+  // Handle change in search input directly (without YouTube auto-extract intercept)
+  const handleSearchInputChange = (e) => {
     const val = e.target.value;
     setInputs(prev => ({ ...prev, title: val }));
-
-    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-    const match = val.match(regex);
-
-    if (match) {
-      setIsSearchUrlLoading(true);
-      try {
-        const response = await fetch('/api/extract', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url: val }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setInputs({
-            title: data.title,
-            topic: data.topic,
-            keywords: data.keywords
-          });
-        }
-      } catch (err) {
-        console.error('Failed to auto-extract from search input:', err);
-      } finally {
-        setIsSearchUrlLoading(false);
-      }
-    }
   };
 
   // Handle user self-photo upload for thumbnail maker
@@ -870,12 +989,22 @@ export default function Home() {
               </svg>
               Upgrade to Premium
             </button>
+
+            {(user || guestId) && (
+              <div style={styles.creditsBadge} title="Your available generation credits">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="var(--color-primary)" stroke="var(--color-primary)" strokeWidth="2" style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }}>
+                  <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" />
+                </svg>
+                <span style={{ fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>{credits}</span>
+                <span style={{ fontSize: '10px', marginLeft: '4px', opacity: 0.8, fontWeight: 700, fontFamily: "'Outfit', sans-serif", textTransform: 'uppercase', letterSpacing: '0.05em' }}>⚡ Credits</span>
+              </div>
+            )}
             
             {user ? (
               /* Logged In View: Profile Avatar with dropdown */
-              <div ref={dropdownRef} style={{ position: 'relative' }}>
+              <div ref={profileDropdownRef} style={{ position: 'relative' }}>
                 <button 
-                  onClick={() => setShowDropdown(!showDropdown)}
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -904,12 +1033,12 @@ export default function Home() {
                   }}>
                     {user.email ? user.email.charAt(0).toUpperCase() : 'G'}
                   </div>
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.2s', transform: showDropdown ? 'rotate(180deg)' : 'rotate(0)' }}>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.2s', transform: showProfileDropdown ? 'rotate(180deg)' : 'rotate(0)' }}>
                     <path d="m6 9 6 6 6-6"></path>
                   </svg>
                 </button>
 
-                {showDropdown && (
+                {showProfileDropdown && (
                   <div style={{
                     position: 'absolute',
                     top: '42px',
@@ -932,7 +1061,7 @@ export default function Home() {
                     </div>
                     <div style={{ height: '1px', background: 'rgba(0, 0, 0, 0.05)', margin: '4px 0' }}></div>
                     <button 
-                      onClick={() => { handleSignOut(); setShowDropdown(false); }}
+                      onClick={() => { handleSignOut(); setShowProfileDropdown(false); }}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1076,10 +1205,10 @@ export default function Home() {
         )}
 
         {/* CENTRAL WORKSPACE MAIN AREA */}
-        <main style={styles.workspace}>
+        <main style={{ ...styles.workspace, overflowY: activeTab === 'maker' ? 'hidden' : 'auto' }}>
           
           {activeTab === 'maker' ? (
-            <div className="tech-dot-grid" style={{ ...styles.makerContainer, position: 'relative', overflow: 'hidden', padding: '0', width: '100%', display: 'flex', flexDirection: 'column' }}>
+            <div className="tech-dot-grid" style={{ ...styles.makerContainer, position: 'relative', overflow: 'hidden', padding: '0', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
               
               {/* Glowing decorative background gradient shapes (Reference Inspired) */}
               <div style={{
@@ -1111,92 +1240,70 @@ export default function Home() {
               <section style={{ 
                 position: 'relative', 
                 zIndex: 1, 
-                padding: '80px 48px 80px 48px', 
+                padding: '40px 48px', 
                 width: '100%',
-                borderBottom: '1px solid rgba(99, 102, 241, 0.05)',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxSizing: 'border-box'
               }}>
                 <div style={{ 
                   display: 'grid', 
-                  gridTemplateColumns: isDesktop ? '1.3fr 0.7fr' : '1fr', 
-                  gap: '64px', 
+                  gridTemplateColumns: isDesktop ? '1.25fr 0.75fr' : '1fr', 
+                  gap: '48px', 
                   alignItems: 'center',
                   maxWidth: '1200px',
                   margin: '0 auto',
-                  width: '100%'
+                  width: '100%',
+                  height: '100%'
                 }}>
                   
                   {/* Left Column: Value Proposition & Glass Prompt compiler */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    
-                    {/* Next-gen Badge */}
-                    <div style={{ display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', gap: '6px', background: 'var(--color-primary-glow)', border: '1px solid rgba(99, 102, 241, 0.15)', borderRadius: '20px', padding: '6px 14px' }}>
-                      <span style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.05em' }}>
-                        Next-Generation of AI Images
-                      </span>
-                    </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', height: '100%', justifyContent: 'center' }}>
 
-                    {/* Headline & Subhead */}
-                    <h1 style={{ ...styles.makerHeadline, fontSize: 'clamp(36px, 5vw, 52px)', fontWeight: 900, color: 'var(--text-primary)', lineHeight: '1.15', letterSpacing: '-0.03em' }}>
-                      Imagine AI as your<br />
-                      <span className="pixel-accent-headline" style={{ backgroundImage: 'linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%)' }}>
-                        Thumbnail Director.
-                      </span>
-                    </h1>
-                    
-                    <p style={{ ...styles.makerSubhead, fontSize: '16px', color: 'var(--text-secondary)', lineHeight: '1.6', maxWidth: '540px' }}>
-                      Secure, serverless platform to generate powerful AI thumbnails and performance optimization. What will you create today?
-                    </p>
-
-                    {/* Step-by-Step Workflow Guide (Workflow Clarity) */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginTop: '12px', marginBottom: '4px', opacity: 0.95 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: 'var(--color-primary)' }}>
-                        <span style={{ background: 'var(--color-primary-glow)', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>1</span>
-                        <span>Describe video topic</span>
-                      </div>
-                      <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="var(--text-muted)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
-                        <path d="M5 12h14M12 5l7 7-7 7"></path>
-                      </svg>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                        <span style={{ background: 'var(--bg-surface-elevated)', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'var(--text-secondary)' }}>2</span>
-                        <span>Choose style niche</span>
-                      </div>
-                      <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="var(--text-muted)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.6 }}>
-                        <path d="M5 12h14M12 5l7 7-7 7"></path>
-                      </svg>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                        <span style={{ background: 'var(--bg-surface-elevated)', width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'var(--text-secondary)' }}>3</span>
-                        <span>Generate & Roast CTR</span>
-                      </div>
+                    {/* Brand Title & Intro (Grouped for readability and to avoid congestion) */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <h1 style={{ ...styles.makerHeadline, fontSize: 'clamp(32px, 4.5vw, 48px)', fontWeight: 900, color: 'var(--text-primary)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: 0 }}>
+                        Imagine AI as your<br />
+                        <span className="pixel-accent-headline" style={{ backgroundImage: 'linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%)' }}>
+                          Thumbnail Director.
+                        </span>
+                      </h1>
+                      
+                      <p style={{ ...styles.makerSubhead, fontSize: '15.5px', color: 'var(--text-secondary)', lineHeight: '1.6', maxWidth: '560px', margin: 0 }}>
+                        Secure, serverless platform to generate powerful AI thumbnails and performance optimization. What will you create today?
+                      </p>
                     </div>
 
                     {/* Search & Generate Glass Bar */}
-                    <div className="card-glass" style={{ padding: '10px 14px', borderRadius: '18px', border: '1px solid rgba(99, 102, 241, 0.15)', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(25px)', boxShadow: '0 16px 40px rgba(99, 102, 241, 0.08)', marginTop: '8px', width: '100%', maxWidth: '680px', position: 'relative', zIndex: 10 }}>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '680px', marginTop: '4px' }}>
+                      {/* Glass backdrop layer (handles background blur, color, border, shadow) */}
+                      <div className="card-glass" style={{ position: 'absolute', inset: 0, padding: 0, borderRadius: '18px', border: '1px solid rgba(99, 102, 241, 0.15)', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(25px)', boxShadow: '0 16px 40px rgba(99, 102, 241, 0.08)', zIndex: -1, pointerEvents: 'none' }}></div>
+                      
+                      {/* Content layer (no backdrop-filter to prevent browser clipping of absolute dropdown children!) */}
+                      <div style={{ padding: '10px 14px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', width: '100%', position: 'relative' }}>
                         
                         {/* Prompt Input */}
                         <div style={{ flex: 1, minWidth: '240px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {isSearchUrlLoading ? (
-                            <span className="spinner" style={{ width: '16px', height: '16px', border: '2px solid var(--border-subtle)', borderTopColor: 'var(--color-primary)', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite', marginLeft: '4px' }}></span>
-                          ) : (
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
-                              <circle cx="11" cy="11" r="8"></circle>
-                              <path d="m21 21-4.3-4.3"></path>
-                            </svg>
-                          )}
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.3-4.3"></path>
+                          </svg>
                           <input 
                             type="text"
                             value={inputs.title}
                             onChange={handleSearchInputChange}
-                            placeholder="Describe your video topic or paste YouTube link..."
+                            placeholder="Describe your video topic..."
                             style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '14px', color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}
                           />
                         </div>
 
                         {/* Custom Style / Niche Selector */}
-                        <div ref={dropdownRef} style={{ position: 'relative', borderLeft: '1px solid var(--border-subtle)', paddingLeft: '10px', display: 'flex', alignItems: 'center' }}>
+                        <div ref={nicheDropdownRef} style={{ position: 'relative', borderLeft: '1px solid var(--border-subtle)', paddingLeft: '10px', display: 'flex', alignItems: 'center' }}>
                           <button 
                             type="button"
-                            onClick={() => setShowDropdown(!showDropdown)}
+                            onClick={() => setShowNicheDropdown(!showNicheDropdown)}
                             style={{ 
                               border: 'none', 
                               background: 'transparent', 
@@ -1226,7 +1333,7 @@ export default function Home() {
                               strokeLinecap="round" 
                               strokeLinejoin="round"
                               style={{ 
-                                transform: showDropdown ? 'rotate(180deg)' : 'rotate(0deg)', 
+                                transform: showNicheDropdown ? 'rotate(180deg)' : 'rotate(0deg)', 
                                 transition: 'transform 0.2s',
                                 opacity: 0.7
                               }}
@@ -1235,7 +1342,7 @@ export default function Home() {
                             </svg>
                           </button>
 
-                          {showDropdown && (
+                          {showNicheDropdown && (
                             <div 
                               style={{
                                 position: 'absolute',
@@ -1269,7 +1376,7 @@ export default function Home() {
                                     type="button"
                                     onClick={() => {
                                       setSelectedNiche(item.value);
-                                      setShowDropdown(false);
+                                      setShowNicheDropdown(false);
                                     }}
                                     style={{
                                       border: 'none',
@@ -1364,7 +1471,7 @@ export default function Home() {
                     </div>
 
                     {/* Aspect Ratio Format Pill Selector */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', marginTop: '14px', zIndex: 1, position: 'relative' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', marginTop: '12px', zIndex: 1, position: 'relative' }}>
                       <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', fontFamily: "'Outfit', sans-serif", textTransform: 'uppercase', letterSpacing: '0.05em' }}>Format Type:</span>
                       <button
                         onClick={() => setAspectRatio('16:9')}
@@ -1449,17 +1556,17 @@ export default function Home() {
                   </div>
 
                   {/* Right Column: Interactive Thumbnail Preview or 3D Mascot */}
-                  <div style={{ flex: 0.9, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+                  <div style={{ flex: 1.0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '380px', height: '100%' }}>
 
                     {userPhotoUrl ? (
                       /* === USER PHOTO SELECTION PREVIEW === */
-                      <div className="card-glass" style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '20px', padding: '28px', textAlign: 'center', animation: 'dropdownFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ffbe0b', animation: 'pulse 1.5s infinite' }}></div>
-                          <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Outfit, sans-serif' }}>Subject Photo Loaded</span>
+                      <div className="card-glass" style={{ width: '100%', maxWidth: '340px', display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', textAlign: 'center', animation: 'dropdownFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ffbe0b', animation: 'pulse 1.5s infinite' }}></div>
+                          <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Outfit, sans-serif' }}>Subject Photo Loaded</span>
                         </div>
 
-                        <div style={{ position: 'relative', width: '160px', height: '160px', borderRadius: '24px', overflow: 'hidden', margin: '0 auto', border: '3px solid var(--color-primary-glow)', boxShadow: '0 12px 28px rgba(99, 102, 241, 0.15)' }}>
+                        <div style={{ position: 'relative', width: '110px', height: '110px', borderRadius: '16px', overflow: 'hidden', margin: '0 auto', border: '2.5px solid var(--color-primary-glow)', boxShadow: '0 8px 20px rgba(99, 102, 241, 0.12)' }}>
                           <img 
                             src={userPhotoUrl} 
                             alt="Uploaded subject" 
@@ -1468,24 +1575,24 @@ export default function Home() {
                         </div>
 
                         <div>
-                          <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>AI Composite Source Active</h4>
-                          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
+                          <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>AI Composite Source Active</h4>
+                          <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: '1.4', margin: 0 }}>
                             Vignette AI will seamlessly extract this subject, apply professional rim lighting, and compose a premium high-CTR thumbnail layout.
                           </p>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '10px', marginTop: '4px' }}>
                           <button
                             onClick={() => userPhotoInputRef.current?.click()}
                             className="btn btn-secondary"
-                            style={{ fontSize: '12px', padding: '8px 16px' }}
+                            style={{ fontSize: '11px', padding: '6px 12px' }}
                           >
                             Change Photo
                           </button>
                           <button
                             onClick={handleClearUserPhoto}
                             className="btn btn-danger"
-                            style={{ fontSize: '12px', padding: '8px 16px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.04)', color: 'var(--color-danger)' }}
+                            style={{ fontSize: '11px', padding: '6px 12px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.04)', color: 'var(--color-danger)' }}
                           >
                             ✕ Remove
                           </button>
@@ -1499,29 +1606,29 @@ export default function Home() {
                           className="floating-speech-bubble"
                           style={{
                             position: 'absolute',
-                            top: '10px',
+                            top: '0px',
                             left: isDesktop ? '-20px' : '10px',
                             zIndex: 10,
                             background: 'rgba(239, 241, 249, 0.85)',
                             backdropFilter: 'blur(20px)',
                             border: '1px solid rgba(99, 102, 241, 0.12)',
-                            borderRadius: '20px 20px 4px 20px',
-                            padding: '12px 18px',
-                            maxWidth: '220px',
-                            boxShadow: '0 8px 24px rgba(99, 102, 241, 0.05)',
+                            borderRadius: '16px 16px 4px 16px',
+                            padding: '8px 14px',
+                            maxWidth: '180px',
+                            boxShadow: '0 6px 18px rgba(99, 102, 241, 0.05)',
                             pointerEvents: 'none'
                           }}
                         >
-                          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)', display: 'block', lineHeight: '1.4', fontFamily: 'Inter, sans-serif' }}>
-                            <strong style={{ color: 'var(--color-primary)' }}>Vigi:</strong> "Describe your video topic on the left and let's craft high-CTR art!"
+                          <span style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary)', display: 'block', lineHeight: '1.35', fontFamily: 'Inter, sans-serif' }}>
+                            <strong style={{ color: 'var(--color-primary)' }}>Vigi:</strong> "Describe your topic on the left to craft art!"
                           </span>
                           {/* Little tail pointing towards the left */}
                           <div style={{
                             position: 'absolute',
-                            bottom: '12px',
-                            left: '-8px',
-                            width: '16px',
-                            height: '16px',
+                            bottom: '8px',
+                            left: '-6px',
+                            width: '12px',
+                            height: '12px',
                             background: '#eff1f9',
                             borderLeft: '1px solid rgba(99, 102, 241, 0.12)',
                             borderBottom: '1px solid rgba(99, 102, 241, 0.12)',
@@ -1531,7 +1638,7 @@ export default function Home() {
                         </div>
 
                         {/* The 3D Canvas mascot wrapper */}
-                        <div style={{ zIndex: 2, position: 'relative', width: '100%', maxWidth: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ zIndex: 2, position: 'relative', width: '100%', maxWidth: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <ThreeMascot />
                         </div>
                       </>
@@ -1541,404 +1648,6 @@ export default function Home() {
 
                 </div>
               </section>
-
-              {/* ==========================================
-                  2. CAROUSEL ARTWORK SLIDER SECTION (Reference Inspired)
-                  ========================================== */}
-              <div style={{ padding: '60px 48px 60px 48px', zIndex: 1, position: 'relative', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                  <span style={{ fontFamily: 'Outfit, sans-serif', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.08em' }}>
-                    ✦ Magical High-CTR Artwork Presets ✦
-                  </span>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Scroll horizontally or click to load</span>
-                </div>
-
-                <div className="horizontal-slider-container">
-                  
-                  {/* Presets Card 1: Sunset beats */}
-                  <div className="slider-card" onClick={() => handleSuggestionClick('lofi')}>
-                    <img src={PRESET_LOFI_IMAGE} className="slider-card-img" alt="Lofi sunset beats" />
-                    <div className="slider-card-overlay">
-                      <span className="slider-card-tag">Documentary</span>
-                      <h4 className="slider-card-title">Retro Sunset Lofi beats to chill/relax</h4>
-                    </div>
-                    <div className="slider-card-play">
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="#ffffff" stroke="none">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Presets Card 2: Ski jump */}
-                  <div className="slider-card" onClick={() => handleSuggestionClick('ski')}>
-                    <img src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=1280&h=720" className="slider-card-img" alt="Ski vlog" />
-                    <div className="slider-card-overlay">
-                      <span className="slider-card-tag" style={{ background: '#ec4899' }}>Fitness</span>
-                      <h4 className="slider-card-title">I Skied Down The Most Dangerous Peak</h4>
-                    </div>
-                    <div className="slider-card-play">
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="#ffffff" stroke="none">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Presets Card 3: Modern Split Kitchen */}
-                  <div className="slider-card" onClick={() => handleSuggestionClick('cooking')}>
-                    <img src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=1280&h=720" className="slider-card-img" alt="Kitchen battle" />
-                    <div className="slider-card-overlay">
-                      <span className="slider-card-tag" style={{ background: '#06b6d4' }}>Tech / VS</span>
-                      <h4 className="slider-card-title">Professional Chef vs Symmetrical Cook</h4>
-                    </div>
-                    <div className="slider-card-play">
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="#ffffff" stroke="none">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Presets Card 4: Gaming Hub */}
-                  <div className="slider-card" onClick={() => {
-                    setInputs({ title: 'Is this the future of retro gaming setup?', topic: 'Cyberpunk console setup with dynamic neon controller glowing', keywords: 'gaming, retro, cyberpunk' });
-                    setSelectedNiche('gaming');
-                    setSelectedArchetype('hero');
-                    setImageUrl('https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=1280&h=720');
-                    setAnalysis({
-                      score: 85,
-                      strengths: [
-                        'Fantastic saturated neon backlighting.',
-                        'Centralized focal subject provides strong clarity.'
-                      ],
-                      weaknesses: [
-                        'High visual noise may cause background clutter at smaller smartphone scales.'
-                      ],
-                      suggestions: [
-                        'Aspect check: Keep left-biased elements clear of duration overlay badges.'
-                      ],
-                      roast: [
-                        'Fantastic saturated neon backlighting.',
-                        'Centralized focal subject provides strong clarity.',
-                        'Aspect check: left-biased elements remain clear of duration overlay badges.'
-                      ],
-                      attentionHierarchy: [
-                        'Primary: Saturated glowing center controllers',
-                        'Secondary: Atmospheric desk setups'
-                      ],
-                      suggestedTitles: [
-                        'I Built the Ultimate 3D Retro Gaming Hub',
-                        'Is this Cyberpunk Setup Worth $5000?',
-                        'The Future of Retro Video Games'
-                      ]
-                    });
-
-                    setShowCritique(true);
-                    setIsOptimized(false);
-                    setProvider('Vignette Preset');
-                  }}>
-                    <img src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=1280&h=720" className="slider-card-img" alt="Gaming console" />
-                    <div className="slider-card-overlay">
-                      <span className="slider-card-tag" style={{ background: '#f59e0b' }}>Gaming</span>
-                      <h4 className="slider-card-title">Cyberpunk Setup With Neon controllers</h4>
-                    </div>
-                    <div className="slider-card-play">
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="#ffffff" stroke="none">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Presets Card 5: Finance wealth charts */}
-                  <div className="slider-card" onClick={() => {
-                    setInputs({ title: 'The reality of investing in stock market charts', topic: 'Modern growth curves with gold wealth overlays in studio room', keywords: 'finance, wealth, investing' });
-                    setSelectedNiche('finance');
-                    setSelectedArchetype('question');
-                    setImageUrl('https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&q=80&w=1280&h=720');
-                    setAnalysis({
-                      score: 80,
-                      strengths: [
-                        'Premium gold wealth elements build quick credibility.',
-                        'Minimal grid backgrounds pop correctly.'
-                      ],
-                      weaknesses: [
-                        'Typography overlays might exceed optimal size bounds.'
-                      ],
-                      suggestions: [
-                        'Check: Keep overlay keywords simple to boost scannability.'
-                      ],
-                      roast: [
-                        'Premium gold wealth elements build quick credibility.',
-                        'Minimal grid backgrounds pop correctly.',
-                        'Check: Keep overlay keywords simple to boost scannability.'
-                      ],
-                      attentionHierarchy: [
-                        'Primary: Gold growth line highlights',
-                        'Secondary: Atmospheric chart backing details'
-                      ],
-                      suggestedTitles: [
-                        'The Stock Market investing secret they hide from you...',
-                        'How I Made $10,000 investing as a complete beginner',
-                        'The Ultimate 2026 growth market guide'
-                      ]
-                    });
-
-                    setShowCritique(true);
-                    setIsOptimized(false);
-                    setProvider('Vignette Preset');
-                  }}>
-                    <img src="https://images.unsplash.com/photo-1621416894569-0f39ed31d247?auto=format&fit=crop&q=80&w=1280&h=720" className="slider-card-img" alt="Finance growth curves" />
-                    <div className="slider-card-overlay">
-                      <span className="slider-card-tag" style={{ background: '#10b981' }}>Finance</span>
-                      <h4 className="slider-card-title">Growth curves with gold wealth lines</h4>
-                    </div>
-                    <div className="slider-card-play">
-                      <svg viewBox="0 0 24 24" width="18" height="18" fill="#ffffff" stroke="none">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                      </svg>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* ==========================================
-                  3. WHAT WE DO FEATURE CARD GRID SECTION (Reference Inspired)
-                  ========================================== */}
-              <div style={{ padding: '64px 48px', background: 'var(--bg-surface-elevated)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)', textAlign: 'center', zIndex: 1, position: 'relative', width: '100%' }}>
-                <div style={{ marginBottom: '36px' }}>
-                  <span style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.1em', display: 'block', marginBottom: '8px' }}>
-                    WHAT WE DO
-                  </span>
-                  <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '32px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.02em', maxWidth: '640px', margin: '0 auto 12px auto' }}>
-                    Bring your imagination to the screen with{' '}
-                    <span style={{ color: 'var(--color-primary)' }}>
-                      Ai thumbnail roasts
-                    </span>
-                  </h2>
-                  <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '520px', margin: '0 auto 16px auto', lineHeight: '1.5' }}>
-                    Generate stunning layouts, analyze clickability flags, simulator realistic postage feeds, and snap custom text layers with full defensive safety.
-                  </p>
-                  
-                  {/* Cursive Signature metadata */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px' }}>
-                    <svg viewBox="0 0 100 30" width="80" height="24" fill="none" stroke="var(--color-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.8 }}>
-                      <path d="M10,15 Q25,5 35,25 T60,15 T85,15 T95,5 M30,5 L30,25" />
-                    </svg>
-                    <span style={{ fontSize: '12px', fontStyle: 'italic', color: 'var(--text-muted)', fontFamily: 'Dancing Script, cursive, Georgia' }}>Vigi AI, Creative Director</span>
-                  </div>
-                </div>
-
-                {/* 4 Cards layout */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-                  
-                  {/* Card 1: Generator */}
-                  <div 
-                    onClick={() => setActiveTab('maker')}
-                    style={{
-                      background: '#ffffff',
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: '16px',
-                      padding: '28px',
-                      textAlign: 'left',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      position: 'relative'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
-                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--color-primary-glow)', display: 'flex', alignItems: 'center', justifyItems: 'center', padding: '8px' }}>
-                      <Sparkles size={20} color="var(--color-primary)" />
-                    </div>
-                    <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>Image generator</h4>
-                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                      Type text video ideas to generate high-CTR thumbnail compositions matching standard left-biased focal subjects.
-                    </p>
-                    <div style={{ marginTop: 'auto', alignSelf: 'flex-start', width: '24px', height: '24px', borderRadius: '50%', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="var(--text-secondary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="7" y1="17" x2="17" y2="7"></line>
-                        <polyline points="7 7 17 7 17 17"></polyline>
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Card 2: CTR Roast */}
-                  <div 
-                    onClick={() => setActiveTab('roast')}
-                    style={{
-                      background: '#ffffff',
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: '16px',
-                      padding: '28px',
-                      textAlign: 'left',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      position: 'relative'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
-                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(168, 85, 247, 0.08)', display: 'flex', alignItems: 'center', justifyItems: 'center', padding: '8px' }}>
-                      <Flame size={20} color="var(--color-accent)" />
-                    </div>
-                    <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>Vision CTR roast</h4>
-                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                      Vision-based analysis scores clickability, roasts clashing elements, maps focal attention hierarchies, and alerts errors.
-                    </p>
-                    <div style={{ marginTop: 'auto', alignSelf: 'flex-start', width: '24px', height: '24px', borderRadius: '50%', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="var(--text-secondary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="7" y1="17" x2="17" y2="7"></line>
-                        <polyline points="7 7 17 7 17 17"></polyline>
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Card 3: Preview */}
-                  <div 
-                    onClick={() => setActiveTab('simulator')}
-                    style={{
-                      background: '#ffffff',
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: '16px',
-                      padding: '28px',
-                      textAlign: 'left',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      position: 'relative'
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
-                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(6, 182, 212, 0.08)', display: 'flex', alignItems: 'center', justifyItems: 'center', padding: '8px' }}>
-                      <Eye size={20} color="var(--color-cyan)" />
-                    </div>
-                    <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>Feed simulator</h4>
-                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                      Test micro mobile feeds search results card preview sidebars to confirm text readability at realistic postage scales.
-                    </p>
-                    <div style={{ marginTop: 'auto', alignSelf: 'flex-start', width: '24px', height: '24px', borderRadius: '50%', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="var(--text-secondary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="7" y1="17" x2="17" y2="7"></line>
-                        <polyline points="7 7 17 7 17 17"></polyline>
-                      </svg>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* ==========================================
-                  4. RUNNING TEXT RIBBON MARQUEE SECTION (Reference Inspired)
-                  ========================================== */}
-              <div className="marquee-container" style={{ margin: '0', width: '100%' }}>
-                <div className="marquee-content">
-                  <span className="marquee-item">Magical Images ✦ <span className="marquee-item-accent">Image Generator</span></span>
-                  <span className="marquee-item">✦ Clickability Roast ✦ <span className="marquee-item-accent">Focal Attention</span></span>
-                  <span className="marquee-item">✦ Responsive Simulator ✦ <span className="marquee-item-accent">Snap Typography</span></span>
-                  <span className="marquee-item">✦ A/B Performance ✦ <span className="marquee-item-accent">CTR Director</span></span>
-                  
-                  {/* Duplicate contents for smooth loop */}
-                  <span className="marquee-item">Magical Images ✦ <span className="marquee-item-accent">Image Generator</span></span>
-                  <span className="marquee-item">✦ Clickability Roast ✦ <span className="marquee-item-accent">Focal Attention</span></span>
-                  <span className="marquee-item">✦ Responsive Simulator ✦ <span className="marquee-item-accent">Snap Typography</span></span>
-                  <span className="marquee-item">✦ A/B Performance ✦ <span className="marquee-item-accent">CTR Director</span></span>
-                </div>
-              </div>
-
-              {/* ==========================================
-                  5. BEFORE-VS-AFTER / HOW TO DETAIL SECTION (Reference Inspired)
-                  ========================================== */}
-              <div style={{ padding: '80px 48px', zIndex: 1, position: 'relative', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '64px', alignItems: 'center' }}>
-                  
-                  {/* Left side: comparison slider or preview */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-accent-hover)', letterSpacing: '0.08em' }}>
-                      OPEN AI IMAGE GENERATOR
-                    </span>
-                    <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '32px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.02em', lineHeight: '1.2' }}>
-                      How to generate<br />
-                      <span style={{ color: 'var(--color-primary)' }}>AI optimized images</span>
-                    </h2>
-                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-                      Vignette automatically maps visual focal shapes, isolates key subjects, and applies heavy background blurs. Toggle between our visual comparison cards below to see the dramatic difference.
-                    </p>
-
-                    {/* Side-by-side comparative split */}
-                    <div className="card-glass" style={{ padding: '20px', background: '#ffffff', borderRadius: '16px', marginTop: '8px', border: '1px solid var(--border-subtle)' }}>
-                      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-                        <div style={{ flex: aspectRatio === '9:16' ? 'none' : 1, width: aspectRatio === '9:16' ? '80px' : 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)' }}>ORIGINAL DRAFT:</span>
-                          <div style={{ aspectRatio: aspectRatio === '9:16' ? '9/16' : '16/9', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-                            <img src={aspectRatio === '9:16' ? "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=720&h=1280" : "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=120&h=70"} alt="Draft" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'grayscale(0.6) blur(0.5px)' }} />
-                          </div>
-                        </div>
-                        <div style={{ flex: aspectRatio === '9:16' ? 'none' : 1, width: aspectRatio === '9:16' ? '80px' : 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-primary)' }}>OPTIMIZED UPGRADE:</span>
-                          <div style={{ aspectRatio: aspectRatio === '9:16' ? '9/16' : '16/9', borderRadius: '8px', overflow: 'hidden', border: '1.5px solid var(--color-primary)' }}>
-                            <img src={aspectRatio === '9:16' ? "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=720&h=1280" : "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=120&h=70"} alt="CTR Optimized" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          </div>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '16px', background: 'var(--color-primary-glow)', padding: '8px 14px', borderRadius: '8px' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--color-primary)' }}>Score Lift:</span>
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>From 62% CTR clickability up to 88%!</span>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* Right side: Step descriptions */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                    
-                    <div style={{ display: 'flex', gap: '16px', borderLeft: '3px solid var(--color-primary)', paddingLeft: '20px' }}>
-                      <div style={{ flexShrink: 0, width: '32px', height: '32px', borderRadius: '50%', background: 'var(--color-primary)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Outfit, sans-serif', fontSize: '14px', fontWeight: 800 }}>
-                        1
-                      </div>
-                      <div>
-                        <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>Describe video requirements</h4>
-                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                          Type in video titles and select niches to instruct the prompt loop rules on focal subject bounds.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '16px', borderLeft: '3px solid var(--border-subtle)', paddingLeft: '20px' }}>
-                      <div style={{ flexShrink: 0, width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-surface-elevated)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Outfit, sans-serif', fontSize: '14px', fontWeight: 800, border: '1px solid var(--border-subtle)' }}>
-                        2
-                      </div>
-                      <div>
-                        <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>Audit clickability details</h4>
-                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                          Analyze design grades to view focal points, clashing contrast alerts, and badge overlaps.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '16px', borderLeft: '3px solid var(--border-subtle)', paddingLeft: '20px' }}>
-                      <div style={{ flexShrink: 0, width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-surface-elevated)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Outfit, sans-serif', fontSize: '14px', fontWeight: 800, border: '1px solid var(--border-subtle)' }}>
-                        3
-                      </div>
-                      <div>
-                        <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>Adjust snap-grid typography</h4>
-                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                          Double-check device scaling at postage postage size and snap large sans-serif typography overlays.
-                        </p>
-                      </div>
-                    </div>
-
-                  </div>
-
-                </div>
-              </div>
 
             </div>
           ) : (
@@ -2096,7 +1805,7 @@ export default function Home() {
                     </div>
                   ) : (
                     /* Standard Success State with split columns */
-                    <div style={{ ...styles.roastFlexGrid, minHeight: isDesktop ? 'calc(90vh - 140px)' : 'auto', alignItems: 'center' }}>
+                    <div style={{ ...styles.roastFlexGrid, minHeight: 'auto', alignItems: 'start' }}>
                       
                       {/* Left Column: Visual Preview */}
                       <div style={{ flex: 1, minWidth: '280px' }}>
@@ -2205,7 +1914,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div style={{ ...styles.upgradeFlexGrid, minHeight: isDesktop ? 'calc(90vh - 140px)' : 'auto', alignItems: 'center' }}>
+                  <div style={{ ...styles.upgradeFlexGrid, minHeight: 'auto', alignItems: 'start' }}>
                     
                     {/* File Pick Area */}
                     <div style={{ flex: 1, minWidth: '300px' }}>
@@ -2307,6 +2016,7 @@ export default function Home() {
                     </div>
 
                   </div>
+
                 </div>
               </div>
             )}
@@ -2324,7 +2034,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div style={{ ...styles.titlesFlexGrid, minHeight: isDesktop ? 'calc(90vh - 140px)' : 'auto', alignItems: 'center' }}>
+                  <div style={{ ...styles.titlesFlexGrid, minHeight: 'auto', alignItems: 'start' }}>
                     
                     {/* Left Column: Visual Pairing Simulator */}
                     <div style={{ flex: 1.2, minWidth: '300px' }} className="card-glass">
@@ -2389,7 +2099,7 @@ export default function Home() {
                 <div style={styles.analyticsWorkspace}>
                   
                   {/* Visual A/B Spotlight Section */}
-                  <div style={{ ...styles.analyticsFlexGrid, minHeight: isDesktop ? 'calc(90vh - 140px)' : 'auto', alignItems: 'center' }}>
+                  <div style={{ ...styles.analyticsFlexGrid, minHeight: 'auto', alignItems: 'start' }}>
                     
                     {/* Left: Text Audit info */}
                     <div style={{ flex: 1, minWidth: '280px' }}>
@@ -2682,6 +2392,18 @@ const styles = {
     boxShadow: '0 4px 12px var(--color-primary-glow)',
     transition: 'all var(--transition-fast)',
   },
+  creditsBadge: {
+    fontFamily: "'Outfit', sans-serif",
+    fontSize: '13px',
+    color: 'var(--text-primary)',
+    background: 'rgba(255, 129, 56, 0.08)',
+    border: '1px solid rgba(255, 129, 56, 0.25)',
+    borderRadius: '20px',
+    padding: '6px 14px',
+    display: 'flex',
+    alignItems: 'center',
+    boxShadow: '0 2px 10px rgba(255, 129, 56, 0.05)',
+  },
   profileAvatar: {
     width: '36px',
     height: '36px',
@@ -2775,11 +2497,11 @@ const styles = {
     minHeight: 0,
   },
   mainCard: {
-    background: 'var(--bg-surface)',
-    border: '1px solid var(--border-subtle)',
-    borderRadius: '24px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.03)',
-    padding: '28px 36px',
+    background: 'transparent',
+    border: 'none',
+    borderRadius: 'none',
+    boxShadow: 'none',
+    padding: '0 24px 16px 0',
     width: '100%',
     minHeight: 'calc(90vh - 100px)',
     flex: 1,
@@ -3340,7 +3062,7 @@ const styles = {
     border: '1px solid rgba(0,0,0,0.06)',
     overflow: 'hidden',
     width: '100%',
-    maxWidth: '380px',
+    maxWidth: '600px',
     margin: '0 auto',
   },
   pairedImageWrap: {

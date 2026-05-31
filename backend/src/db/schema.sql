@@ -9,6 +9,7 @@ create extension if not exists "pgcrypto";
 -- Linked to Supabase Auth auth.users via foreign key
 create table if not exists public.profiles (
   id          uuid primary key,
+  credits     integer not null default 5 constraint chk_credits_nonnegative check (credits >= 0),
   created_at  timestamptz default now()
 );
 
@@ -104,3 +105,38 @@ $$ language plpgsql security definer;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- ========================================================
+-- Performance Indexing Optimizations
+-- ========================================================
+
+-- Relational indexes for optimized high-speed historic query pagination
+create index if not exists idx_thumbnails_user_id on public.thumbnails(user_id);
+create index if not exists idx_thumbnails_created_at on public.thumbnails(created_at desc);
+create index if not exists idx_analyses_thumbnail_id on public.analyses(thumbnail_id);
+create index if not exists idx_analyses_user_id on public.analyses(user_id);
+create index if not exists idx_analyses_created_at on public.analyses(created_at desc);
+
+-- ========================================================
+-- Atomic Credit Decrement Stored Procedure
+-- ========================================================
+-- Run this stored procedure definition in your Supabase SQL editor to enable atomic updates:
+create or replace function public.decrement_credits(user_id uuid, amount integer)
+returns integer as $$
+declare
+  new_credits integer;
+begin
+  update public.profiles
+  set credits = greatest(0, credits - amount)
+  where id = user_id
+  returning credits into new_credits;
+  return new_credits;
+end;
+$$ language plpgsql security definer;
+
+-- ========================================================
+-- Schema Alteration Migration (For Existing Live Databases)
+-- ========================================================
+-- Run this block once in your Supabase SQL editor to upgrade existing users:
+-- alter table public.profiles add column if not exists credits integer not null default 5 constraint chk_credits_nonnegative check (credits >= 0);
+

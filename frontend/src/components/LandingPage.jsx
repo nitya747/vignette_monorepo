@@ -230,19 +230,147 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* 3. SCROLLING MARQUEE (Social proof branding details) */}
-      <div className="marquee-container" style={styles.marqueeSection}>
-        <div className="marquee-content">
-          <span className="marquee-item">✦ CTR OPTIMIZED ✦ </span>
-          <span className="marquee-item marquee-item-accent">VISUAL INTELLIGENCE ✦ </span>
-          <span className="marquee-item">SAFE-ZONE SHIELD ✦ </span>
-          <span className="marquee-item marquee-item-accent">MAGNETIC HEADLINES ✦ </span>
-          <span className="marquee-item">✦ CTR OPTIMIZED ✦ </span>
-          <span className="marquee-item marquee-item-accent">VISUAL INTELLIGENCE ✦ </span>
-          <span className="marquee-item">SAFE-ZONE SHIELD ✦ </span>
-          <span className="marquee-item marquee-item-accent">MAGNETIC HEADLINES ✦ </span>
+      {/* 3. MULTI-PLATFORM SAFE-ZONE MATRIX & CTR PRESETS */}
+      <section style={styles.platformSection}>
+        <div style={styles.platformContainer}>
+          <div style={styles.platformHeader}>
+            <div style={styles.platformBadge}>
+              <Layers size={12} color="var(--color-primary)" />
+              <span style={styles.platformBadgeText}>Multi-Platform Standard</span>
+            </div>
+            <h2 style={styles.platformTitle}>Safe-Zone & CTR Calibration Suite</h2>
+            <p style={styles.platformSubtitle}>
+              One workspace. Tailored aspect ratios, auto-injected native interface overlays, and dynamic legibility safeties for every digital feed.
+            </p>
+          </div>
+
+          <div style={styles.platformGrid}>
+            {/* Card 1: YouTube */}
+            <div className="card-glass platform-card" style={styles.platformCard}>
+              <div className="platform-card-glow" style={{ ...styles.platformCardGlow, background: 'radial-gradient(circle, rgba(239, 68, 68, 0.12) 0%, transparent 70%)' }} />
+              <div style={styles.platformCardHeader}>
+                <div style={{ ...styles.platformIconBox, background: 'rgba(239, 68, 68, 0.08)' }}>
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.41 19c1.71.46 8.59.46 8.59.46s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96 29 29 0 0 0 .46-5.29 29 29 0 0 0-.46-5.33z" fill="#ef4444" />
+                    <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02" fill="#ffffff" />
+                  </svg>
+                </div>
+                <div style={styles.platformMeta}>
+                  <span style={styles.platformName}>YouTube Feed</span>
+                  <span style={styles.platformRatio}>16:9 Landscape</span>
+                </div>
+              </div>
+              <div style={styles.platformCardBody}>
+                <div style={styles.platformFeatureItem}>
+                  <CheckCircle2 size={12} color="var(--color-primary)" />
+                  <span>Time-Badge Obstruct Protection</span>
+                </div>
+                <div style={styles.platformFeatureItem}>
+                  <CheckCircle2 size={12} color="var(--color-primary)" />
+                  <span>Sidebar Overlay Mock Simulation</span>
+                </div>
+                <div style={styles.platformFeatureItem}>
+                  <CheckCircle2 size={12} color="var(--color-primary)" />
+                  <span>Mobile Feed Legibility Roast</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: TikTok */}
+            <div className="card-glass platform-card" style={styles.platformCard}>
+              <div className="platform-card-glow" style={{ ...styles.platformCardGlow, background: 'radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%)' }} />
+              <div style={styles.platformCardHeader}>
+                <div style={{ ...styles.platformIconBox, background: 'rgba(6, 182, 212, 0.08)' }}>
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" stroke="var(--color-cyan)" />
+                  </svg>
+                </div>
+                <div style={styles.platformMeta}>
+                  <span style={styles.platformName}>TikTok Cover</span>
+                  <span style={styles.platformRatio}>9:16 Portrait</span>
+                </div>
+              </div>
+              <div style={styles.platformCardBody}>
+                <div style={styles.platformFeatureItem}>
+                  <CheckCircle2 size={12} color="var(--color-cyan)" />
+                  <span>Bottom Caption Safe-Zone Alignment</span>
+                </div>
+                <div style={styles.platformFeatureItem}>
+                  <CheckCircle2 size={12} color="var(--color-cyan)" />
+                  <span>Right-Side Interaction Blockers Scan</span>
+                </div>
+                <div style={styles.platformFeatureItem}>
+                  <CheckCircle2 size={12} color="var(--color-cyan)" />
+                  <span>Ultra-Contrast Vertical Heatmap</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Twitch */}
+            <div className="card-glass platform-card" style={styles.platformCard}>
+              <div className="platform-card-glow" style={{ ...styles.platformCardGlow, background: 'radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%)' }} />
+              <div style={styles.platformCardHeader}>
+                <div style={{ ...styles.platformIconBox, background: 'rgba(168, 85, 247, 0.08)' }}>
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#a855f7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 2H3v16h5v4l4-4h5l4-4V2zm-10 9H9V6h2v5zm4 0h-2V6h2v5z" fill="#a855f7" />
+                  </svg>
+                </div>
+                <div style={styles.platformMeta}>
+                  <span style={styles.platformName}>Twitch Stream</span>
+                  <span style={styles.platformRatio}>16:9 Broadcast</span>
+                </div>
+              </div>
+              <div style={styles.platformCardBody}>
+                <div style={styles.platformFeatureItem}>
+                  <CheckCircle2 size={12} color="var(--color-accent)" />
+                  <span>Live Stream Directory Standout Roast</span>
+                </div>
+                <div style={styles.platformFeatureItem}>
+                  <CheckCircle2 size={12} color="var(--color-accent)" />
+                  <span>Dynamic Resolution Clutter Scan</span>
+                </div>
+                <div style={styles.platformFeatureItem}>
+                  <CheckCircle2 size={12} color="var(--color-accent)" />
+                  <span>Badge & Viewer-Count Masking</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Instagram */}
+            <div className="card-glass platform-card" style={styles.platformCard}>
+              <div className="platform-card-glow" style={{ ...styles.platformCardGlow, background: 'radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, transparent 70%)' }} />
+              <div style={styles.platformCardHeader}>
+                <div style={{ ...styles.platformIconBox, background: 'rgba(236, 72, 153, 0.08)' }}>
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ec4899" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                  </svg>
+                </div>
+                <div style={styles.platformMeta}>
+                  <span style={styles.platformName}>Instagram Feed</span>
+                  <span style={styles.platformRatio}>4:5 Vertical Grid</span>
+                </div>
+              </div>
+              <div style={styles.platformCardBody}>
+                <div style={styles.platformFeatureItem}>
+                  <CheckCircle2 size={12} color="#ec4899" />
+                  <span>Grid Crop Center-Weighted Audit</span>
+                </div>
+                <div style={styles.platformFeatureItem}>
+                  <CheckCircle2 size={12} color="#ec4899" />
+                  <span>Visual Rhythm & Detail Scan</span>
+                </div>
+                <div style={styles.platformFeatureItem}>
+                  <CheckCircle2 size={12} color="#ec4899" />
+                  <span>Explore Page Contrast Isolation</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
 
       {/* 4. PRODUCT FEATURE GRID (Bento Grid) */}
       <section id="features" style={styles.featuresSection}>
@@ -365,7 +493,7 @@ export default function LandingPage({
 
       {/* 6. HOW IT WORKS SECTION */}
       <section style={styles.workflowSection}>
-        <div style={styles.sectionHeader}>
+        <div style={styles.workflowHeader}>
           <span style={styles.sectionBadge}>Simple Workflow</span>
           <h2 style={styles.sectionTitle}>Three Steps to Maximum Clickability</h2>
           <p style={styles.sectionSubtitle}>
@@ -378,7 +506,7 @@ export default function LandingPage({
             {
               num: "1",
               title: "Enter Topic & Keywords",
-              desc: "Type in your core title idea or paste your existing YouTube link directly into the generator bar to extract metadata."
+              desc: "Type in your core title idea directly into the generator bar to define your concept."
             },
             {
               num: "2",
@@ -405,7 +533,7 @@ export default function LandingPage({
 
       {/* 7. PREMIUM PRICING PLANS */}
       <section id="pricing" style={styles.pricingSection}>
-        <div style={styles.sectionHeader}>
+        <div style={styles.pricingHeader}>
           <span style={styles.sectionBadge} className="badge-accent">Simple Pricing</span>
           <h2 style={styles.sectionTitle}>Scale Your CTR Retention</h2>
           <p style={styles.sectionSubtitle}>
@@ -867,11 +995,127 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  marqueeSection: {
+  platformSection: {
+    padding: '60px 24px',
+    maxWidth: '1200px',
+    margin: '40px auto 20px auto',
     width: '100%',
-    zIndex: 1,
-    background: 'rgba(255, 255, 255, 0.5)',
-    margin: '40px 0'
+    position: 'relative',
+    zIndex: 1
+  },
+  platformContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '40px'
+  },
+  platformHeader: {
+    textAlign: 'center',
+    maxWidth: '680px',
+    margin: '0 auto',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '12px'
+  },
+  platformBadge: {
+    display: 'inline-flex',
+    alignSelf: 'center',
+    alignItems: 'center',
+    gap: '6px',
+    background: 'var(--color-primary-glow)',
+    border: '1px solid rgba(99, 102, 241, 0.15)',
+    borderRadius: '20px',
+    padding: '4px 10px'
+  },
+  platformBadgeText: {
+    fontSize: '10px',
+    fontWeight: 800,
+    textTransform: 'uppercase',
+    color: 'var(--color-primary)',
+    letterSpacing: '0.05em',
+    fontFamily: "'Outfit', sans-serif"
+  },
+  platformTitle: {
+    fontSize: 'clamp(24px, 3.5vw, 36px)',
+    fontWeight: 800,
+    color: 'var(--text-primary)',
+    lineHeight: '1.2'
+  },
+  platformSubtitle: {
+    fontSize: '15px',
+    color: 'var(--text-secondary)',
+    lineHeight: '1.6'
+  },
+  platformGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+    gap: '24px',
+    width: '100%'
+  },
+  platformCard: {
+    position: 'relative',
+    padding: '28px 24px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
+    borderRadius: '20px',
+    cursor: 'pointer'
+  },
+  platformCardGlow: {
+    position: 'absolute',
+    top: '-40px',
+    right: '-40px',
+    width: '140px',
+    height: '140px',
+    borderRadius: '50%',
+    zIndex: 0,
+    pointerEvents: 'none'
+  },
+  platformCardHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    zIndex: 1
+  },
+  platformIconBox: {
+    width: '46px',
+    height: '46px',
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 10px rgba(0,0,0,0.02)'
+  },
+  platformMeta: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px'
+  },
+  platformName: {
+    fontSize: '16px',
+    fontWeight: 800,
+    color: 'var(--text-primary)',
+    fontFamily: "'Outfit', sans-serif"
+  },
+  platformRatio: {
+    fontSize: '11px',
+    fontWeight: 700,
+    color: 'var(--text-muted)'
+  },
+  platformCardBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    zIndex: 1
+  },
+  platformFeatureItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: 'var(--text-secondary)',
+    lineHeight: '1.4'
   },
   featuresSection: {
     padding: '80px 24px',
@@ -1095,10 +1339,19 @@ const styles = {
     fontWeight: 600,
     lineHeight: '1.4'
   },
+  workflowHeader: {
+    textAlign: 'center',
+    maxWidth: '680px',
+    margin: '0 auto 28px auto',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '10px'
+  },
   workflowSection: {
-    padding: '80px 24px',
+    padding: '48px 32px',
     maxWidth: '1200px',
-    margin: '0 auto',
+    margin: '80px auto 80px auto',
     width: '100%',
     background: 'rgba(255, 255, 255, 0.4)',
     borderRadius: '30px',
@@ -1109,20 +1362,20 @@ const styles = {
   stepsContainer: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '40px',
+    gap: '32px',
     width: '100%',
-    marginTop: '20px'
+    marginTop: '24px'
   },
   stepItem: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '14px',
+    gap: '12px',
     textAlign: 'center',
     alignItems: 'center'
   },
   stepNumberBox: {
-    width: '48px',
-    height: '48px',
+    width: '40px',
+    height: '40px',
     borderRadius: '50%',
     background: 'var(--color-primary)',
     display: 'flex',
@@ -1130,38 +1383,47 @@ const styles = {
     justifyContent: 'center',
     boxShadow: '0 4px 12px var(--color-primary-glow)',
     position: 'relative',
-    marginBottom: '10px'
+    marginBottom: '8px'
   },
   stepNumberText: {
-    fontSize: '18px',
+    fontSize: '15px',
     fontWeight: 900,
     color: '#ffffff',
     fontFamily: "'Outfit', sans-serif"
   },
   stepConnectorLine: {
     position: 'absolute',
-    top: '24px',
-    left: '48px',
+    top: '20px',
+    left: '40px',
     width: '280px',
     height: '2px',
     background: 'rgba(99,102,241,0.15)',
-    zIndex: -1,
+    zIndex: -1
   },
   stepTitle: {
-    fontSize: '18px',
+    fontSize: '16px',
     fontWeight: 700,
     color: 'var(--text-primary)'
   },
   stepDesc: {
-    fontSize: '13.5px',
+    fontSize: '13px',
     color: 'var(--text-secondary)',
-    lineHeight: '1.6',
+    lineHeight: '1.5',
     maxWidth: '280px'
   },
+  pricingHeader: {
+    textAlign: 'center',
+    maxWidth: '680px',
+    margin: '0 auto 28px auto',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '10px'
+  },
   pricingSection: {
-    padding: '100px 24px',
+    padding: '48px 24px',
     maxWidth: '1000px',
-    margin: '0 auto',
+    margin: '80px auto',
     width: '100%',
     position: 'relative',
     zIndex: 1
@@ -1171,20 +1433,20 @@ const styles = {
     gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
     gap: '32px',
     width: '100%',
-    alignItems: 'center',
-    marginTop: '20px'
+    alignItems: 'stretch',
+    marginTop: '24px'
   },
   pricingCard: {
-    padding: '40px 32px',
+    padding: '32px 32px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    gap: '16px',
     background: '#ffffff',
     borderRadius: '24px'
   },
   pricingPlanName: {
     fontFamily: "'Outfit', sans-serif",
-    fontSize: '16px',
+    fontSize: '15px',
     fontWeight: 800,
     textTransform: 'uppercase',
     color: 'var(--text-secondary)',
@@ -1195,51 +1457,51 @@ const styles = {
     alignItems: 'baseline'
   },
   priceSymbol: {
-    fontSize: '24px',
+    fontSize: '20px',
     fontWeight: 800,
     color: 'var(--text-primary)',
     fontFamily: "'Outfit', sans-serif"
   },
   priceValue: {
-    fontSize: '54px',
+    fontSize: '44px',
     fontWeight: 900,
     color: 'var(--text-primary)',
     fontFamily: "'Outfit', sans-serif",
     lineHeight: '1'
   },
   pricePeriod: {
-    fontSize: '14px',
+    fontSize: '13px',
     fontWeight: 600,
     color: 'var(--text-muted)'
   },
   pricingPlanDesc: {
-    fontSize: '13.5px',
+    fontSize: '13px',
     color: 'var(--text-secondary)',
     lineHeight: '1.5'
   },
   pricingDivider: {
     height: '1px',
     background: 'var(--border-subtle)',
-    margin: '10px 0'
+    margin: '8px 0'
   },
   pricingFeaturesList: {
     listStyle: 'none',
     display: 'flex',
     flexDirection: 'column',
-    gap: '14px',
+    gap: '10px',
     padding: 0
   },
   pricingFeatureItem: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
-    fontSize: '13.5px',
+    gap: '8px',
+    fontSize: '13px',
     color: 'var(--text-secondary)'
   },
   pricingCTA: {
     marginTop: '10px',
     width: '100%',
-    padding: '12px 0',
+    padding: '11px 0',
     borderRadius: '12px',
     display: 'flex',
     alignItems: 'center',

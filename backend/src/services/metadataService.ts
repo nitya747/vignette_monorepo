@@ -66,29 +66,11 @@ export async function extractYouTubeMetadata(url: string): Promise<ExtractRespon
       keywords: uniqueKeywords || 'youtube, video, tutorial, viral'
     };
 
-  } catch (fetchError) {
-    console.warn(`[Backend API] oEmbed metadata fetch failed for ${videoId}. Using offline fallback generator:`, fetchError);
-    
-    const fallbackTitles = [
-      'I Spent 100 Hours Inside an Autonomous AI Village',
-      'How to Scale a Startup to $10M ARR in 2026',
-      'We Designed the Ultimate High-Tech Dream Studio',
-      'The Truth Behind YouTube’s Secret CTR Algorithm',
-      '1 Hour of Cozy Late Night Lofi Study Beats'
-    ];
-    
-    let charSum = 0;
-    for (let i = 0; i < videoId.length; i++) {
-      charSum += videoId.charCodeAt(i);
-    }
-    const selectedIndex = charSum % fallbackTitles.length;
-    const fallbackTitle = fallbackTitles[selectedIndex];
-    
-    return {
-      title: fallbackTitle,
-      author: 'Content Creator',
-      topic: `A highly engaging viral breakdown explaining: ${fallbackTitle}`,
-      keywords: 'ai, coding, tech, creative, youtube'
-    };
+  } catch (fetchError: any) {
+    console.error(`[Backend API] oEmbed metadata fetch failed for video ID ${videoId}:`, fetchError);
+    throw new ValidationError(
+      { url: 'Metadata fetch failed' },
+      `Failed to retrieve YouTube video metadata. The video might be private, deleted, or the system is experiencing rate limits: ${fetchError?.message || fetchError}`
+    );
   }
 }

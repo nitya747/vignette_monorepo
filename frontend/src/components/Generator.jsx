@@ -13,6 +13,7 @@ import YoutubePreview from './YoutubePreview';
 import { compilePrompt } from '../lib/prompts';
 import { generateThumbnailImage, analyzeThumbnailCTR } from '../lib/imageService';
 import { savePerformanceRecord, compileLearningModifiers, getNicheInsights } from '../lib/database';
+import { supabase } from '../lib/supabase';
 
 // Pre-loaded premium aesthetic lofi start state to mimic the Canva screenshot
 const PRESET_LOFI_IMAGE = 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&q=80&w=1280&h=720';
@@ -258,7 +259,16 @@ export default function Generator() {
     });
 
     try {
-      const result = await generateThumbnailImage(prompt, selectedNiche, selectedArchetype, aspectRatio);
+      let token = null;
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        token = session?.access_token;
+      }
+      if (!token) {
+        token = localStorage.getItem('vignette_guest_id') || 'guest-anonymous';
+      }
+
+      const result = await generateThumbnailImage(prompt, selectedNiche, selectedArchetype, aspectRatio, null, token);
       setImageUrl(result.imageUrl);
       setProvider(result.provider);
       
@@ -309,7 +319,16 @@ export default function Generator() {
     });
 
     try {
-      const result = await generateThumbnailImage(optimizedPrompt, selectedNiche, selectedArchetype, aspectRatio);
+      let token = null;
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        token = session?.access_token;
+      }
+      if (!token) {
+        token = localStorage.getItem('vignette_guest_id') || 'guest-anonymous';
+      }
+
+      const result = await generateThumbnailImage(optimizedPrompt, selectedNiche, selectedArchetype, aspectRatio, null, token);
       
       setImageUrl(result.imageUrl);
       setProvider(result.provider);

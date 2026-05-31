@@ -15,13 +15,16 @@ export const optionalAuth = async (req, res, next) => {
     if (!token) {
         return next();
     }
-    if (!supabase || token.startsWith('sandbox-')) {
-        console.warn('[Auth Middleware] Supabase is not configured or sandbox token used. Simulating valid anonymous token validation.');
+    if (token.startsWith('guest-')) {
         req.user = {
-            id: 'mock-sandbox-user-id',
-            email: 'sandbox@vignette.ai',
-            isAnonymous: false
+            id: token,
+            email: 'guest@vignette.ai',
+            isAnonymous: true
         };
+        return next();
+    }
+    if (!supabase) {
+        console.warn('[Auth Middleware] Supabase client not initialized. Bypassing user lookup.');
         return next();
     }
     try {

@@ -11,7 +11,7 @@ const MOCK_MODE = false;
 /**
  * Interface function to handle secure backend image generation
  */
-export async function generateThumbnailImage(prompt, niche, archetype, aspectRatio = '16:9', image = null) {
+export async function generateThumbnailImage(prompt, niche, archetype, aspectRatio = '16:9', image = null, token = null) {
   // If Mock Mode is active (Phases 1-3), return immediately with custom local stock presets
   if (MOCK_MODE) {
     return new Promise((resolve) => {
@@ -27,26 +27,37 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
 
   // Phase 4 Live Integration Route
   try {
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch('/api/generate', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({ prompt, niche, archetype, aspectRatio, image }),
     });
 
     if (!response.ok) {
-      throw new Error('Image generation endpoint reported an error');
+      const errBody = await response.json().catch(() => ({}));
+      throw new Error(errBody.error || 'Image generation endpoint reported an error');
     }
 
     const data = await response.json();
     return {
       imageUrl: data.imageUrl,
       revisedPrompt: data.revisedPrompt || prompt,
-      provider: data.provider || 'fal.ai (flux/schnell)'
+      provider: data.provider || 'fal.ai (flux/schnell)',
+      remainingCredits: data.remainingCredits
     };
   } catch (error) {
     console.error('Failed to generate image via live API, falling back to mock:', error);
+    // Propagate credit restriction errors immediately so they are handled by the UI
+    if (error.message.includes('credits') || error.message.includes('Insufficient') || error.message.includes('top up')) {
+      throw error;
+    }
     return {
       imageUrl: image || getMockImageUrl(niche, archetype, aspectRatio),
       revisedPrompt: prompt,

@@ -1,11 +1,14 @@
 import { config } from '../config/index.js';
 import { AnalyzePayload, CTRCritiqueResponse } from '../types/index.js';
 import { OpenAIProvider } from '../providers/openaiProvider.js';
-import { MockProvider } from '../providers/mockProvider.js';
 
 export async function analyzeThumbnail(payload: AnalyzePayload): Promise<CTRCritiqueResponse> {
   const isKeyAvailable = config.visionApiKey && config.visionApiKey !== 'your_openai_api_key_here' && config.visionApiKey.trim() !== '';
-  const provider = isKeyAvailable ? new OpenAIProvider() : new MockProvider();
+  if (!isKeyAvailable) {
+    throw new Error('OpenAI Vision API key is not configured. Please set the VISION_API_KEY environment variable in your .env.local file.');
+  }
+
+  const provider = new OpenAIProvider();
 
   const systemPrompt = `You are an elite, world-class YouTube Thumbnail Director, Audience Psychologist, and CTR Performance Optimizer. 
 Critically analyze the provided thumbnail image in the context of the "${payload.niche}" niche and "${payload.archetype}" layout archetype.

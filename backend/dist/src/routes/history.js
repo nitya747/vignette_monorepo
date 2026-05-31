@@ -2,11 +2,43 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { validate } from '../middleware/validateRequest.js';
 import { requireAuth } from '../middleware/auth.js';
-import { saveGeneration, getUserHistory, getGenerationById, deleteGeneration, renameGeneration } from '../services/historyService.js';
+import { saveGeneration, getUserHistory, getGenerationById, deleteGeneration, renameGeneration, getUserCredits, decrementUserCredits, deleteGuestProfile } from '../services/historyService.js';
 import { NotFoundError } from '../middleware/errorHandler.js';
 export const historyRouter = Router();
 // Secure all endpoints under requireAuth middleware
 historyRouter.use(requireAuth);
+// GET /api/history/credits -> Retrieves user's active credit count
+historyRouter.get('/credits', async (req, res, next) => {
+    try {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        const user = req.user;
+        let credits = await getUserCredits(user.id);
+        const guestId = req.query.guestId;
+        if (guestId && typeof guestId === 'string' && guestId.startsWith('guest-')) {
+            try {
+                const guestCredits = await getUserCredits(guestId);
+                // If guest has spent their 1 free credit (balance is 0)
+                if (guestCredits === 0) {
+                    // If the user's credits are at default starting balance of 5
+                    if (credits === 5) {
+                        credits = await decrementUserCredits(user.id, 1);
+                        await deleteGuestProfile(guestId);
+                        console.log(`[History Router] Migrated guest spent credit for ${guestId}. Decremented user ${user.id} starting credits to 4 and cleaned up guest profile.`);
+                    }
+                }
+            }
+            catch (migrationErr) {
+                console.error('[History Router] Failed to migrate guest credits:', migrationErr);
+            }
+        }
+        res.json({ credits });
+    }
+    catch (error) {
+        next(error);
+    }
+});
 const analysisSchema = z.object({
     score: z.number().min(0).max(100),
     strengths: z.array(z.string()),
