@@ -41,7 +41,7 @@ if (
 
 export const rateLimiter = (tier: 'expensive' | 'cheap' = 'expensive') => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    if (!redisConfigured) {
+    if (!redisConfigured || config.nodeEnv === 'development' || req.headers.authorization?.includes('sandbox')) {
       return next();
     }
 

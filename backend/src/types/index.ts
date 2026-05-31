@@ -21,15 +21,16 @@ export interface CompilePromptPayload {
   keywords?: string;
   niche: string;
   archetype: string;
-  aspectRatio?: '16:9' | '9:16';
+  aspectRatio?: '16:9' | '9:16' | '4:5';
   learningModifiers?: string;
+  usePhoto?: boolean;
 }
 
 export interface ImageGenerationPayload {
   prompt: string;
   niche: string;
   archetype: string;
-  aspectRatio?: '16:9' | '9:16';
+  aspectRatio?: '16:9' | '9:16' | '4:5';
   userId?: string;
   image?: string;
 }

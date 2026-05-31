@@ -17,12 +17,12 @@ export class FalProvider {
         if (userId) {
             learningModifiers = await getLearningModifiers(userId, niche);
         }
-        const compiledPrompt = compilePrompt({ title: prompt, niche, archetype, aspectRatio, learningModifiers });
+        const compiledPrompt = compilePrompt({ title: prompt, niche, archetype, aspectRatio, learningModifiers, usePhoto: !!image });
         const startTime = Date.now();
         const endpoint = image ? 'https://fal.run/fal-ai/flux/dev/image-to-image' : 'https://fal.run/fal-ai/flux/schnell';
         const body = {
             prompt: compiledPrompt,
-            image_size: aspectRatio === '9:16' ? '9:16' : '16:9',
+            image_size: aspectRatio === '9:16' ? 'portrait_16_9' : (aspectRatio === '4:5' ? { width: 832, height: 1040 } : 'landscape_16_9'),
             sync_mode: true,
             num_inference_steps: 4,
         };

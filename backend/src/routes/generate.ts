@@ -14,7 +14,7 @@ const generateSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required'),
   niche: z.string().min(1, 'Niche is required'),
   archetype: z.string().min(1, 'Archetype is required'),
-  aspectRatio: z.enum(['16:9', '9:16']).default('16:9'),
+  aspectRatio: z.enum(['16:9', '9:16', '4:5']).default('16:9'),
   image: z.string().optional()
 });
 

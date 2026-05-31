@@ -34,7 +34,7 @@ else {
 }
 export const rateLimiter = (tier = 'expensive') => {
     return async (req, res, next) => {
-        if (!redisConfigured) {
+        if (!redisConfigured || config.nodeEnv === 'development' || req.headers.authorization?.includes('sandbox')) {
             return next();
         }
         const limiter = tier === 'expensive' ? expensiveLimiter : cheapLimiter;

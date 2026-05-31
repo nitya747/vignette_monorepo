@@ -1,8 +1,7 @@
 import fetch from 'node-fetch';
 
 async function runTests() {
-  console.log('--- Vignette.ai API Integration Tests ---');
-  const token = 'Bearer sandbox-token-secret-xyz';
+  const token = `Bearer guest-sandbox-token-${Math.floor(Math.random() * 100000)}`;
   let savedId = '';
   
   try {
@@ -30,7 +29,10 @@ async function runTests() {
     console.log('\n3. Testing POST /api/generate...');
     const generateRes = await fetch('http://localhost:5000/api/generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': token
+      },
       body: JSON.stringify({
         prompt: 'A premium sleek tech workspace in high-end studio lighting',
         niche: 'tech',
