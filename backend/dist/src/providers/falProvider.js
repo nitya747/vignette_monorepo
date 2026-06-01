@@ -23,12 +23,10 @@ export class FalProvider {
         const body = {
             prompt: compiledPrompt,
             sync_mode: true,
+            aspect_ratio: aspectRatio,
         };
         if (image) {
             body.image_urls = [image];
-        }
-        else {
-            body.aspect_ratio = aspectRatio;
         }
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for image generation

@@ -30,12 +30,11 @@ export class FalProvider implements BaseImageProvider {
     const body: any = {
       prompt: compiledPrompt,
       sync_mode: true,
+      aspect_ratio: aspectRatio,
     };
     
     if (image) {
       body.image_urls = [image];
-    } else {
-      body.aspect_ratio = aspectRatio;
     }
 
     const controller = new AbortController();
