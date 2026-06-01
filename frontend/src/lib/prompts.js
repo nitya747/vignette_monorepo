@@ -34,6 +34,12 @@ export const NICHES = {
     name: 'Fitness / Athletics',
     style: 'High-energy athletic focus, raw sweat and muscular texture, dynamic powerful sweat shadows, motivational side-lit body highlights, high physical action contrast, high-speed camera capture, hard rim highlights, gritty dramatic contrast, volumetric backlighting.',
     description: 'High grit, raw sweat, powerful shadows, active dynamic focus.'
+  },
+  education: {
+    id: 'education',
+    name: 'Education / Productivity',
+    style: 'Moody cinematic study setting, intense focused student leaning over a glowing screen with visible sweat and concentration, background featuring a large chalkboard or whiteboard filled with complex physics and mathematical equations, a glowing volumetric blue electric brain outline and cerebral energy waves radiating around the head, dramatic chiaroscuro key lighting, deep atmospheric depth of field, high-contrast storytelling.',
+    description: 'Moody focused study, complex equations, glowing brain energy outline.'
   }
 };
 
@@ -41,29 +47,61 @@ export const ARCHETYPES = {
   reaction: {
     id: 'reaction',
     name: 'Reaction / Emotion',
-    composition: 'An extreme macro close-up of a human face with an exaggerated expressive expression of wide-eyed curiosity and shock. The face dominates 50% of the frame on the left-side (left third of image), looking right at a glowing focal point in the middle third. Captured on an 85mm f/1.4 lens, razor-sharp focus on the eyes, cinematic shallow depth of field, detailed facial expressions.',
-    textSafeZone: 'The top-left quadrant of the frame is a flat, dark, simple negative space with no details, specifically reserved for a text layer.',
+    composition: {
+      standard: 'An extreme macro close-up of a human face with an exaggerated expressive expression of wide-eyed curiosity and shock. The face dominates 50% of the frame on the left-side (left third of image), looking right at a glowing focal point in the middle third. Captured on an 85mm f/1.4 lens, razor-sharp focus on the eyes, cinematic shallow depth of field, detailed facial expressions.',
+      vertical: 'An extreme macro close-up of a human face with an exaggerated expressive expression of wide-eyed curiosity and shock. The face dominates the upper half of vertical frame, looking down at a central glowing focus. Captured on an 85mm f/1.4 lens, razor-sharp focus on the eyes, cinematic shallow depth of field, detailed facial expressions.',
+      square: 'An extreme macro close-up of a human face with an exaggerated expressive expression of wide-eyed curiosity and shock. The face is a center-aligned square frame, with visual focus concentrated in the middle 70% bounds. Captured on an 85mm f/1.4 lens, razor-sharp focus on the eyes, cinematic shallow depth of field, detailed facial expressions.'
+    },
+    textSafeZone: {
+      standard: 'The top-left quadrant of the frame is a flat, dark, simple negative space with no details, specifically reserved for a text layer.',
+      vertical: 'The top-center region is a flat, dark, simple negative space with no details, specifically reserved for a text layer.',
+      square: 'The top-center quadrant of the frame is a flat, dark, simple negative space with no details, specifically reserved for a text layer.'
+    },
     description: 'Expressive close-up face dominating one side to build an emotional hook.'
   },
   versus: {
     id: 'versus',
     name: 'Versus (Comparison)',
-    composition: 'A sharp, symmetrical split screen. The left side features a bright, high-energy colored visual with an expressive subject; the right side features a highly contrasting dark, moody visual with opposing subject. A vertical neon energy line splits the center. Captured on a wide-angle 24mm f/2.8 lens, hyper-sharp details across both halves, crisp deep-focus separation.',
-    textSafeZone: 'The top-center region is a simple gradient, providing high-contrast negative space for text overlays.',
+    composition: {
+      standard: 'A sharp, symmetrical split screen. The left side features a bright, high-energy colored visual with an expressive subject; the right side features a highly contrasting dark, moody visual with opposing subject. A vertical neon energy line splits the center. Captured on a wide-angle 24mm f/2.8 lens, hyper-sharp details across both halves, crisp deep-focus separation.',
+      vertical: 'A sharp, symmetrical vertical split screen. The upper half features a bright, high-energy colored visual with an expressive subject; the lower half features a highly contrasting dark, moody visual with opposing subject. A horizontal neon energy line splits the center. Captured on a wide-angle 24mm f/2.8 lens, hyper-sharp details across both halves, crisp deep-focus separation.',
+      square: 'A sharp, symmetrical split screen. The left side features a bright, high-energy colored visual with an expressive subject; the right side features a highly contrasting dark, moody visual with opposing subject. A vertical neon energy line splits the center. Captured on a wide-angle 24mm f/2.8 lens, hyper-sharp details across both halves, crisp deep-focus separation.'
+    },
+    textSafeZone: {
+      standard: 'The top-center region is a simple gradient, providing high-contrast negative space for text overlays.',
+      vertical: 'The middle-horizontal strip is a simple dark overlay bar, providing high-contrast negative space for text overlays.',
+      square: 'The top-center region is a simple gradient, providing high-contrast negative space for text overlays.'
+    },
     description: 'Symmetrical comparison split to build curiosity or conflict.'
   },
   hero: {
     id: 'hero',
     name: 'Hero Subject',
-    composition: 'A single, high-fidelity hero subject stands crisply in the center of the frame, isolated by a clean, heavily blurred background with a vibrant colored neon rim light highlighting its outer edges. Shot on a 50mm f/1.2 portrait lens, intense bokeh background separation, professional studio subject-isolation.',
-    textSafeZone: 'The top-left and top-right quadrants are clean negative space, perfect for bold typography.',
+    composition: {
+      standard: 'A single, high-fidelity hero subject stands crisply in the center of the frame, isolated by a clean, heavily blurred background with a vibrant colored neon rim light highlighting its outer edges. Shot on a 50mm f/1.2 portrait lens, intense bokeh background separation, professional studio subject-isolation.',
+      vertical: 'A single, high-fidelity hero subject stands crisply in the center of the frame, isolated by a clean, heavily blurred background with a vibrant colored neon rim light highlighting its outer edges. Shot on a 50mm f/1.2 portrait lens, intense bokeh background separation, professional studio subject-isolation.',
+      square: 'A single, high-fidelity hero subject stands crisply in the center of the frame, isolated by a clean, heavily blurred background with a vibrant colored neon rim light highlighting its outer edges. Shot on a 50mm f/1.2 portrait lens, intense bokeh background separation, professional studio subject-isolation.'
+    },
+    textSafeZone: {
+      standard: 'The top-left and top-right quadrants are clean negative space, perfect for bold typography.',
+      vertical: 'The top-center and bottom-center regions are clean negative space, perfect for bold typography.',
+      square: 'The top-left and top-right quadrants are clean negative space, perfect for bold typography.'
+    },
     description: 'Clean central focus on a single object or product.'
   },
   question: {
     id: 'question',
     name: 'Burning Question',
-    composition: 'An abstract, mysterious, and high-intrigue setting. A central glowing outline or question mark shape emerges from deep shadows, creating a compelling curiosity gap with deep atmospheric fog. Shot on a 35mm f/1.8 cinematic lens, high atmospheric depth, misty volume rays, soft mystery framing.',
-    textSafeZone: 'The entire upper half of the image is a simple dark fog gradient, ensuring overlay text pops.',
+    composition: {
+      standard: 'An abstract, mysterious, and high-intrigue setting. A central glowing outline or question mark shape emerges from deep shadows, creating a compelling curiosity gap with deep atmospheric fog. Shot on a 35mm f/1.8 cinematic lens, high atmospheric depth, misty volume rays, soft mystery framing.',
+      vertical: 'An abstract, mysterious, and high-intrigue setting. A central glowing outline or question mark shape emerges from deep shadows, creating a compelling curiosity gap with deep atmospheric fog. Shot on a 35mm f/1.8 cinematic lens, high atmospheric depth, misty volume rays, soft mystery framing.',
+      square: 'An abstract, mysterious, and high-intrigue setting. A central glowing outline or question mark shape emerges from deep shadows, creating a compelling curiosity gap with deep atmospheric fog. Shot on lane-wide 35mm f/1.8 cinematic lens, high atmospheric depth, misty volume rays, soft mystery framing.'
+    },
+    textSafeZone: {
+      standard: 'The entire upper half of the image is a simple dark fog gradient, ensuring overlay text pops.',
+      vertical: 'The upper third of the vertical image is a simple dark fog gradient, ensuring overlay text pops.',
+      square: 'The entire upper half of the image is a simple dark fog gradient, ensuring overlay text pops.'
+    },
     description: 'Intriguing, abstract composition creating a high curiosity gap.'
   }
 };
@@ -94,6 +132,11 @@ export const MOCK_THUMBNAILS = {
   'fitness-versus': 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80&w=1280&h=720',
   'fitness-hero': 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=1280&h=720',
   'fitness-question': 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=1280&h=720',
+  
+  'education-reaction': 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=1280&h=720',
+  'education-versus': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1280&h=720',
+  'education-hero': 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=1280&h=720',
+  'education-question': 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=1280&h=720',
 };
 
 // Dynamic local fallback mock image list if custom strings are used
@@ -103,44 +146,34 @@ const FALLBACK_NICHE_IMAGES = {
   documentary: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=1280&h=720',
   tech: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=1280&h=720',
   fitness: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&q=80&w=1280&h=720',
+  education: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=1280&h=720',
 };
+
+/**
+ * Preprocesses titles to extract clean visual nouns, preventing text-bleed bugs.
+ */
+function extractVisualSubject(title) {
+  if (!title) return 'creative subject';
+  
+  // Clean YouTube separators (| , - , —) and emojis
+  let subject = title.split(/[|\-—]/)[0].replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '');
+  
+  // Clean clickbait action prefixes
+  subject = subject.replace(/^(how to|why you should|i tried to|i spent|this is why|what happens if|is this the)\s+/i, '');
+  
+  // Clean common video suffixes
+  subject = subject.replace(/\s+(at home|in \d{4}|for beginners|tutorial|vlog|guide|playlist|video|channel|revealed)$/i, '');
+  
+  return subject.trim();
+}
 
 /**
  * Compiles a structured, highly psychological prompt optimized for high CTR
  */
 export function compilePrompt({ title, topic, keywords, niche, archetype, aspectRatio = '16:9', learningModifiers = '', usePhoto = false }) {
-  const selectedNiche = NICHES[niche] || NICHES.gaming;
-  const selectedArchetype = ARCHETYPES[archetype] || ARCHETYPES.reaction;
-  
-  // Enforce Rule of 3 visual elements
-  const compositionLimit = 'Strictly limit the frame to a maximum of 3 visual elements: 1 primary focal subject, 1 secondary supporting object or neon accent element, and 1 clean highly blurred background scene.';
-  
-  // Format subject based on whether we are using photo-upload mode vs. pure AI subject generation
-  let subjectDescription = '';
-  if (usePhoto) {
-    subjectDescription = `Incorporate the user's provided subject photo naturally as the main foreground element, applying professional edge-glow highlights matching the ${selectedNiche.name} lighting style, blending it seamlessly into the background layers.`;
-  } else {
-    subjectDescription = `The primary subject matter represents: ${topic || 'creative content'} related to '${title || 'video topic'}'. Render this subject with hyper-realistic details, crisp lifelike textures, realistic lighting highlights, and detailed volumetric posture. Use keywords: ${keywords || 'none'}.`;
-  }
-
-  // Construct complete psychological prompt with appropriate aspect ratio crops
-  if (aspectRatio === '9:16') {
-    const verticalComposition = selectedArchetype.composition.replace(
-      'left-side (left third of image), looking right at a glowing focal point in the middle third',
-      'upper half of vertical frame, looking down at a central glowing focus'
-    );
-    const verticalTextSafe = selectedArchetype.textSafeZone.replace('top-left quadrant', 'top-center region');
-    return `YouTube Shorts vertical video frame, 9:16 aspect ratio, vertical composition, 720x1280. ${verticalComposition} ${selectedNiche.style} ${subjectDescription} ${compositionLimit} ${verticalTextSafe} Ultra-high contrast, vivid professional studio lighting, rim-lit silhouettes, heavily blurred background depth of field to make the foreground pop at small sizes. No watermarks, no cluttered elements, no text or symbols in the bottom-right corner. ${learningModifiers}`;
-  } else if (aspectRatio === '4:5') {
-    const squareComposition = selectedArchetype.composition.replace(
-      'left-side (left third of image), looking right at a glowing focal point in the middle third',
-      'center-aligned square frame, with visual focus concentrated in the middle 70% bounds'
-    );
-    const squareTextSafe = 'The bottom 15% of the frame is a simple, clean, dark gradient overlay safe-zone, strictly clear of any visual details or text layers to prevent clutter with feed captions.';
-    return `Instagram feed vertical photo, 4:5 aspect ratio, crop composition, 1080x1350. ${squareComposition} ${selectedNiche.style} ${subjectDescription} ${compositionLimit} ${squareTextSafe} Ultra-high contrast, vivid professional studio lighting, rim-lit silhouettes, heavily blurred background depth of field to make the foreground pop at small sizes. No watermarks, no cluttered elements, no text or symbols in the bottom-right corner. ${learningModifiers}`;
-  }
-
-  return `YouTube thumbnail, 16:9 aspect ratio, 1280x720. ${selectedArchetype.composition} ${selectedNiche.style} ${subjectDescription} ${compositionLimit} ${selectedArchetype.textSafeZone} Ultra-high contrast, vivid professional studio lighting, rim-lit silhouettes, heavily blurred background depth of field to make the foreground pop at small sizes. No watermarks, no cluttered elements, no text or symbols in the bottom-right corner. ${learningModifiers}`;
+  // Direct raw prompting: let the image model interpret the visual description naturally
+  const prompt = title || topic || '';
+  return prompt.trim();
 }
 
 /**
@@ -207,6 +240,9 @@ function extractContextPhrase(title, topic, keywords) {
  * Generates highly realistic and constructive CTR Roast Critic details based on inputs
  */
 export function getMockCTRScore(title, niche, archetype, topic = '', keywords = '') {
+  niche = niche || 'education';
+  archetype = archetype || 'hero';
+
   const titleWords = title ? title.split(/\s+/).length : 5;
   const searchText = `${title || ''} ${topic || ''} ${keywords || ''}`.toLowerCase();
   
@@ -316,7 +352,7 @@ export function getMockCTRScore(title, niche, archetype, topic = '', keywords = 
   const isSitcom = searchText.includes('taarak') || searchText.includes('mehta') || searchText.includes('ooltah') || searchText.includes('chashmah') || searchText.includes('jethalal') || searchText.includes('sab tv') || (searchText.includes('episode') && (searchText.includes('cooker') || searchText.includes('confusion') || searchText.includes('ep ')));
   const isCooking = !isSitcom && (searchText.includes('cook') || searchText.includes('kitchen') || searchText.includes('chef') || searchText.includes('food') || searchText.includes('recipe') || searchText.includes('jalebi') || searchText.includes('bake') || searchText.includes('fry'));
   const isLofi = searchText.includes('lofi') || searchText.includes('chill') || searchText.includes('ambient') || searchText.includes('sunset') || searchText.includes('music') || searchText.includes('beats');
-  const isCodingEdu = !!detectedSubject || searchText.includes('learn to code') || searchText.includes('learn coding') || searchText.includes('dsa') || searchText.includes('programming') || searchText.includes('roadmap') || searchText.includes('leetcode') || searchText.includes('placement') || searchText.includes('internship') || searchText.includes('career') || searchText.includes('developer');
+  const isCodingEdu = !!detectedSubject || searchText.includes('learn to code') || searchText.includes('learn coding') || searchText.includes('dsa') || searchText.includes('programming') || searchText.includes('roadmap') || searchText.includes('leetcode') || searchText.includes('placement') || searchText.includes('internship') || searchText.includes('career') || searchText.includes('developer') || searchText.includes('study') || searchText.includes('genius') || searchText.includes('productivity') || searchText.includes('hack') || searchText.includes('education') || searchText.includes('learn');
 
   if (isSitcom) {
     const isTaarakMehta = searchText.includes('taarak') || searchText.includes('mehta') || searchText.includes('ooltah') || searchText.includes('chashmah') || searchText.includes('jethalal');
@@ -399,6 +435,12 @@ export function getMockCTRScore(title, niche, archetype, topic = '', keywords = 
       `How to Master ${cleanSubject} in 15 Minutes a Day`,
       `Why your ${cleanSubject} routine isn't working (Fix it now)`
     ].map(t => t.slice(0, 65));
+  } else if (niche === 'education') {
+    suggested = [
+      `How to Study Like a Genius: 10 Productivity Hacks!`,
+      `The Ultimate Study Routine of the Top 1% (Scientifically Proven)`,
+      `Stop Studying Harder: 10 Hacks to Learn 10x Faster`
+    ].map(t => t.slice(0, 65));
   } else {
     suggested = [
       `How to Actually Master ${cleanSubject} (Step-by-Step)`,
@@ -432,6 +474,10 @@ export function getMockCTRScore(title, niche, archetype, topic = '', keywords = 
     strengths.push('Outstanding kinetic framing. High physical action contrast provides strong athletic energy.');
     weaknesses.push('Subject framing blends too much with white snow or sky details in the background.');
     suggestions.push('Add a bold color rim light to separate the physical athlete silhouette from backdrop slopes.');
+  } else if (niche === 'education') {
+    strengths.push('Superb focused study environment. The glowing laptop reflection and whiteboard formula background create an incredibly high psychological authority.');
+    weaknesses.push('The dark chiaroscuro lighting needs strong glow accents around the subject silhouette to pop on high-density YouTube recommendation grids.');
+    suggestions.push('Add a vibrant electric brain outline or rim glow around the head to enhance the study genius aesthetic.');
   }
 
   // Archetype rules

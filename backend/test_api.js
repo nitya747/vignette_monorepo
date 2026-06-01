@@ -34,10 +34,11 @@ async function runTests() {
         'Authorization': token
       },
       body: JSON.stringify({
-        prompt: 'A premium sleek tech workspace in high-end studio lighting',
+        prompt: 'A real live live generation test with a high-end luxury setup ' + Math.random(),
         niche: 'tech',
         archetype: 'hero',
-        aspectRatio: '16:9'
+        aspectRatio: '16:9',
+        image: null
       })
     });
     const generateData = await generateRes.json();

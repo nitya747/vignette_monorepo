@@ -18,6 +18,36 @@ export default function Gallery({
   const [showOriginal, setShowOriginal] = useState(false);
   const [previewScale, setPreviewScale] = useState('desktop'); // 'desktop' or 'mobile'
 
+  const handleDownload = async () => {
+    if (!imageUrl) return;
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const sanitizedTitle = (title || 'thumbnail')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/(^_+|_+$)/g, '');
+      a.download = `${sanitizedTitle || 'thumbnail'}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[Gallery Download Error]', err);
+      // Fallback
+      const a = document.createElement('a');
+      a.href = imageUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
   if (isGenerating) {
     return (
       <div className="card-glass flex-center shimmer" style={styles.loadingContainer}>
@@ -297,6 +327,15 @@ export default function Gallery({
         </button>
 
         <button 
+          onClick={handleDownload}
+          className="btn btn-secondary"
+          style={styles.actionBtn}
+        >
+          <Download size={16} color="var(--color-primary)" />
+          Download Image
+        </button>
+
+        <button 
           onClick={onSaveToLibrary}
           className={isSaved ? "btn btn-success" : "btn btn-secondary"}
           style={{
@@ -481,7 +520,7 @@ const styles = {
   },
   actionGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: '1fr 1fr 1fr',
     gap: '12px',
   },
   actionBtn: {

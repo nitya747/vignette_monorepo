@@ -962,6 +962,23 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
 }
 
+/* Projects card hover for showing and styling download buttons elegantly */
+.library-card-hover:hover .library-card-download-btn {
+  opacity: 1 !important;
+  transform: scale(1.05);
+}
+.library-card-download-btn:hover {
+  background: var(--color-primary) !important;
+  box-shadow: 0 4px 12px var(--color-primary-glow) !important;
+}
+
+/* Projects card action download button hover */
+.library-card-action-download-btn:hover {
+  background: var(--color-primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px var(--color-primary-glow) !important;
+}
+
 /* ==========================================================================
    User Photo Upload Button
    ========================================================================== */

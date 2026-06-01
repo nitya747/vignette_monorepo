@@ -9,8 +9,8 @@ const analyzeSchema = z.object({
     title: z.string().min(1, 'Title is required'),
     topic: z.string().optional(),
     keywords: z.string().optional(),
-    niche: z.string().min(1, 'Niche is required'),
-    archetype: z.string().min(1, 'Archetype is required')
+    niche: z.string().default('default'),
+    archetype: z.string().default('default')
 });
 analyzeRouter.post('/', rateLimiter('expensive'), validate(analyzeSchema), async (req, res, next) => {
     try {

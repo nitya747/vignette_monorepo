@@ -119,7 +119,7 @@ export function getMockCTRScore(
   const isSitcom = searchText.includes('taarak') || searchText.includes('mehta') || searchText.includes('ooltah') || searchText.includes('chashmah') || searchText.includes('jethalal') || searchText.includes('sab tv') || (searchText.includes('episode') && (searchText.includes('cooker') || searchText.includes('confusion') || searchText.includes('ep ')));
   const isCooking = !isSitcom && (searchText.includes('cook') || searchText.includes('kitchen') || searchText.includes('chef') || searchText.includes('food') || searchText.includes('recipe') || searchText.includes('jalebi') || searchText.includes('bake') || searchText.includes('fry'));
   const isLofi = searchText.includes('lofi') || searchText.includes('chill') || searchText.includes('ambient') || searchText.includes('sunset') || searchText.includes('music') || searchText.includes('beats');
-  const isCodingEdu = !!detectedSubject || searchText.includes('learn to code') || searchText.includes('learn coding') || searchText.includes('dsa') || searchText.includes('programming') || searchText.includes('roadmap') || searchText.includes('leetcode') || searchText.includes('placement') || searchText.includes('internship') || searchText.includes('career') || searchText.includes('developer');
+  const isCodingEdu = !!detectedSubject || searchText.includes('learn to code') || searchText.includes('learn coding') || searchText.includes('dsa') || searchText.includes('programming') || searchText.includes('roadmap') || searchText.includes('leetcode') || searchText.includes('placement') || searchText.includes('internship') || searchText.includes('career') || searchText.includes('developer') || searchText.includes('study') || searchText.includes('genius') || searchText.includes('productivity') || searchText.includes('hack') || searchText.includes('education') || searchText.includes('learn');
 
   if (isSitcom) {
     const isTaarakMehta = searchText.includes('taarak') || searchText.includes('mehta') || searchText.includes('ooltah') || searchText.includes('chashmah') || searchText.includes('jethalal');
@@ -202,6 +202,12 @@ export function getMockCTRScore(
       `How to Master ${cleanSubject} in 15 Minutes a Day`,
       `Why your ${cleanSubject} routine isn't working (Fix it now)`
     ].map(t => t.slice(0, 65));
+  } else if (niche === 'education') {
+    suggested = [
+      `How to Study Like a Genius: 10 Productivity Hacks!`,
+      `The Ultimate Study Routine of the Top 1% (Scientifically Proven)`,
+      `Stop Studying Harder: 10 Hacks to Learn 10x Faster`
+    ].map(t => t.slice(0, 65));
   } else {
     suggested = [
       `How to Actually Master ${cleanSubject} (Step-by-Step)`,
@@ -235,6 +241,10 @@ export function getMockCTRScore(
     strengths.push('Outstanding kinetic framing. High physical action contrast provides strong athletic energy.');
     weaknesses.push('Subject framing blends too much with white snow or sky details in the background.');
     suggestions.push('Add a bold color rim light to separate the physical athlete silhouette from backdrop slopes.');
+  } else if (niche === 'education') {
+    strengths.push('Superb focused study environment. The glowing laptop reflection and whiteboard formula background create an incredibly high psychological authority.');
+    weaknesses.push('The dark chiaroscuro lighting needs strong glow accents around the subject silhouette to pop on high-density YouTube recommendation grids.');
+    suggestions.push('Add a vibrant electric brain outline or rim glow around the head to enhance the study genius aesthetic.');
   }
 
   // Archetype rules

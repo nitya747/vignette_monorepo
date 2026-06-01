@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Calendar, Eye, Trash2, ChevronLeft, ChevronRight, FolderOpen, LogIn, Edit3 } from 'lucide-react';
+import { Sparkles, Calendar, Eye, Trash2, ChevronLeft, ChevronRight, FolderOpen, LogIn, Edit3, Download } from 'lucide-react';
 
 export default function LibraryPanel({ session, onSelect, onOpenAuth }) {
   const [items, setItems] = useState([]);
@@ -82,6 +82,40 @@ export default function LibraryPanel({ session, onSelect, onOpenAuth }) {
     }
   };
 
+  const handleDownloadThumbnail = async (e, item) => {
+    e.stopPropagation();
+    if (!item.imageUrl) return;
+
+    try {
+      const response = await fetch(item.imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      const sanitizedTitle = (item.title || 'thumbnail')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/(^_+|_+$)/g, '');
+      a.download = `${sanitizedTitle || 'thumbnail'}.png`;
+      
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('[Library Thumbnail Download Error]', err);
+      // Fallback: open in new tab if CORS blocks fetch
+      const a = document.createElement('a');
+      a.href = item.imageUrl;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
   const handleDelete = async (e, id) => {
     e.stopPropagation(); // Avoid triggering card selection
     setDeletingId(id);
@@ -129,9 +163,11 @@ export default function LibraryPanel({ session, onSelect, onOpenAuth }) {
       case 'finance':
         return { ...style, background: 'rgba(234, 179, 8, 0.1)', color: '#eab308' };
       case 'documentary':
-        return { ...style, background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' };
+        return { ...style, background: 'rgba(217, 119, 6, 0.1)', color: '#d97706' };
       case 'tech':
         return { ...style, background: 'rgba(168, 85, 247, 0.1)', color: '#a855f7' };
+      case 'education':
+        return { ...style, background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' };
       default:
         return { ...style, background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' };
     }
@@ -219,6 +255,16 @@ export default function LibraryPanel({ session, onSelect, onOpenAuth }) {
                       </div>
                     )}
 
+                    {/* Download overlay button */}
+                    <button 
+                      onClick={(e) => handleDownloadThumbnail(e, item)}
+                      className="library-card-download-btn"
+                      style={styles.downloadBtn}
+                      title="Download Thumbnail"
+                    >
+                      <Download size={13} />
+                    </button>
+
                     {/* Delete Trash overlay button */}
                     <button 
                       onClick={(e) => handleDelete(e, item.id)}
@@ -290,8 +336,19 @@ export default function LibraryPanel({ session, onSelect, onOpenAuth }) {
                     )}
 
                     <div style={styles.dateRow}>
-                      <Calendar size={11} color="var(--text-muted)" style={{ marginRight: '4px' }} />
-                      <span>{new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <Calendar size={11} color="var(--text-muted)" style={{ marginRight: '4px' }} />
+                        <span>{new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      </div>
+                      <button 
+                        onClick={(e) => handleDownloadThumbnail(e, item)}
+                        className="library-card-action-download-btn"
+                        style={styles.cardDownloadActionBtn}
+                        title="Download Thumbnail Image"
+                      >
+                        <Download size={11} style={{ marginRight: '4px' }} />
+                        Download
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -481,6 +538,24 @@ const styles = {
     alignItems: 'center',
     boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
   },
+  downloadBtn: {
+    position: 'absolute',
+    top: '10px',
+    right: '40px',
+    width: '24px',
+    height: '24px',
+    borderRadius: '50%',
+    background: 'rgba(15, 15, 20, 0.6)',
+    border: 'none',
+    color: '#ffffff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    opacity: 0,
+    transition: 'all var(--transition-fast)',
+    zIndex: 5,
+  },
   deleteBtn: {
     position: 'absolute',
     top: '10px',
@@ -497,6 +572,7 @@ const styles = {
     cursor: 'pointer',
     opacity: 0, // shown on card hover in CSS rules, handled responsively
     transition: 'all var(--transition-fast)',
+    zIndex: 5,
   },
   cardBody: {
     padding: '16px',
@@ -605,9 +681,25 @@ const styles = {
   dateRow: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
     fontSize: '10px',
     color: 'var(--text-muted)',
     marginTop: 'auto'
+  },
+  cardDownloadActionBtn: {
+    background: 'rgba(99, 102, 241, 0.06)',
+    border: '1px solid rgba(99, 102, 241, 0.15)',
+    color: 'var(--color-primary)',
+    fontFamily: "'Outfit', sans-serif",
+    fontSize: '10px',
+    fontWeight: 700,
+    padding: '3px 8px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    transition: 'all var(--transition-fast)',
   },
   pagination: {
     display: 'flex',

@@ -25,6 +25,9 @@ export class OpenAIProvider implements BaseAnalysisProvider {
       imageUrlPayload = `data:image/png;base64,${image}`;
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -57,7 +60,10 @@ export class OpenAIProvider implements BaseAnalysisProvider {
         ],
         max_tokens: 600,
       }),
+      signal: controller.signal as any,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();

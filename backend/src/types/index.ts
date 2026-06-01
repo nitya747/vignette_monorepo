@@ -10,8 +10,16 @@ export interface NicheInfo {
 export interface ArchetypeInfo {
   id: string;
   name: string;
-  composition: string;
-  textSafeZone: string;
+  composition: {
+    standard: string;
+    vertical: string;
+    square: string;
+  };
+  textSafeZone: {
+    standard: string;
+    vertical: string;
+    square: string;
+  };
   description: string;
 }
 
@@ -19,8 +27,8 @@ export interface CompilePromptPayload {
   title: string;
   topic?: string;
   keywords?: string;
-  niche: string;
-  archetype: string;
+  niche?: string;
+  archetype?: string;
   aspectRatio?: '16:9' | '9:16' | '4:5';
   learningModifiers?: string;
   usePhoto?: boolean;
@@ -28,8 +36,8 @@ export interface CompilePromptPayload {
 
 export interface ImageGenerationPayload {
   prompt: string;
-  niche: string;
-  archetype: string;
+  niche?: string;
+  archetype?: string;
   aspectRatio?: '16:9' | '9:16' | '4:5';
   userId?: string;
   image?: string;
@@ -57,8 +65,8 @@ export interface AnalyzePayload {
   title: string;
   topic?: string;
   keywords?: string;
-  niche: string;
-  archetype: string;
+  niche?: string;
+  archetype?: string;
 }
 
 export interface ExtractPayload {

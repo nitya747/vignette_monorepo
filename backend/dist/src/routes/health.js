@@ -10,7 +10,7 @@ healthRouter.get('/', (req, res) => {
         environment: config.nodeEnv,
         database: isDbConfigured ? 'connected (Supabase PostgreSQL)' : 'disconnected (using memory sandbox)',
         providers: {
-            imageGeneration: config.falKey && config.falKey !== 'your_fal_ai_api_key_here' ? 'fal.ai (flux/schnell)' : 'Mock Engine (Auto-Fallback)',
+            imageGeneration: config.falKey && config.falKey !== 'your_fal_ai_api_key_here' ? 'fal.ai (gemini-25-flash-image)' : 'Mock Engine (Auto-Fallback)',
             analysis: config.visionApiKey && config.visionApiKey !== 'your_openai_api_key_here' ? 'openai (gpt-4o)' : 'Mock Engine (Auto-Fallback)'
         },
         uptime: Math.floor(process.uptime())

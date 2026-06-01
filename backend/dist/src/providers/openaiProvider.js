@@ -14,6 +14,8 @@ export class OpenAIProvider {
         if (typeof image === 'string' && image.startsWith('iVBORw0KGgo')) {
             imageUrlPayload = `data:image/png;base64,${image}`;
         }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -46,7 +48,9 @@ export class OpenAIProvider {
                 ],
                 max_tokens: 600,
             }),
+            signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         if (!response.ok) {
             const errorText = await response.text();
             throw new ProviderError(`OpenAI Vision service responded with status ${response.status}: ${errorText}`);

@@ -7,8 +7,8 @@ export interface ThumbnailAnalysisPayload {
   title: string;
   topic?: string;
   keywords?: string;
-  niche: string;
-  archetype: string;
+  niche?: string;
+  archetype?: string;
 }
 
 export interface BaseImageProvider {

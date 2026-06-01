@@ -40,7 +40,7 @@ import { supabase } from './lib/supabase';
 
 // Library utilities
 import { compilePrompt } from './lib/prompts';
-import { generateThumbnailImage, analyzeThumbnailCTR } from './lib/imageService';
+import { generateThumbnailImage, analyzeThumbnailCTR, uploadReferenceImage } from './lib/imageService';
 import { savePerformanceRecord, compileLearningModifiers } from './lib/database';
 
 // Pre-loaded premium aesthetic lofi start state matching lofi preset
@@ -121,8 +121,8 @@ export default function Home() {
     topic: 'Relaxed cozy loft window view at sunset with city skyscrapers', 
     keywords: 'lofi, chill, sunset, music, aesthetic' 
   });
-  const [selectedNiche, setSelectedNiche] = useState('documentary');
-  const [selectedArchetype, setSelectedArchetype] = useState('question');
+  const [selectedNiche, setSelectedNiche] = useState('default');
+  const [selectedArchetype, setSelectedArchetype] = useState('default');
   const [aspectRatio, setAspectRatio] = useState('16:9'); // '16:9' or '9:16'
   
   const [imageUrl, setImageUrl] = useState(PRESET_LOFI_IMAGE);
@@ -667,14 +667,23 @@ export default function Home() {
   };
 
   // Handle user self-photo upload for thumbnail maker
-  const handleUserPhotoUpload = (file) => {
+  const handleUserPhotoUpload = async (file) => {
     if (!file || !file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setUserPhotoUrl(event.target.result);
-      showToast('Subject photo selected! Click "Generate" to let AI design the final thumbnail.', 'success');
-    };
-    reader.readAsDataURL(file);
+    
+    // Create local preview immediately for reactive UI
+    const localUrl = URL.createObjectURL(file);
+    setUserPhotoUrl(localUrl); // Temporarily show local blob
+    
+    try {
+      showToast('Uploading subject photo securely...', 'info');
+      const signedUrl = await uploadReferenceImage(file, user?.id || 'guest');
+      setUserPhotoUrl(signedUrl); // Set state to the final signed URL
+      showToast('Photo uploaded! Click "Generate" to let AI edit your photo.', 'success');
+    } catch (error) {
+      console.error('Failed to upload reference photo to Supabase:', error);
+      setUserPhotoUrl(null);
+      showToast('Failed to upload photo. Please check your internet connection.', 'error');
+    }
   };
 
   const handleClearUserPhoto = () => {
@@ -1277,16 +1286,16 @@ export default function Home() {
                     </div>
 
                     {/* Search & Generate Glass Bar */}
-                    <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '680px', marginTop: '4px' }}>
+                    <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '780px', marginTop: '4px' }}>
                       {/* Glass backdrop layer (handles background blur, color, border, shadow) */}
-                      <div className="card-glass" style={{ position: 'absolute', inset: 0, padding: 0, borderRadius: '18px', border: '1px solid rgba(99, 102, 241, 0.15)', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(25px)', boxShadow: '0 16px 40px rgba(99, 102, 241, 0.08)', zIndex: -1, pointerEvents: 'none' }}></div>
+                      <div className="card-glass" style={{ position: 'absolute', inset: 0, padding: 0, borderRadius: '24px', border: '1px solid rgba(99, 102, 241, 0.15)', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(25px)', boxShadow: '0 16px 40px rgba(99, 102, 241, 0.08)', zIndex: -1, pointerEvents: 'none' }}></div>
                       
                       {/* Content layer (no backdrop-filter to prevent browser clipping of absolute dropdown children!) */}
-                      <div style={{ padding: '10px 14px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', width: '100%', position: 'relative' }}>
+                      <div style={{ padding: '12px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', width: '100%', position: 'relative' }}>
                         
                         {/* Prompt Input */}
-                        <div style={{ flex: 1, minWidth: '240px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
+                        <div style={{ flex: 1, minWidth: '280px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
                             <circle cx="11" cy="11" r="8"></circle>
                             <path d="m21 21-4.3-4.3"></path>
                           </svg>
@@ -1295,142 +1304,9 @@ export default function Home() {
                             value={inputs.title}
                             onChange={handleSearchInputChange}
                             placeholder="Describe your video topic..."
-                            style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '14px', color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}
+                            style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '15.5px', color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}
                           />
                         </div>
-
-                        {/* Custom Style / Niche Selector */}
-                        <div ref={nicheDropdownRef} style={{ position: 'relative', borderLeft: '1px solid var(--border-subtle)', paddingLeft: '10px', display: 'flex', alignItems: 'center' }}>
-                          <button 
-                            type="button"
-                            onClick={() => setShowNicheDropdown(!showNicheDropdown)}
-                            style={{ 
-                              border: 'none', 
-                              background: 'transparent', 
-                              outline: 'none', 
-                              fontSize: '13px', 
-                              fontWeight: 700, 
-                              color: 'var(--text-secondary)', 
-                              cursor: 'pointer', 
-                              fontFamily: 'Outfit, sans-serif', 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '6px',
-                              padding: '6px 12px',
-                              borderRadius: '8px',
-                              userSelect: 'none'
-                            }}
-                            className="custom-dropdown-trigger"
-                          >
-                            <span>{selectedNiche.charAt(0).toUpperCase() + selectedNiche.slice(1)}</span>
-                            <svg 
-                              viewBox="0 0 24 24" 
-                              width="14" 
-                              height="14" 
-                              fill="none" 
-                              stroke="currentColor" 
-                              strokeWidth="3" 
-                              strokeLinecap="round" 
-                              strokeLinejoin="round"
-                              style={{ 
-                                transform: showNicheDropdown ? 'rotate(180deg)' : 'rotate(0deg)', 
-                                transition: 'transform 0.2s',
-                                opacity: 0.7
-                              }}
-                            >
-                              <path d="m6 9 6 6 6-6"></path>
-                            </svg>
-                          </button>
-
-                          {showNicheDropdown && (
-                            <div 
-                              style={{
-                                position: 'absolute',
-                                top: 'calc(100% + 12px)',
-                                right: '0',
-                                background: 'rgba(255, 255, 255, 0.98)',
-                                backdropFilter: 'blur(20px)',
-                                border: '1px solid rgba(99, 102, 241, 0.15)',
-                                borderRadius: '12px',
-                                boxShadow: '0 12px 32px rgba(99, 102, 241, 0.12)',
-                                zIndex: 100,
-                                minWidth: '160px',
-                                padding: '6px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '2px',
-                                animation: 'dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-                              }}
-                            >
-                              {[
-                                { value: 'documentary', label: 'Documentary' },
-                                { value: 'gaming', label: 'Gaming' },
-                                { value: 'finance', label: 'Finance' },
-                                { value: 'tech', label: 'Tech' },
-                                { value: 'fitness', label: 'Fitness' }
-                              ].map((item) => {
-                                const isActive = selectedNiche === item.value;
-                                return (
-                                  <button
-                                    key={item.value}
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedNiche(item.value);
-                                      setShowNicheDropdown(false);
-                                    }}
-                                    style={{
-                                      border: 'none',
-                                      background: isActive ? 'var(--color-primary)' : 'transparent',
-                                      color: isActive ? '#ffffff' : 'var(--text-secondary)',
-                                      padding: '8px 14px',
-                                      borderRadius: '8px',
-                                      fontSize: '13px',
-                                      fontWeight: isActive ? 700 : 600,
-                                      textAlign: 'left',
-                                      cursor: 'pointer',
-                                      fontFamily: 'Inter, sans-serif',
-                                      transition: 'all 0.15s ease',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'space-between',
-                                      width: '100%'
-                                    }}
-                                    className={isActive ? '' : 'dropdown-item-hover'}
-                                  >
-                                    <span>{item.label}</span>
-                                    {isActive && (
-                                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M20 6 9 17l-5-5"></path>
-                                      </svg>
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Generate button */}
-                        <button
-                          onClick={handleGenerate}
-                          disabled={isGenerating || !inputs.title.trim()}
-                          className="btn btn-primary"
-                          style={{ background: 'var(--color-primary)', color: '#ffffff', border: 'none', borderRadius: '10px', padding: '12px 24px', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', boxShadow: '0 4px 14px rgba(99, 102, 241, 0.25)', transition: 'all 0.2s' }}
-                        >
-                          {isGenerating ? (
-                            <>
-                              <span style={styles.btnSpinner}></span>
-                              Generat...
-                            </>
-                          ) : (
-                            <>
-                              Generate
-                              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M5 12h14M12 5l7 7-7 7"></path>
-                              </svg>
-                            </>
-                          )}
-                        </button>
 
                         {/* Use Your Photo button */}
                         <label
@@ -1438,12 +1314,12 @@ export default function Home() {
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '5px',
+                            gap: '6px',
                             background: userPhotoUrl ? 'rgba(99, 102, 241, 0.08)' : 'var(--bg-surface)',
                             border: `1px solid ${userPhotoUrl ? 'var(--color-primary)' : 'var(--border-subtle)'}`,
-                            borderRadius: '10px',
-                            padding: '12px 16px',
-                            fontSize: '13px',
+                            borderRadius: '16px',
+                            padding: '12px 20px',
+                            fontSize: '13.5px',
                             fontWeight: 700,
                             color: userPhotoUrl ? 'var(--color-primary)' : 'var(--text-secondary)',
                             cursor: 'pointer',
@@ -1453,7 +1329,7 @@ export default function Home() {
                           }}
                           className="user-photo-upload-btn"
                         >
-                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                             <circle cx="12" cy="7" r="4"/>
                           </svg>
@@ -1467,90 +1343,70 @@ export default function Home() {
                           />
                         </label>
 
+                        {/* Generate button */}
+                        <button
+                          onClick={handleGenerate}
+                          disabled={isGenerating || !inputs.title.trim()}
+                          className="btn btn-primary"
+                          style={{ background: 'var(--color-primary)', color: '#ffffff', border: 'none', borderRadius: '16px', padding: '12px 26px', fontSize: '13.5px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', boxShadow: '0 4px 14px rgba(99, 102, 241, 0.25)', transition: 'all 0.2s' }}
+                        >
+                          {isGenerating ? (
+                            <>
+                              <span style={styles.btnSpinner}></span>
+                              Generat...
+                            </>
+                          ) : (
+                            <>
+                              Generate
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M5 12h14M12 5l7 7-7 7"></path>
+                              </svg>
+                            </>
+                          )}
+                        </button>
+
                       </div>
                     </div>
 
-                    {/* Aspect Ratio Format Pill Selector */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', marginTop: '12px', zIndex: 1, position: 'relative' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', fontFamily: "'Outfit', sans-serif", textTransform: 'uppercase', letterSpacing: '0.05em' }}>Format Type:</span>
-                      <button
-                        onClick={() => setAspectRatio('16:9')}
-                        style={{
-                          border: '1px solid',
-                          borderColor: aspectRatio === '16:9' ? 'var(--color-primary)' : 'var(--border-subtle)',
-                          background: aspectRatio === '16:9' ? 'var(--color-primary-glow)' : 'var(--bg-surface)',
-                          color: aspectRatio === '16:9' ? 'var(--color-primary)' : 'var(--text-secondary)',
-                          fontSize: '11px', fontWeight: 700, padding: '5px 14px', borderRadius: '20px', cursor: 'pointer', transition: 'all 0.15s', outline: 'none'
-                        }}
-                      >
-                        Standard (16:9)
-                      </button>
-                      <button
-                        onClick={() => setAspectRatio('9:16')}
-                        style={{
-                          border: '1px solid',
-                          borderColor: aspectRatio === '9:16' ? 'var(--color-primary)' : 'var(--border-subtle)',
-                          background: aspectRatio === '9:16' ? 'var(--color-primary-glow)' : 'var(--bg-surface)',
-                          color: aspectRatio === '9:16' ? 'var(--color-primary)' : 'var(--text-secondary)',
-                          fontSize: '11px', fontWeight: 700, padding: '5px 14px', borderRadius: '20px', cursor: 'pointer', transition: 'all 0.15s', outline: 'none'
-                        }}
-                      >
-                        YouTube Shorts (9:16)
-                      </button>
-                    </div>
-
-                    {/* Popular Tags Archetypes selector below bar */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', marginTop: '12px', zIndex: 1, position: 'relative' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-secondary)', fontFamily: "'Outfit', sans-serif", textTransform: 'uppercase', letterSpacing: '0.05em' }}>Click Archetype:</span>
-                      
-                      <button 
-                        onClick={() => setSelectedArchetype('question')}
-                        style={{
-                          border: '1px solid',
-                          borderColor: selectedArchetype === 'question' ? 'var(--color-accent)' : 'var(--border-subtle)',
-                          background: selectedArchetype === 'question' ? 'var(--color-accent-glow)' : 'var(--bg-surface)',
-                          color: selectedArchetype === 'question' ? 'var(--color-accent-hover)' : 'var(--text-secondary)',
-                          fontSize: '11px', fontWeight: 700, padding: '5px 14px', borderRadius: '20px', cursor: 'pointer', transition: 'all 0.15s'
-                        }}
-                      >
-                        Burning Question
-                      </button>
-                      <button 
-                        onClick={() => setSelectedArchetype('versus')}
-                        style={{
-                          border: '1px solid',
-                          borderColor: selectedArchetype === 'versus' ? 'var(--color-accent)' : 'var(--border-subtle)',
-                          background: selectedArchetype === 'versus' ? 'var(--color-accent-glow)' : 'var(--bg-surface)',
-                          color: selectedArchetype === 'versus' ? 'var(--color-accent-hover)' : 'var(--text-secondary)',
-                          fontSize: '11px', fontWeight: 700, padding: '5px 14px', borderRadius: '20px', cursor: 'pointer', transition: 'all 0.15s'
-                        }}
-                      >
-                        Versus Split
-                      </button>
-                      <button 
-                        onClick={() => setSelectedArchetype('hero')}
-                        style={{
-                          border: '1px solid',
-                          borderColor: selectedArchetype === 'hero' ? 'var(--color-accent)' : 'var(--border-subtle)',
-                          background: selectedArchetype === 'hero' ? 'var(--color-accent-glow)' : 'var(--bg-surface)',
-                          color: selectedArchetype === 'hero' ? 'var(--color-accent-hover)' : 'var(--text-secondary)',
-                          fontSize: '11px', fontWeight: 700, padding: '5px 14px', borderRadius: '20px', cursor: 'pointer', transition: 'all 0.15s'
-                        }}
-                      >
-                        Hero Subject
-                      </button>
-                      <button 
-                        onClick={() => setSelectedArchetype('reaction')}
-                        style={{
-                          border: '1px solid',
-                          borderColor: selectedArchetype === 'reaction' ? 'var(--color-accent)' : 'var(--border-subtle)',
-                          background: selectedArchetype === 'reaction' ? 'var(--color-accent-glow)' : 'var(--bg-surface)',
-                          color: selectedArchetype === 'reaction' ? 'var(--color-accent-hover)' : 'var(--text-secondary)',
-                          fontSize: '11px', fontWeight: 700, padding: '5px 14px', borderRadius: '20px', cursor: 'pointer', transition: 'all 0.15s'
-                        }}
-                      >
-                        Extreme Emotion
-                      </button>
+                    {/* FORMAT TYPE ASPECT RATIO SELECTOR */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', width: '100%', maxWidth: '780px', marginTop: '12px', paddingLeft: '8px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: '110px', fontFamily: "'Outfit', sans-serif" }}>
+                        Format Type:
+                      </span>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button
+                          onClick={() => setAspectRatio('16:9')}
+                          style={{
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontSize: '12.5px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            border: '1.5px solid ' + (aspectRatio === '16:9' ? 'var(--color-primary)' : 'var(--border-subtle)'),
+                            background: aspectRatio === '16:9' ? 'var(--color-primary-glow)' : 'var(--bg-surface)',
+                            color: aspectRatio === '16:9' ? 'var(--color-primary)' : 'var(--text-secondary)'
+                          }}
+                        >
+                          Standard (16:9)
+                        </button>
+                        <button
+                          onClick={() => setAspectRatio('9:16')}
+                          style={{
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontSize: '12.5px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            border: '1.5px solid ' + (aspectRatio === '9:16' ? 'var(--color-primary)' : 'var(--border-subtle)'),
+                            background: aspectRatio === '9:16' ? 'var(--color-primary-glow)' : 'var(--bg-surface)',
+                            color: aspectRatio === '9:16' ? 'var(--color-primary)' : 'var(--text-secondary)'
+                          }}
+                        >
+                          YouTube Shorts (9:16)
+                        </button>
+                      </div>
                     </div>
 
                   </div>

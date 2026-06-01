@@ -57,8 +57,8 @@ const saveSchema = z.object({
     }, {
         message: 'Image URL must be a valid HTTP/HTTPS URL or base64 data URL'
     }),
-    niche: z.string().min(1, 'Niche is required'),
-    archetype: z.string().min(1, 'Archetype is required'),
+    niche: z.string().default('default'),
+    archetype: z.string().default('default'),
     aspectRatio: z.enum(['16:9', '9:16']).default('16:9'),
     provider: z.string().min(1, 'Provider is required'),
     analysis: analysisSchema

@@ -10,7 +10,7 @@ import CanvasEditor from './CanvasEditor';
 import CTRAnalysisPanel from './CTRAnalysisPanel';
 import YoutubePreview from './YoutubePreview';
 
-import { compilePrompt } from '../lib/prompts';
+import { compilePrompt, detectNicheAndArchetype } from '../lib/prompts';
 import { generateThumbnailImage, analyzeThumbnailCTR } from '../lib/imageService';
 import { savePerformanceRecord, compileLearningModifiers, getNicheInsights } from '../lib/database';
 import { supabase } from '../lib/supabase';
@@ -76,7 +76,17 @@ export default function Generator() {
 
   // Sync state between Canva prompt box and Generator title
   const handleInputChange = (field, value) => {
-    setInputs(prev => ({ ...prev, [field]: value }));
+    setInputs(prev => ({ 
+      ...prev, 
+      [field]: value,
+      ...(field === 'title' ? { topic: value } : {})
+    }));
+    
+    if (field === 'title') {
+      const { niche, archetype } = detectNicheAndArchetype(value);
+      setSelectedNiche(niche);
+      setSelectedArchetype(archetype);
+    }
   };
 
   const handleAutoFill = (extractedDetails) => {
@@ -459,26 +469,59 @@ export default function Generator() {
                   </button>
                 </div>
 
-                {/* Aspect Ratio Format Pill Selector */}
-                <div style={styles.formatPillContainer}>
-                  <button
-                    onClick={() => setAspectRatio('16:9')}
-                    style={{
-                      ...styles.formatPill,
-                      ...(aspectRatio === '16:9' ? styles.formatPillActive : {})
-                    }}
-                  >
-                    Standard (16:9)
-                  </button>
-                  <button
-                    onClick={() => setAspectRatio('9:16')}
-                    style={{
-                      ...styles.formatPill,
-                      ...(aspectRatio === '9:16' ? styles.formatPillActive : {})
-                    }}
-                  >
-                    YouTube Shorts (9:16)
-                  </button>
+                {/* Aspect Ratio Format Pill & Reset Selector */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '8px' }}>
+                  <div style={styles.formatPillContainer}>
+                    <button
+                      onClick={() => setAspectRatio('16:9')}
+                      style={{
+                        ...styles.formatPill,
+                        ...(aspectRatio === '16:9' ? styles.formatPillActive : {})
+                      }}
+                    >
+                      Standard (16:9)
+                    </button>
+                    <button
+                      onClick={() => setAspectRatio('9:16')}
+                      style={{
+                        ...styles.formatPill,
+                        ...(aspectRatio === '9:16' ? styles.formatPillActive : {})
+                      }}
+                    >
+                      YouTube Shorts (9:16)
+                    </button>
+                  </div>
+
+                  {imageUrl && (
+                    <button
+                      onClick={handleReset}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid var(--border-subtle)',
+                        color: 'var(--text-secondary)',
+                        borderRadius: '20px',
+                        padding: '6px 14px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.borderColor = 'var(--border-strong)';
+                        e.target.style.color = 'var(--text-primary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.borderColor = 'var(--border-subtle)';
+                        e.target.style.color = 'var(--text-secondary)';
+                      }}
+                    >
+                      <RotateCcw size={12} />
+                      Reset Workspace
+                    </button>
+                  )}
                 </div>
 
                 {/* Interactive Canva Suggestions Dropdown underneath */}
@@ -506,7 +549,7 @@ export default function Generator() {
               </div>
             </div>
 
-            {/* Right Column: Large Rounded Preview Canvas & Style Preset Quick Selector */}
+            {/* Right Column: Large Rounded Preview Canvas */}
             <div style={styles.rightColumn}>
               {/* Preview image wrapped in Gallery */}
               <Gallery 
@@ -520,180 +563,8 @@ export default function Generator() {
                 aspectRatio={aspectRatio}
                 title={inputs.title}
               />
-
-              {/* Custom Canva Style Selector Underneath */}
-              <div className="canva-styles-container">
-                <button 
-                  onClick={() => handlePresetSelect('anime')}
-                  className={`canva-style-card ${activePreset === 'anime' ? 'canva-style-card-active' : ''}`}
-                >
-                  <div className="canva-style-card-preview" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&q=80&w=64')` }} />
-                  <span className="canva-style-card-name">Anime</span>
-                </button>
-
-                <button 
-                  onClick={() => handlePresetSelect('filmic')}
-                  className={`canva-style-card ${activePreset === 'filmic' ? 'canva-style-card-active' : ''}`}
-                >
-                  <div className="canva-style-card-preview" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=64')` }} />
-                  <span className="canva-style-card-name">Filmic</span>
-                </button>
-
-                <button 
-                  onClick={() => handlePresetSelect('retrowave')}
-                  className={`canva-style-card ${activePreset === 'retrowave' ? 'canva-style-card-active' : ''}`}
-                >
-                  <div className="canva-style-card-preview" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=64')` }} />
-                  <span className="canva-style-card-name">Retrowave</span>
-                </button>
-
-                <button 
-                  onClick={() => handlePresetSelect('moody')}
-                  className={`canva-style-card ${activePreset === 'moody' ? 'canva-style-card-active' : ''}`}
-                >
-                  <div className="canva-style-card-preview" style={{ backgroundImage: `url('${PRESET_LOFI_IMAGE}')` }} />
-                  <span className="canva-style-card-name">Moody</span>
-                </button>
-
-                <button 
-                  onClick={() => handlePresetSelect('more')}
-                  className={`canva-style-card ${showAdvanced ? 'canva-style-card-active' : ''}`}
-                >
-                  <div style={styles.moreIconBox}>
-                    <Sliders size={14} color={showAdvanced ? 'var(--color-primary-hover)' : 'var(--text-secondary)'} />
-                  </div>
-                  <span className="canva-style-card-name">{showAdvanced ? 'Close Pick' : 'More 20+'}</span>
-                </button>
-              </div>
             </div>
           </div>
-
-          {/* 3. SLIDEOUT/COLLAPSIBLE DETAILED CONTROLS DRAWER */}
-          {showAdvanced && (
-            <div style={styles.advancedDrawer}>
-              <div style={styles.drawerHeader}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Sliders size={18} color="var(--color-primary)" />
-                  <h3 style={styles.drawerTitle}>Advanced Generator Context & pickers</h3>
-                </div>
-                <button 
-                  onClick={() => setShowAdvanced(false)}
-                  style={styles.closeDrawerBtn}
-                >
-                  Close Settings
-                </button>
-              </div>
-              
-              <div style={styles.drawerContentGrid}>
-                {/* Advanced Form Context Inputs */}
-                <InputSection 
-                  values={inputs} 
-                  onChange={handleInputChange} 
-                  onAutoFill={handleAutoFill}
-                />
-                
-                {/* Visual Archetypes / Niches & Upload File controls */}
-                <div className="card-glass" style={styles.pickerSection}>
-                  <NichePicker 
-                    selectedNiche={selectedNiche} 
-                    onSelect={setSelectedNiche} 
-                  />
-                  <ArchetypePicker 
-                    selectedArchetype={selectedArchetype} 
-                    onSelect={setSelectedArchetype} 
-                  />
-                  
-                  {/* Thumbnail Rewrite Upload section */}
-                  <div style={styles.rewriteSection}>
-                    <div style={styles.rewriteHeader}>
-                      <Upload size={14} color="var(--color-accent)" />
-                      <span style={styles.rewriteTitle}>Thumbnail Rewrite Mode (Catalog Upgrade)</span>
-                    </div>
-                    <p style={styles.rewriteDesc}>
-                      Upload an underperforming image to analyze visual weight contrast and recreate an optimized alternative blueprint.
-                    </p>
-                    <label style={styles.uploadBtn}>
-                      <ImageIcon size={14} />
-                      Upload Original Image
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleExistingUpload} 
-                        style={{ display: 'none' }} 
-                      />
-                    </label>
-                  </div>
-
-                  {/* AI Niche Learning Moat Widget (Task 4.2) */}
-                  <div style={styles.learningMoatBox}>
-                    <div style={styles.learningMoatHeader}>
-                      <span style={styles.learningMoatBadge}>AI LEARNING MOAT</span>
-                      <span style={{
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        color: learningModifiersActive ? 'var(--color-primary)' : 'var(--text-muted)'
-                      }}>
-                        {learningModifiersActive ? '✓ ACTIVE MOAT' : '✦ TELEMETRY MODE'}
-                      </span>
-                    </div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={styles.learningLabel}>Niche Category:</span>
-                        <span style={styles.learningValue}>{selectedNiche.toUpperCase()}</span>
-                      </div>
-                      
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={styles.learningLabel}>AI Data Log:</span>
-                        <span style={{ ...styles.learningValue, fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          {nicheInsights.message}
-                        </span>
-                      </div>
-
-                      {nicheInsights.averageScore > 0 ? (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={styles.learningLabel}>Average CTR:</span>
-                          <span style={{ ...styles.learningValue, color: 'var(--color-primary)', fontWeight: 800 }}>
-                            {nicheInsights.averageScore}%
-                          </span>
-                        </div>
-                      ) : null}
-
-                      {nicheInsights.topColors.length > 0 && nicheInsights.topColors[0] !== 'No data yet' ? (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={styles.learningLabel}>Winning Palettes:</span>
-                          <span style={{ ...styles.learningValue, textTransform: 'capitalize' }}>
-                            {nicheInsights.topColors.join(', ')}
-                          </span>
-                        </div>
-                      ) : null}
-                    </div>
-                    
-                    {learningModifiersActive ? (
-                      <div style={styles.moatIndicator}>
-                        <Sparkles size={10} color="var(--color-primary)" />
-                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-                          Prompt compiler is automatically injecting compiled clickability parameters!
-                        </span>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  {/* Reset Generator state */}
-                  {imageUrl && (
-                    <button 
-                      onClick={handleReset} 
-                      className="btn btn-secondary"
-                      style={{ width: '100%' }}
-                    >
-                      <RotateCcw size={14} style={{ marginRight: '6px' }} />
-                      Reset Workspace
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* 4. VISUAL CTR ANALYSIS & CRITIQUE (Show critique details underneath hero grid) */}
           {showCritique && analysis && (

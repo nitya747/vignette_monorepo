@@ -34,11 +34,17 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
       headers['Authorization'] = `Bearer ${token}`;
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
     const response = await fetch('/api/generate', {
       method: 'POST',
       headers,
       body: JSON.stringify({ prompt, niche, archetype, aspectRatio, image }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errBody = await response.json().catch(() => ({}));
@@ -49,7 +55,7 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
     return {
       imageUrl: data.imageUrl,
       revisedPrompt: data.revisedPrompt || prompt,
-      provider: data.provider || 'fal.ai (flux/schnell)',
+      provider: data.provider || 'fal.ai (gemini-25-flash-image)',
       remainingCredits: data.remainingCredits
     };
   } catch (error) {
@@ -80,13 +86,19 @@ export async function analyzeThumbnailCTR(imageBlobOrUrl, title, topic, keywords
 
   // Phase 4 Live Integration Route
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ image: imageBlobOrUrl, title, topic, keywords, niche, archetype }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error('Analysis endpoint reported an error');
@@ -96,5 +108,55 @@ export async function analyzeThumbnailCTR(imageBlobOrUrl, title, topic, keywords
   } catch (error) {
     console.error('Failed to analyze vision via live API, falling back to mock:', error);
     return getMockCTRScore(title, niche, archetype, topic, keywords);
+  }
+}
+
+import { supabase } from './supabase.js';
+
+/**
+ * Uploads a raw binary image file directly to Supabase Storage in the
+ * private bucket 'vignette-temp-uploads' and returns a short-lived signed URL.
+ */
+export async function uploadReferenceImage(file, userId = 'guest') {
+  if (!supabase) {
+    console.warn('[uploadReferenceImage] Supabase is not configured. Falling back to local data URL.');
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  try {
+    const fileExt = file.name.split('.').pop();
+    const uniqueId = Math.random().toString(36).substring(2, 9);
+    const filePath = `temp-uploads/${userId}/${Date.now()}-${uniqueId}.${fileExt}`;
+
+    // 1. Upload raw binary to Supabase
+    const { data, error } = await supabase.storage
+      .from('vignette-temp-uploads')
+      .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+    if (error) {
+      throw new Error(`Supabase Storage upload failed: ${error.message}`);
+    }
+
+    // 2. Request a 10-minute (600 seconds) short-lived signed URL for fal.ai ingestion
+    const { data: signData, error: signError } = await supabase.storage
+      .from('vignette-temp-uploads')
+      .createSignedUrl(filePath, 600);
+
+    if (signError) {
+      throw new Error(`Failed to generate signed URL: ${signError.message}`);
+    }
+
+    return signData.signedUrl;
+  } catch (err) {
+    console.error('[uploadReferenceImage] Upload failed, falling back to local base64 preview:', err);
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.readAsDataURL(file);
+    });
   }
 }

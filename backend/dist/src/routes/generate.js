@@ -10,10 +10,10 @@ import { decrementUserCredits } from '../services/historyService.js';
 export const generateRouter = Router();
 const generateSchema = z.object({
     prompt: z.string().min(1, 'Prompt is required'),
-    niche: z.string().min(1, 'Niche is required'),
-    archetype: z.string().min(1, 'Archetype is required'),
+    niche: z.string().default('default'),
+    archetype: z.string().default('default'),
     aspectRatio: z.enum(['16:9', '9:16', '4:5']).default('16:9'),
-    image: z.string().optional()
+    image: z.string().url('Reference image must be a valid public or signed URL.').nullable().optional()
 });
 generateRouter.post('/', optionalAuth, creditMiddleware, rateLimiter('expensive'), cacheMiddleware('generate'), validate(generateSchema), async (req, res, next) => {
     try {
