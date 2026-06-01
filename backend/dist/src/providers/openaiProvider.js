@@ -15,7 +15,7 @@ export class OpenAIProvider {
             imageUrlPayload = `data:image/png;base64,${image}`;
         }
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for analysis
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {

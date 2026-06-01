@@ -39,7 +39,7 @@ export class FalProvider implements BaseImageProvider {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for image generation
 
     const response = await fetch(endpoint, {
       method: 'POST',
