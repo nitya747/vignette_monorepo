@@ -57,8 +57,8 @@ export const cacheMiddleware = (cacheType: 'extract' | 'generate') => {
     if (cacheType === 'extract') {
       key = req.body.url || '';
     } else {
-      const { prompt, niche, archetype, aspectRatio = '16:9' } = req.body;
-      key = getHash({ prompt, niche, archetype, aspectRatio });
+      const { prompt, niche, archetype, aspectRatio = '16:9', image } = req.body;
+      key = getHash({ prompt, niche, archetype, aspectRatio, image });
     }
 
     if (!key) {

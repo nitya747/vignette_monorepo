@@ -44,10 +44,14 @@ export function compilePrompt({
   }
 
   // Construct the prompt using the exact user-specified template
-  let finalPrompt = `A high-CTR, professional YouTube thumbnail style image for a video about ${coreSubject}. The central focus is a visually striking, highly expressive main subject that perfectly symbolizes ${coreSubject}, looking directly at the viewer with intense emotion. Vibrant, high-contrast color palette. The background is a clean, relevant, and softly blurred environment matching the theme. Clean, uncluttered composition with a clear focal point, leaving open negative space on one side for text. ${ratioText}`;
+  let finalPrompt = `A high-impact, professional YouTube thumbnail optimized for high CTR, centered entirely around the video topic: ${coreSubject}.
+Composition: Position the primary subject or character strictly on the right third of the frame, displaying an intense, expressive facial reaction. Keep the left third of the image perfectly minimalist, uncluttered and include a text overlay there.
+Style & Lighting: Cinematic lighting, high contrast, ultra-sharp focus, modern aesthetic, and realistic textures.
+Multimodal instruction (Optional): If a reference image is attached to this request, natively fuse its artistic style, color grading, and character consistency into this new composition.
+Aspect Ratio: ${aspectRatio}`;
 
   if (learningModifiers) {
-    finalPrompt += ` ${learningModifiers}`;
+    finalPrompt += `\n\n${learningModifiers}`;
   }
 
   return finalPrompt.trim();
