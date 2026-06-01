@@ -43,9 +43,15 @@ export function compilePrompt({
     ratioText = 'Portrait 4:5 aspect ratio.';
   }
 
-  // Construct the prompt using the exact user-specified template
+  // Dynamically tailor the composition based on format orientation to prevent vertical squishing
+  const isVertical = aspectRatio === '9:16' || aspectRatio === '4:5';
+  const compositionText = isVertical
+    ? `Composition: Position the primary subject or character in the lower or central section of the vertical frame, displaying an intense, expressive facial reaction. Keep the upper section of the vertical frame perfectly minimalist, uncluttered and include a text overlay there.`
+    : `Composition: Position the primary subject or character strictly on the right third of the frame, displaying an intense, expressive facial reaction. Keep the left third of the image perfectly minimalist, uncluttered and include a text overlay there.`;
+
+  // Construct the prompt using the exact user-specified template, adapted dynamically to the aspect ratio
   let finalPrompt = `A high-impact, professional YouTube thumbnail optimized for high CTR, centered entirely around the video topic: ${coreSubject}.
-Composition: Position the primary subject or character strictly on the right third of the frame, displaying an intense, expressive facial reaction. Keep the left third of the image perfectly minimalist, uncluttered and include a text overlay there.
+${compositionText}
 Style & Lighting: Cinematic lighting, high contrast, ultra-sharp focus, modern aesthetic, and realistic textures.
 Multimodal instruction (Optional): If a reference image is attached to this request, natively fuse its artistic style, color grading, and character consistency into this new composition.
 Aspect Ratio: ${aspectRatio}`;
