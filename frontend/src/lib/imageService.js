@@ -35,7 +35,7 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45-second timeout for image generation
 
     const response = await fetch('/api/generate', {
       method: 'POST',
@@ -87,7 +87,7 @@ export async function analyzeThumbnailCTR(imageBlobOrUrl, title, topic, keywords
   // Phase 4 Live Integration Route
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45-second timeout for vision analysis
 
     const response = await fetch('/api/analyze', {
       method: 'POST',
