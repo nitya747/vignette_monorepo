@@ -16,14 +16,22 @@ export class FalProvider implements BaseImageProvider {
     this.falKey = config.falKey;
   }
 
-  async generate({ prompt, niche, archetype, aspectRatio = '16:9', userId, image }: ImageGenerationPayload): Promise<ImageGenerationResponse> {
+  async generate({ prompt, niche, archetype, aspectRatio = '16:9', userId, image }: ImageGenerationPayload, refinedPrompt?: string): Promise<ImageGenerationResponse> {
     // Fetch learning modifiers from the user's past high-performing generations
     let learningModifiers = '';
     if (userId) {
       learningModifiers = await getLearningModifiers(userId, niche || 'default');
     }
 
-    const compiledPrompt = compilePrompt({ title: prompt, niche, archetype, aspectRatio, learningModifiers, usePhoto: !!image });
+    // Use pre-refined prompt from Layer 1 if available, otherwise compile it standard
+    const compiledPrompt = refinedPrompt || compilePrompt({ 
+      title: prompt, 
+      niche, 
+      archetype, 
+      aspectRatio, 
+      learningModifiers, 
+      usePhoto: !!image 
+    });
     const startTime = Date.now();
 
     const endpoint = image ? 'https://fal.run/fal-ai/gemini-3.1-flash-image-preview/edit' : 'https://fal.run/fal-ai/gemini-3.1-flash-image-preview';

@@ -171,15 +171,7 @@ function extractVisualSubject(title) {
  * Compiles a structured, highly psychological prompt optimized for high CTR
  */
 export function compilePrompt({ title, topic, keywords, niche, archetype, aspectRatio = '16:9', learningModifiers = '', usePhoto = false }) {
-  const coreSubject = title || topic || '';
-
-  let finalPrompt = `Generate a ${aspectRatio} professional youtube thumbnail for a youtube video with the topic: ${coreSubject}`;
-
-  if (learningModifiers) {
-    finalPrompt += `\n\n${learningModifiers}`;
-  }
-
-  return finalPrompt.trim();
+  return (title || topic || '').trim();
 }
 
 /**

@@ -149,8 +149,8 @@ export async function getUserHistory(
   const dbUserId = getUuidFromString(userId);
   const startOffset = (page - 1) * pageSize;
 
-  // Fetch joined rows sorted desc from live database
-  const { data, error } = await supabase
+  // Fetch joined rows sorted desc and paginated natively from database
+  const { data, error, count } = await supabase
     .from('thumbnails')
     .select(`
       *,
@@ -163,9 +163,10 @@ export async function getUserHistory(
         attention_hierarchy,
         suggested_titles
       )
-    `)
+    `, { count: 'exact' })
     .eq('user_id', dbUserId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(startOffset, startOffset + pageSize - 1);
 
   if (error) {
     throw error;
@@ -198,15 +199,9 @@ export async function getUserHistory(
     };
   });
 
-  // Sort by createdAt descending
-  dbItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-  // Paginate
-  const paginatedItems = dbItems.slice(startOffset, startOffset + pageSize);
-
   return {
-    items: paginatedItems,
-    total: dbItems.length,
+    items: dbItems,
+    total: count || 0,
     page,
     pageSize
   };
@@ -382,10 +377,9 @@ export async function getUserCredits(userId: string): Promise<number> {
     .single();
 
   if (error || !data) {
-    // If profile record is missing in database (PGRST116), defensively create it on the fly
     if (error?.code === 'PGRST116') {
       console.log(`[History Service] Profile record missing for user ${dbUserId}. Defensively creating row.`);
-      const defaultCredits = isGuest ? 1 : 5;
+      const defaultCredits = isGuest ? 100 : 500;
       const { data: upsertData, error: upsertError } = await supabase
         .from('profiles')
         .upsert({ id: dbUserId, credits: defaultCredits }, { onConflict: 'id' })

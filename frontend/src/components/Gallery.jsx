@@ -18,6 +18,10 @@ export default function Gallery({
   const [showOriginal, setShowOriginal] = useState(false);
   const [previewScale, setPreviewScale] = useState('desktop'); // 'desktop' or 'mobile'
 
+  const displayTitle = title && title.length > 70 
+    ? (title.substring(0, 67) + '...') 
+    : (title || 'Cozy Ambient Playlistbeats to relax/study');
+
   const handleDownload = async () => {
     if (!imageUrl) return;
     try {
@@ -209,7 +213,7 @@ export default function Gallery({
                     <span style={styles.shortsHandle}>@TechVanguard</span>
                     <button style={styles.shortsSubscribeBtn}>Subscribe</button>
                   </div>
-                  <p style={styles.shortsTitleText}>{title || 'Cozy Ambient Playlistbeats to relax/study'}</p>
+                  <p style={styles.shortsTitleText}>{displayTitle}</p>
                   <div style={styles.shortsMusicRow}>
                     <span style={{ fontSize: '10px', color: '#ffffff' }}>🎵 original sound - TechVanguard</span>
                   </div>
@@ -244,7 +248,7 @@ export default function Gallery({
                       <User size={14} color="#9ca3af" />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
-                      <h4 style={styles.mobileVideoTitle}>{title || 'Cozy Ambient Playlistbeats to relax/study'}</h4>
+                      <h4 style={styles.mobileVideoTitle}>{displayTitle}</h4>
                       <div style={styles.mobileChannelRow}>
                         <span>TechVanguard</span>
                         <CheckCircle2 size={10} color="#aaa" />
@@ -302,7 +306,7 @@ export default function Gallery({
               <User size={16} color="var(--text-muted)" />
             </div>
             <div style={styles.desktopTextDetails}>
-              <h4 style={styles.desktopVideoTitle}>{title || 'Cozy Ambient Playlistbeats to relax/study'}</h4>
+              <h4 style={styles.desktopVideoTitle}>{displayTitle}</h4>
               <div style={styles.desktopChannelRow}>
                 <span style={styles.desktopChannelName}>TechVanguard</span>
                 <CheckCircle2 size={10} color="var(--text-muted)" style={{ marginLeft: '2px' }} />
@@ -317,15 +321,6 @@ export default function Gallery({
       )}
 
       <div style={styles.actionGrid}>
-        <button 
-          onClick={onAnalyze}
-          className="btn btn-secondary"
-          style={styles.actionBtn}
-        >
-          <Eye size={16} color="var(--color-primary)" />
-          CTR Vision Critique
-        </button>
-
         <button 
           onClick={handleDownload}
           className="btn btn-secondary"
@@ -520,7 +515,7 @@ const styles = {
   },
   actionGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr 1fr',
+    gridTemplateColumns: '1fr 1fr',
     gap: '12px',
   },
   actionBtn: {
@@ -832,6 +827,12 @@ const styles = {
     color: 'var(--text-primary)',
     lineHeight: '1.4',
     margin: 0,
+    maxHeight: '40px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
   },
   desktopChannelRow: {
     display: 'flex',

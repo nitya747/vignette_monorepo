@@ -5,7 +5,9 @@ import { Play, User, CheckCircle2, Tablet, Monitor, AlignLeft, ThumbsUp, ThumbsD
 
 export default function YoutubePreview({ imageUrl, title, aspectRatio = '16:9' }) {
   const [feedMode, setFeedMode] = useState('desktop');
-  const displayTitle = title || 'I Spent 100 Hours Inside an Autonomous AI Village';
+  const displayTitle = title && title.length > 70 
+    ? (title.substring(0, 67) + '...') 
+    : (title || 'I Spent 100 Hours Inside an Autonomous AI Village');
   const isShorts = aspectRatio === '9:16';
 
   return (
@@ -724,6 +726,10 @@ const styles = {
     lineHeight: '1.3',
     maxHeight: '30px',
     overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
   },
   channelRowMobile: {
     display: 'flex',

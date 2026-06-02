@@ -7,7 +7,7 @@ import {
   Eye, 
   UploadCloud, 
   TextQuote, 
-  TrendingUp, 
+  FolderClosed, 
   ChevronRight, 
   ArrowRight,
   Shield,
@@ -31,11 +31,19 @@ export default function LandingPage({
     onStartCreating(quickPrompt);
   };
 
+  const handleScrollTo = (e, id) => {
+    e.preventDefault();
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   const featureCards = [
     {
-      icon: Flame,
-      title: "Visual CTR Roast",
-      desc: "Our visual intelligence network audits contrast boundaries, detects detail clutter, and critiques legibility to roast and multiply your click-through rates.",
+      icon: Sparkles,
+      title: "AI Thumbnail Director",
+      desc: "Instantly generate scroll-stopping, high-impact thumbnails and custom visual layouts using advanced DALL-E 3 text-safe rimlighting styles.",
       color: "var(--color-primary)",
       badge: "AI Powered"
     },
@@ -44,21 +52,14 @@ export default function LandingPage({
       title: "Feed Preview Simulator",
       desc: "Instantly preview and test exactly how your layouts stand out against competitors in smartphone feeds, home pages, and compressed search ranks.",
       color: "var(--color-cyan)",
-      badge: "Audience Audit"
+      badge: "Feed Preview"
     },
     {
-      icon: TextQuote,
-      title: "Title Pairing Engine",
-      desc: "Generate highly magnetic titles that structurally align with your visual composition weights, establishing maximum contextual hook retention.",
-      color: "var(--color-accent)",
-      badge: "Click Hooks"
-    },
-    {
-      icon: TrendingUp,
-      title: "Performance Analytics",
-      desc: "Track layout scores, log color mood performance, and build a history of your highest-performing assets to feed the clickability learning loop.",
+      icon: FolderClosed,
+      title: "Projects Library",
+      desc: "Save and manage your generated visual layouts in a personal gallery, allowing you to instantly restore and iterate on past designs.",
       color: "var(--color-gold)",
-      badge: "Learning Loop"
+      badge: "Save & Manage"
     }
   ];
 
@@ -89,9 +90,9 @@ export default function LandingPage({
 
           {/* Navigation Links */}
           <nav style={styles.nav}>
-            <a href="#features" style={styles.navLink}>Features</a>
-            <a href="#roast-showcase" style={styles.navLink}>Showcase</a>
-            <a href="#pricing" style={styles.navLink}>Pricing</a>
+            <a href="#features" onClick={(e) => handleScrollTo(e, 'features')} style={styles.navLink}>Features</a>
+            <a href="#workflow" onClick={(e) => handleScrollTo(e, 'workflow')} style={styles.navLink}>Workflow</a>
+            <a href="#pricing" onClick={(e) => handleScrollTo(e, 'pricing')} style={styles.navLink}>Pricing</a>
           </nav>
 
           {/* Right Side Call To Actions */}
@@ -336,34 +337,33 @@ export default function LandingPage({
               </div>
             </div>
 
-            {/* Card 4: Instagram */}
+            {/* Card 4: YouTube Shorts */}
             <div className="card-glass platform-card" style={styles.platformCard}>
-              <div className="platform-card-glow" style={{ ...styles.platformCardGlow, background: 'radial-gradient(circle, rgba(236, 72, 153, 0.12) 0%, transparent 70%)' }} />
+              <div className="platform-card-glow" style={{ ...styles.platformCardGlow, background: 'radial-gradient(circle, rgba(239, 68, 68, 0.12) 0%, transparent 70%)' }} />
               <div style={styles.platformCardHeader}>
-                <div style={{ ...styles.platformIconBox, background: 'rgba(236, 72, 153, 0.08)' }}>
-                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ec4899" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" />
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                <div style={{ ...styles.platformIconBox, background: 'rgba(239, 68, 68, 0.08)' }}>
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="6" y="2" width="12" height="20" rx="3" fill="none" />
+                    <polygon points="10 9 15 12 10 15 10 9" fill="#ef4444" />
                   </svg>
                 </div>
                 <div style={styles.platformMeta}>
-                  <span style={styles.platformName}>Instagram Feed</span>
-                  <span style={styles.platformRatio}>4:5 Vertical Grid</span>
+                  <span style={styles.platformName}>YouTube Shorts</span>
+                  <span style={styles.platformRatio}>9:16 Vertical Portrait</span>
                 </div>
               </div>
               <div style={styles.platformCardBody}>
                 <div style={styles.platformFeatureItem}>
-                  <CheckCircle2 size={12} color="#ec4899" />
-                  <span>Grid Crop Center-Weighted Audit</span>
+                  <CheckCircle2 size={12} color="#ef4444" />
+                  <span>Right-Side Buttons Safe-Zone Overlay</span>
                 </div>
                 <div style={styles.platformFeatureItem}>
-                  <CheckCircle2 size={12} color="#ec4899" />
-                  <span>Visual Rhythm & Detail Scan</span>
+                  <CheckCircle2 size={12} color="#ef4444" />
+                  <span>Caption and Sound Badge Clutter Scan</span>
                 </div>
                 <div style={styles.platformFeatureItem}>
-                  <CheckCircle2 size={12} color="#ec4899" />
-                  <span>Explore Page Contrast Isolation</span>
+                  <CheckCircle2 size={12} color="#ef4444" />
+                  <span>Shorts Feed Standout Calibration</span>
                 </div>
               </div>
             </div>
@@ -400,99 +400,10 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* 5. BEFORE/AFTER ROAST SHOWCASE */}
-      <section id="roast-showcase" style={styles.showcaseSection}>
-        <div style={styles.sectionHeader}>
-          <span style={styles.sectionBadge} className="badge-accent">Legibility Audit</span>
-          <h2 style={styles.sectionTitle}>The Vignette Optimization Loop</h2>
-          <p style={styles.sectionSubtitle}>
-            Typical thumbnails obstruct text overlays and blend subjects into busy backgrounds. Vignette isolates visual focus to double your performance.
-          </p>
-        </div>
 
-        <div style={styles.comparisonGrid}>
-          {/* Unoptimized Card */}
-          <div className="card-glass" style={styles.comparisonCard}>
-            <div style={styles.cardHeaderStrip}>
-              <span style={{ ...styles.scoreBadge, background: '#fee2e2', color: 'var(--color-danger)' }}>Score: 48% (Weak)</span>
-              <span style={styles.nicheBadge}>Typical Creator Design</span>
-            </div>
-            
-            {/* Visual Image */}
-            <div style={styles.previewImageContainer}>
-              <img 
-                src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=640&h=360" 
-                alt="Before thumbnail layout" 
-                style={styles.comparisonImage} 
-              />
-              <div style={styles.errorOverlayContainer}>
-                {/* Simulated time badge obstructing elements */}
-                <div style={styles.timeBadgeFake}>12:34</div>
-                
-                {/* Safety violations warnings */}
-                <div style={{ ...styles.legibilityWarning, top: '20px', left: '20px' }}>
-                  ⚠️ Typography lacks contrast
-                </div>
-                <div style={{ ...styles.legibilityWarning, bottom: '20px', right: '80px' }}>
-                  ⚠️ Obstructed by time badge
-                </div>
-              </div>
-            </div>
-
-            <div style={styles.cardCritiqueList}>
-              <h4 style={styles.critiqueListTitle}>Scan Detections:</h4>
-              <div style={styles.critiqueItem} className="text-danger">
-                ✕ Focal subject blends completely into mountain background details.
-              </div>
-              <div style={styles.critiqueItem} className="text-danger">
-                ✕ Action items are blocked by YouTube's standard duration badge overlay.
-              </div>
-            </div>
-          </div>
-
-          {/* Vignette Optimized Card */}
-          <div className="card-glass" style={{ ...styles.comparisonCard, border: '1px solid var(--color-primary)' }}>
-            <div style={styles.cardHeaderStrip}>
-              <span style={{ ...styles.scoreBadge, background: '#d1fae5', color: 'var(--color-success)' }}>Score: 92% (Excellent)</span>
-              <span style={{ ...styles.nicheBadge, color: 'var(--color-primary)' }}>Vignette Optimized</span>
-            </div>
-
-            {/* Visual Image */}
-            <div style={styles.previewImageContainer}>
-              <img 
-                src="https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&q=80&w=640&h=360" 
-                alt="Optimized thumbnail layout" 
-                style={styles.comparisonImage} 
-              />
-              <div style={styles.successOverlayContainer}>
-                {/* Safe zone and contrast highlight overlays */}
-                <div style={styles.timeBadgeFake}>12:34</div>
-                <div style={styles.safeZoneOverlayBorder} />
-                <div style={styles.focalPointHighlight}>
-                  <Sparkles size={14} color="#ffffff" />
-                  Isolated Subject
-                </div>
-                <div style={styles.legibilitySuccess}>
-                  ✓ Contrast: 7.2:1 (Excellent)
-                </div>
-              </div>
-            </div>
-
-            <div style={styles.cardCritiqueList}>
-              <h4 style={styles.critiqueListTitle}>Vignette Enhancements:</h4>
-              <div style={styles.critiqueItem} className="text-success">
-                ✓ Saturated sunset colors generate high-contrast eye retention.
-              </div>
-              <div style={styles.critiqueItem} className="text-success">
-                ✓ Key title typography is safely aligned in the left mobile safe-zones.
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* 6. HOW IT WORKS SECTION */}
-      <section style={styles.workflowSection}>
+      <section id="workflow" style={styles.workflowSection}>
         <div style={styles.workflowHeader}>
           <span style={styles.sectionBadge}>Simple Workflow</span>
           <h2 style={styles.sectionTitle}>Three Steps to Maximum Clickability</h2>
@@ -506,7 +417,7 @@ export default function LandingPage({
             {
               num: "1",
               title: "Enter Topic & Keywords",
-              desc: "Type in your core title idea directly into the generator bar to define your concept."
+              desc: "Type in your core topic idea directly into the generator bar to define your concept."
             },
             {
               num: "2",
@@ -515,8 +426,8 @@ export default function LandingPage({
             },
             {
               num: "3",
-              title: "Audit, Optimize & Export",
-              desc: "Deploy the Visual Roast analyzer, boost contrast gradients in one click, and export premium safe-zone aligned assets."
+              title: "Preview & Export Layouts",
+              desc: "Verify layouts inside responsive mobile preview devices, and save or export your premium thumbnail designs."
             }
           ].map((step, i) => (
             <div key={i} style={styles.stepItem}>
@@ -561,10 +472,6 @@ export default function LandingPage({
               </li>
               <li style={styles.pricingFeatureItem}>
                 <CheckCircle2 size={16} color="var(--color-primary)" />
-                <span>Basic visual CTR roasts</span>
-              </li>
-              <li style={styles.pricingFeatureItem}>
-                <CheckCircle2 size={16} color="var(--color-primary)" />
                 <span>Standard 16:9 feed preview simulator</span>
               </li>
             </ul>
@@ -598,7 +505,7 @@ export default function LandingPage({
               </li>
               <li style={styles.pricingFeatureItem}>
                 <CheckCircle2 size={16} color="var(--color-primary)" />
-                <span style={{ fontWeight: 600 }}>Deep contrast & safe-zone intelligence reports</span>
+                <span style={{ fontWeight: 600 }}>Multi-platform aspect-ratio layouts</span>
               </li>
               <li style={styles.pricingFeatureItem}>
                 <CheckCircle2 size={16} color="var(--color-primary)" />
@@ -607,10 +514,6 @@ export default function LandingPage({
               <li style={styles.pricingFeatureItem}>
                 <CheckCircle2 size={16} color="var(--color-primary)" />
                 <span>Save to cloud project library</span>
-              </li>
-              <li style={styles.pricingFeatureItem}>
-                <CheckCircle2 size={16} color="var(--color-primary)" />
-                <span>Title-pairing composition compiler</span>
               </li>
             </ul>
 

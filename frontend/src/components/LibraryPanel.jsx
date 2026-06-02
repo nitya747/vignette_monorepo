@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Calendar, Eye, Trash2, ChevronLeft, ChevronRight, FolderOpen, LogIn, Edit3, Download } from 'lucide-react';
+import { Sparkles, Calendar, Eye, Trash2, ChevronLeft, ChevronRight, FolderOpen, LogIn, Edit3, Download, ArrowLeft } from 'lucide-react';
 
-export default function LibraryPanel({ session, onSelect, onOpenAuth }) {
+export default function LibraryPanel({ session, onSelect, onOpenAuth, onBack }) {
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [limit] = useState(6);
+  const [limit] = useState(12);
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   
@@ -176,19 +176,44 @@ export default function LibraryPanel({ session, onSelect, onOpenAuth }) {
   if (!session) {
     /* Guest View: CTA to prompt AuthModal */
     return (
-      <div className="flex-center card-glass" style={styles.guestContainer}>
-        <div style={styles.guestInner}>
-          <FolderOpen size={48} color="var(--color-primary)" style={{ marginBottom: '16px', opacity: 0.8 }} />
-          <h2 style={styles.guestTitle}>Your Personal Project Library</h2>
-          <p style={styles.guestSub}>Log in to automatically save, sync, and retrieve your click-optimized thumbnails and CTR roasts across devices.</p>
-          <button 
-            onClick={onOpenAuth}
-            className="btn btn-primary"
-            style={styles.guestBtn}
-          >
-            <LogIn size={14} style={{ marginRight: '8px' }} />
-            Sign In to Unlock
-          </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', alignItems: 'flex-start' }}>
+        {/* Back to Home Link */}
+        <button 
+          onClick={onBack}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'rgba(99, 102, 241, 0.08)',
+            border: '1px solid rgba(99, 102, 241, 0.15)',
+            borderRadius: '10px',
+            padding: '6px 12px',
+            fontSize: '12px',
+            fontWeight: 700,
+            color: 'var(--color-primary)',
+            cursor: 'pointer',
+            alignSelf: 'flex-start',
+            fontFamily: "'Outfit', sans-serif"
+          }}
+        >
+          <ArrowLeft size={13} style={{ strokeWidth: 2.5 }} />
+          <span>Back to Home</span>
+        </button>
+
+        <div className="flex-center card-glass" style={{ ...styles.guestContainer, width: '100%' }}>
+          <div style={styles.guestInner}>
+            <FolderOpen size={48} color="var(--color-primary)" style={{ marginBottom: '16px', opacity: 0.8 }} />
+            <h2 style={styles.guestTitle}>Your Personal Project Library</h2>
+            <p style={styles.guestSub}>Log in to automatically save, sync, and retrieve your click-optimized thumbnails across devices.</p>
+            <button 
+              onClick={onOpenAuth}
+              className="btn btn-primary"
+              style={styles.guestBtn}
+            >
+              <LogIn size={14} style={{ marginRight: '8px' }} />
+              Sign In to Unlock
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -198,7 +223,31 @@ export default function LibraryPanel({ session, onSelect, onOpenAuth }) {
 
   return (
     <div className="card-glass" style={styles.panel}>
-      
+      {/* Back to Home Link */}
+      <button 
+        onClick={onBack}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          background: 'rgba(99, 102, 241, 0.08)',
+          border: '1px solid rgba(99, 102, 241, 0.15)',
+          borderRadius: '10px',
+          padding: '6px 12px',
+          fontSize: '12px',
+          fontWeight: 700,
+          color: 'var(--color-primary)',
+          cursor: 'pointer',
+          marginBottom: '20px',
+          alignSelf: 'flex-start',
+          fontFamily: "'Outfit', sans-serif",
+          width: 'fit-content'
+        }}
+      >
+        <ArrowLeft size={13} style={{ strokeWidth: 2.5 }} />
+        <span>Back to Home</span>
+      </button>
+
       {/* Header */}
       <div style={styles.header}>
         <div>

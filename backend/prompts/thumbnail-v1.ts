@@ -33,24 +33,7 @@ export function compilePrompt({
   learningModifiers = '',
   usePhoto = false
 }: CompilePromptPayload): string {
-  const coreSubject = title || topic || '';
-  
-  // Format aspect ratio text dynamically based on selection
-  let ratioText = 'Widescreen 16:9 aspect ratio.';
-  if (aspectRatio === '9:16') {
-    ratioText = 'Vertical 9:16 aspect ratio.';
-  } else if (aspectRatio === '4:5') {
-    ratioText = 'Portrait 4:5 aspect ratio.';
-  }
-
-  // Construct the prompt using the exact user-specified template
-  let finalPrompt = `Generate a ${aspectRatio} professional youtube thumbnail for a youtube video with the topic: ${coreSubject}`;
-
-  if (learningModifiers) {
-    finalPrompt += `\n\n${learningModifiers}`;
-  }
-
-  return finalPrompt.trim();
+  return (title || topic || '').trim();
 }
 
 /**

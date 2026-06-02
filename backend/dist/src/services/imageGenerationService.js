@@ -1,6 +1,17 @@
 import { config } from '../config/index.js';
 import { FalProvider } from '../providers/falProvider.js';
+import { refinePromptWithLLM } from './promptRefinementService.js';
 export async function generateImage(payload) {
+    // Layer 1: LLM Prompt Refinement
+    const refinedPrompt = await refinePromptWithLLM({
+        title: payload.title || payload.prompt,
+        topic: payload.topic,
+        keywords: payload.keywords,
+        niche: payload.niche,
+        archetype: payload.archetype,
+        aspectRatio: payload.aspectRatio,
+        usePhoto: !!payload.image
+    });
     const isKeyAvailable = config.falKey && config.falKey !== 'your_fal_ai_api_key_here' && config.falKey.trim() !== '';
     if (!isKeyAvailable) {
         console.log('[imageGenerationService] fal.ai key not configured. Returning premium mock placeholder image to allow database billing verification.');
@@ -29,14 +40,14 @@ export async function generateImage(payload) {
         }
         return {
             imageUrl: payload.image || mockUrl,
-            revisedPrompt: payload.prompt,
+            revisedPrompt: refinedPrompt,
             provider: 'Mock Engine (gemini-3.1-flash-image-preview Sandbox Fallback)',
             latencyMs: 100
         };
     }
     try {
         const provider = new FalProvider();
-        return await provider.generate(payload);
+        return await provider.generate(payload, refinedPrompt);
     }
     catch (error) {
         console.warn(`[imageGenerationService] fal.ai provider generation failed or timed out (${error?.message || error}). Seamlessly falling back to sandbox mockup.`);
@@ -61,7 +72,7 @@ export async function generateImage(payload) {
         }
         return {
             imageUrl: payload.image || mockUrl,
-            revisedPrompt: payload.prompt,
+            revisedPrompt: refinedPrompt,
             provider: 'Mock Engine (gemini-3.1-flash-image-preview Sandbox Fallback - API Timeout)',
             latencyMs: 120
         };

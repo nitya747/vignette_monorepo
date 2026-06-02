@@ -11,7 +11,7 @@ const MOCK_MODE = false;
 /**
  * Interface function to handle secure backend image generation
  */
-export async function generateThumbnailImage(prompt, niche, archetype, aspectRatio = '16:9', image = null, token = null) {
+export async function generateThumbnailImage(prompt, niche, archetype, aspectRatio = '16:9', image = null, token = null, title = '', topic = '', keywords = '') {
   // If Mock Mode is active (Phases 1-3), return immediately with custom local stock presets
   if (MOCK_MODE) {
     return new Promise((resolve) => {
@@ -40,7 +40,16 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
     const response = await fetch('/api/generate', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ prompt, niche, archetype, aspectRatio, image }),
+      body: JSON.stringify({ 
+        prompt, 
+        niche, 
+        archetype, 
+        aspectRatio, 
+        image,
+        title: title || undefined,
+        topic: topic || undefined,
+        keywords: keywords || undefined
+      }),
       signal: controller.signal
     });
 

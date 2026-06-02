@@ -278,7 +278,7 @@ export default function Generator() {
         token = localStorage.getItem('vignette_guest_id') || 'guest-anonymous';
       }
 
-      const result = await generateThumbnailImage(prompt, selectedNiche, selectedArchetype, aspectRatio, null, token);
+      const result = await generateThumbnailImage(prompt, selectedNiche, selectedArchetype, aspectRatio, null, token, inputs.title, inputs.topic, inputs.keywords);
       setImageUrl(result.imageUrl);
       setProvider(result.provider);
       
@@ -338,7 +338,7 @@ export default function Generator() {
         token = localStorage.getItem('vignette_guest_id') || 'guest-anonymous';
       }
 
-      const result = await generateThumbnailImage(optimizedPrompt, selectedNiche, selectedArchetype, aspectRatio, null, token);
+      const result = await generateThumbnailImage(optimizedPrompt, selectedNiche, selectedArchetype, aspectRatio, null, token, inputs.title, inputs.topic, inputs.keywords);
       
       setImageUrl(result.imageUrl);
       setProvider(result.provider);

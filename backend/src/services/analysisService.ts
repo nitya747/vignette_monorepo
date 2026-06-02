@@ -3,13 +3,6 @@ import { AnalyzePayload, CTRCritiqueResponse } from '../types/index.js';
 import { OpenAIProvider } from '../providers/openaiProvider.js';
 
 export async function analyzeThumbnail(payload: AnalyzePayload): Promise<CTRCritiqueResponse> {
-  const isKeyAvailable = config.visionApiKey && config.visionApiKey !== 'your_openai_api_key_here' && config.visionApiKey.trim() !== '';
-  if (!isKeyAvailable) {
-    throw new Error('OpenAI Vision API key is not configured. Please set the VISION_API_KEY environment variable in your .env.local file.');
-  }
-
-  const provider = new OpenAIProvider();
-
   const systemPrompt = `You are an elite, world-class YouTube Thumbnail Director, Audience Psychologist, and CTR Performance Optimizer. 
 Critically analyze the provided thumbnail image in the direct context of the video's title and description.
 Assess its visual contrast, focal separation, text legibility, safe-zone layouts, and overall clickability.
@@ -56,6 +49,11 @@ Keywords: "${payload.keywords || ''}"
 Critique this thumbnail and suggest improvements and 3 contextual, high-CTR title pairings.`;
 
   try {
+    const isKeyAvailable = config.visionApiKey && config.visionApiKey !== 'your_openai_api_key_here' && config.visionApiKey.trim() !== '';
+    if (!isKeyAvailable) {
+      throw new Error('OpenAI Vision API key is not configured. Please set the VISION_API_KEY environment variable in your .env.local file.');
+    }
+    const provider = new OpenAIProvider();
     return await provider.analyze({
       image: payload.image,
       systemPrompt,

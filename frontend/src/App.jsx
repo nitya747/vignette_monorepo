@@ -84,12 +84,9 @@ export default function Home() {
     switch (path) {
       case '/dashboard': return 'maker';
       case '/projects': return 'gallery';
+      case '/preview': return 'simulator';
       case '/roast': return 'roast';
       case '/editor': return 'editor';
-      case '/preview': return 'simulator';
-      case '/upload': return 'upgrade';
-      case '/titles': return 'titles';
-      case '/analytics': return 'analytics';
       case '/':
       default:
         return 'landing';
@@ -102,12 +99,9 @@ export default function Home() {
     switch (tabId) {
       case 'maker': navigate('/dashboard'); break;
       case 'gallery': navigate('/projects'); break;
+      case 'simulator': navigate('/preview'); break;
       case 'roast': navigate('/roast'); break;
       case 'editor': navigate('/editor'); break;
-      case 'simulator': navigate('/preview'); break;
-      case 'upgrade': navigate('/upload'); break;
-      case 'titles': navigate('/titles'); break;
-      case 'analytics': navigate('/analytics'); break;
       case 'landing':
       default:
         navigate('/');
@@ -125,15 +119,15 @@ export default function Home() {
   const [selectedArchetype, setSelectedArchetype] = useState('default');
   const [aspectRatio, setAspectRatio] = useState('16:9'); // '16:9' or '9:16'
   
-  const [imageUrl, setImageUrl] = useState(PRESET_LOFI_IMAGE);
+  const [imageUrl, setImageUrl] = useState('');
   const [originalImageUrl, setOriginalImageUrl] = useState('');
-  const [provider, setProvider] = useState('Vignette Preset');
+  const [provider, setProvider] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isOptimized, setIsOptimized] = useState(false);
   
-  const [analysis, setAnalysis] = useState(PRESET_LOFI_CRITIQUE);
-  const [showCritique, setShowCritique] = useState(true);
+  const [analysis, setAnalysis] = useState(null);
+  const [showCritique, setShowCritique] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [analysisError, setAnalysisError] = useState(null);
 
@@ -146,7 +140,7 @@ export default function Home() {
   const [isSaved, setIsSaved] = useState(false);
   const [credits, setCredits] = useState(() => {
     const saved = localStorage.getItem('vignette_credits');
-    return saved !== null ? parseInt(saved, 10) : 1;
+    return saved !== null ? parseInt(saved, 10) : 100;
   });
 
   useEffect(() => {
@@ -411,7 +405,7 @@ export default function Home() {
     });
 
     try {
-      const result = await generateThumbnailImage(prompt, selectedNiche, selectedArchetype, aspectRatio, userPhotoUrl, session?.access_token || guestId);
+      const result = await generateThumbnailImage(prompt, selectedNiche, selectedArchetype, aspectRatio, userPhotoUrl, session?.access_token || guestId, inputs.title, inputs.topic, inputs.keywords);
       setImageUrl(result.imageUrl);
       setProvider(result.provider);
       
@@ -441,18 +435,7 @@ export default function Home() {
         });
       }
       
-      const critique = await analyzeThumbnailCTR(
-        result.imageUrl, 
-        inputs.title, 
-        inputs.topic, 
-        inputs.keywords, 
-        selectedNiche, 
-        selectedArchetype
-      );
-      setAnalysis(critique);
-      setShowCritique(true);
-
-      // Successfully generated: smooth transition to CTR Roast panel to showcase visual roasts!
+      // Successfully generated: smooth transition to visual blueprint tab!
       setTimeout(() => {
         setActiveTab('roast');
       }, 800);
@@ -496,7 +479,7 @@ export default function Home() {
     });
 
     try {
-      const result = await generateThumbnailImage(optimizedPrompt, selectedNiche, selectedArchetype, aspectRatio, userPhotoUrl, session?.access_token || guestId);
+      const result = await generateThumbnailImage(optimizedPrompt, selectedNiche, selectedArchetype, aspectRatio, userPhotoUrl, session?.access_token || guestId, inputs.title, inputs.topic, inputs.keywords);
       
       setImageUrl(result.imageUrl);
       setProvider(result.provider);
@@ -872,11 +855,7 @@ export default function Home() {
 
   const sidebarTabs = [
     { id: 'gallery', label: 'Projects', icon: FolderClosed, subText: 'Projects' },
-    { id: 'roast', label: 'CTR Roast', icon: Flame, subText: 'CTR Roast' },
     { id: 'simulator', label: 'Feed Preview', icon: Eye, subText: 'Preview' },
-    { id: 'upgrade', label: 'Upload & Audit', icon: UploadCloud, subText: 'Upload' },
-    { id: 'titles', label: 'Title Pairing', icon: TextQuote, subText: 'Titles' },
-    { id: 'analytics', label: 'Analytics', icon: TrendingUp, subText: 'Analytics' },
   ];
 
   if (activeTab === 'landing') {
@@ -953,39 +932,7 @@ export default function Home() {
             <span style={styles.logoText}>vignette.ai</span>
           </div>
 
-          {/* Central navigation links */}
-          {isDesktop && (
-            <nav style={styles.nav}>
-              <a 
-                href="#maker" 
-                onClick={(e) => { e.preventDefault(); setActiveTab('maker'); }} 
-                style={{ ...styles.navLink, ...(activeTab === 'maker' ? styles.navLinkActive : {}) }}
-              >
-                Create
-              </a>
-              <a 
-                href="#roast" 
-                onClick={(e) => { e.preventDefault(); setActiveTab('roast'); }} 
-                style={{ ...styles.navLink, ...(activeTab === 'roast' ? styles.navLinkActive : {}) }}
-              >
-                CTR Roast
-              </a>
-              <a 
-                href="#simulator" 
-                onClick={(e) => { e.preventDefault(); setActiveTab('simulator'); }} 
-                style={{ ...styles.navLink, ...(activeTab === 'simulator' ? styles.navLinkActive : {}) }}
-              >
-                Preview
-              </a>
-              <a 
-                href="#analytics" 
-                onClick={(e) => { e.preventDefault(); setActiveTab('analytics'); }} 
-                style={{ ...styles.navLink, ...(activeTab === 'analytics' ? styles.navLinkActive : {}) }}
-              >
-                Analytics
-              </a>
-            </nav>
-          )}
+
 
           {/* Right actions */}
           <div style={styles.headerActions}>
@@ -1176,7 +1123,7 @@ export default function Home() {
             {/* 2. Map other Quillbot-inspired tools with strong active/inactive differentiation */}
             {sidebarTabs.map((tab) => {
               const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
+              const isActive = activeTab === tab.id || (tab.id === 'simulator' && activeTab === 'roast');
               return (
                 <button
                   key={tab.id}
@@ -1209,7 +1156,6 @@ export default function Home() {
               );
             })}
 
-            <div style={{ flexGrow: 1 }} />
           </aside>
         )}
 
@@ -1414,89 +1360,108 @@ export default function Home() {
                   {/* Right Column: Interactive Thumbnail Preview or 3D Mascot */}
                   <div style={{ flex: 1.0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '380px', height: '100%' }}>
 
-                    {userPhotoUrl ? (
-                      /* === USER PHOTO SELECTION PREVIEW === */
-                      <div className="card-glass" style={{ width: '100%', maxWidth: '340px', display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', textAlign: 'center', animation: 'dropdownFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ffbe0b', animation: 'pulse 1.5s infinite' }}></div>
-                          <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Outfit, sans-serif' }}>Subject Photo Loaded</span>
-                        </div>
-
-                        <div style={{ position: 'relative', width: '110px', height: '110px', borderRadius: '16px', overflow: 'hidden', margin: '0 auto', border: '2.5px solid var(--color-primary-glow)', boxShadow: '0 8px 20px rgba(99, 102, 241, 0.12)' }}>
-                          <img 
-                            src={userPhotoUrl} 
-                            alt="Uploaded subject" 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                          />
-                        </div>
-
-                        <div>
-                          <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>AI Composite Source Active</h4>
-                          <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: '1.4', margin: 0 }}>
-                            Vignette AI will seamlessly extract this subject, apply professional rim lighting, and compose a premium high-CTR thumbnail layout.
-                          </p>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '10px', marginTop: '4px' }}>
-                          <button
-                            onClick={() => userPhotoInputRef.current?.click()}
-                            className="btn btn-secondary"
-                            style={{ fontSize: '11px', padding: '6px 12px' }}
-                          >
-                            Change Photo
-                          </button>
-                          <button
-                            onClick={handleClearUserPhoto}
-                            className="btn btn-danger"
-                            style={{ fontSize: '11px', padding: '6px 12px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.04)', color: 'var(--color-danger)' }}
-                          >
-                            ✕ Remove
-                          </button>
-                        </div>
+                    {isGenerating ? (
+                      <div style={{ width: '100%', maxWidth: '520px' }}>
+                        <Gallery 
+                          imageUrl={imageUrl} 
+                          isGenerating={isGenerating} 
+                          onAnalyze={() => {}}
+                          originalImageUrl={originalImageUrl}
+                          provider={provider}
+                          isOptimized={isOptimized}
+                          aspectRatio={aspectRatio}
+                          title={inputs.title}
+                          onSaveToLibrary={handleSaveToLibrary}
+                          isSaved={isSaved}
+                        />
                       </div>
                     ) : (
-                      /* === DEFAULT 3D MASCOT === */
                       <>
-                        {/* Premium glassmorphic speech bubble */}
-                        <div 
-                          className="floating-speech-bubble"
-                          style={{
-                            position: 'absolute',
-                            top: '0px',
-                            left: isDesktop ? '-20px' : '10px',
-                            zIndex: 10,
-                            background: 'rgba(239, 241, 249, 0.85)',
-                            backdropFilter: 'blur(20px)',
-                            border: '1px solid rgba(99, 102, 241, 0.12)',
-                            borderRadius: '16px 16px 4px 16px',
-                            padding: '8px 14px',
-                            maxWidth: '180px',
-                            boxShadow: '0 6px 18px rgba(99, 102, 241, 0.05)',
-                            pointerEvents: 'none'
-                          }}
-                        >
-                          <span style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary)', display: 'block', lineHeight: '1.35', fontFamily: 'Inter, sans-serif' }}>
-                            <strong style={{ color: 'var(--color-primary)' }}>Vigi:</strong> "Describe your topic on the left to craft art!"
-                          </span>
-                          {/* Little tail pointing towards the left */}
-                          <div style={{
-                            position: 'absolute',
-                            bottom: '8px',
-                            left: '-6px',
-                            width: '12px',
-                            height: '12px',
-                            background: '#eff1f9',
-                            borderLeft: '1px solid rgba(99, 102, 241, 0.12)',
-                            borderBottom: '1px solid rgba(99, 102, 241, 0.12)',
-                            transform: 'rotate(45deg)',
-                            zIndex: -1
-                          }}></div>
-                        </div>
+                        {userPhotoUrl ? (
+                          /* === USER PHOTO SELECTION PREVIEW === */
+                          <div className="card-glass" style={{ width: '100%', maxWidth: '340px', display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', textAlign: 'center', animation: 'dropdownFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ffbe0b', animation: 'pulse 1.5s infinite' }}></div>
+                              <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Outfit, sans-serif' }}>Subject Photo Loaded</span>
+                            </div>
 
-                        {/* The 3D Canvas mascot wrapper */}
-                        <div style={{ zIndex: 2, position: 'relative', width: '100%', maxWidth: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <ThreeMascot />
-                        </div>
+                            <div style={{ position: 'relative', width: '110px', height: '110px', borderRadius: '16px', overflow: 'hidden', margin: '0 auto', border: '2.5px solid var(--color-primary-glow)', boxShadow: '0 8px 20px rgba(99, 102, 241, 0.12)' }}>
+                              <img 
+                                src={userPhotoUrl} 
+                                alt="Uploaded subject" 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                              />
+                            </div>
+
+                            <div>
+                              <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>AI Composite Source Active</h4>
+                              <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: '1.4', margin: 0 }}>
+                                Vignette AI will seamlessly extract this subject, apply professional rim lighting, and compose a premium high-CTR thumbnail layout.
+                              </p>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', borderTop: '1px solid var(--border-subtle)', paddingTop: '10px', marginTop: '4px' }}>
+                              <button
+                                onClick={() => userPhotoInputRef.current?.click()}
+                                className="btn btn-secondary"
+                                style={{ fontSize: '11px', padding: '6px 12px' }}
+                              >
+                                Change Photo
+                              </button>
+                              <button
+                                onClick={handleClearUserPhoto}
+                                className="btn btn-danger"
+                                style={{ fontSize: '11px', padding: '6px 12px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.04)', color: 'var(--color-danger)' }}
+                              >
+                                ✕ Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* === DEFAULT 3D MASCOT === */
+                          <>
+                            {/* Premium glassmorphic speech bubble */}
+                            <div 
+                              className="floating-speech-bubble"
+                              style={{
+                                position: 'absolute',
+                                top: '0px',
+                                left: isDesktop ? '-20px' : '10px',
+                                zIndex: 10,
+                                background: 'rgba(239, 241, 249, 0.85)',
+                                backdropFilter: 'blur(20px)',
+                                border: '1px solid rgba(99, 102, 241, 0.12)',
+                                borderRadius: '16px 16px 4px 16px',
+                                padding: '8px 14px',
+                                maxWidth: '180px',
+                                boxShadow: '0 6px 18px rgba(99, 102, 241, 0.05)',
+                                pointerEvents: 'none'
+                              }}
+                            >
+                              <span style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary)', display: 'block', lineHeight: '1.35', fontFamily: 'Inter, sans-serif' }}>
+                                <strong style={{ color: 'var(--color-primary)' }}>Vigi:</strong> "Describe your topic on the left to craft art!"
+                              </span>
+                              {/* Little tail pointing towards the left */}
+                              <div style={{
+                                position: 'absolute',
+                                bottom: '8px',
+                                left: '-6px',
+                                width: '12px',
+                                height: '12px',
+                                background: '#eff1f9',
+                                borderLeft: '1px solid rgba(99, 102, 241, 0.12)',
+                                borderBottom: '1px solid rgba(99, 102, 241, 0.12)',
+                                transform: 'rotate(45deg)',
+                                zIndex: -1
+                              }}></div>
+                            </div>
+
+                            {/* The 3D Canvas mascot wrapper */}
+                            <div style={{ zIndex: 2, position: 'relative', width: '100%', maxWidth: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <ThreeMascot />
+                            </div>
+                          </>
+                        )}
                       </>
                     )}
 
@@ -1538,66 +1503,12 @@ export default function Home() {
               />
             )}
 
-            {/* ==============================================================
-                TAB 3: CTR ROAST / ANALYZER (Task 2.2 Visual Roast Panel)
-                ============================================================== */}
             {activeTab === 'roast' && (
               <div style={styles.mainCard}>
                 <div style={styles.roastContainer}>
-                  <div style={styles.workspaceHeader}>
-                    <h2 style={styles.workspaceTitle}>Visual CTR Roast Intelligence</h2>
-                    <p style={styles.workspaceDesc}>
-                      Vignette's deep vision grades highlight readability thresholds, safe-zones, and layout clashing factors instantly.
-                    </p>
-                  </div>
 
-                  {analysisError ? (
-                    /* Dynamic Graceful Error State */
-                    <div className="card-glass flex-center" style={{ flex: 1, minHeight: '400px', flexDirection: 'column', gap: '20px', padding: '40px', border: '1px solid rgba(239, 68, 68, 0.15)', background: 'linear-gradient(135deg, #ffffff 0%, rgba(239, 68, 68, 0.01) 100%)', textAlign: 'center' }}>
-                      <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <AlertTriangle size={28} color="var(--color-danger)" />
-                      </div>
-                      <div>
-                        <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                          Visual Roast Network Offline
-                        </h4>
-                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '380px', margin: '0 auto', lineHeight: '1.5' }}>
-                          {analysisError}
-                        </p>
-                      </div>
-                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                        <button 
-                          onClick={() => {
-                            setAnalysisError(null);
-                            handleGenerate();
-                          }}
-                          className="btn btn-primary"
-                          style={{ fontSize: '12.5px', padding: '10px 18px' }}
-                        >
-                          Retry Connection
-                        </button>
-                        <button 
-                          onClick={() => {
-                            setAnalysisError(null);
-                            const fallbackResult = getMockCTRScore(
-                              inputs.title, 
-                              selectedNiche, 
-                              selectedArchetype, 
-                              inputs.topic, 
-                              inputs.keywords
-                            );
-                            setAnalysis(fallbackResult);
-                            setShowCritique(true);
-                          }}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '12.5px', padding: '10px 18px' }}
-                        >
-                          Activate Local Sandbox
-                        </button>
-                      </div>
-                    </div>
-                  ) : isGenerating ? (
-                    /* AI Analyzing Loading State: "AI analyzing thumbnail..." (Scanner Effect) */
+                  {isGenerating ? (
+                    /* AI Analyzing Loading State */
                     <div className="card-glass flex-center" style={{ flex: 1, minHeight: '400px', flexDirection: 'column', gap: '24px', position: 'relative', overflow: 'hidden', padding: '40px' }}>
                       <div className="shimmer" style={{ position: 'absolute', inset: 0, opacity: 0.08 }}></div>
                       <div style={{
@@ -1615,10 +1526,10 @@ export default function Home() {
                       </div>
                       <div style={{ textAlign: 'center', zIndex: 1 }}>
                         <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                          AI Scanning Thumbnail...
+                          Synthesizing Layout Visuals...
                         </h3>
                         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '320px', margin: '0 auto', lineHeight: '1.5' }}>
-                          Vignette's visual intelligence engine is auditing layout grids, textsafe spaces, clashing contrast rates, and readability constraints.
+                          Applying Niche Color Rim Lighting and Text-Safe Negatives for extreme scroll-stopping layouts.
                         </p>
                       </div>
                       
@@ -1627,17 +1538,17 @@ export default function Home() {
                       </div>
                     </div>
                   ) : !imageUrl ? (
-                    /* Premium proactive Empty State to redirect creators */
+                    /* Empty State */
                     <div className="card-glass flex-center" style={{ flex: 1, minHeight: '400px', flexDirection: 'column', gap: '24px', padding: '40px', textAlign: 'center', background: 'linear-gradient(135deg, #ffffff 0%, rgba(99, 102, 241, 0.01) 100%)', border: '1px dashed rgba(99, 102, 241, 0.25)' }}>
                       <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--color-primary-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Flame size={32} color="var(--color-primary)" />
                       </div>
                       <div>
                         <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                          Director's Visual Critique is Empty
+                          Workspace is Empty
                         </h3>
                         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '380px', margin: '0 auto', lineHeight: '1.5' }}>
-                          No visual thumbnail asset is loaded in the workspace. Describe video concepts to generate layout elements, or upload catalogue drafts to run audits.
+                          No visual thumbnail asset is loaded in the workspace. Describe video concepts on the dashboard to generate layout elements.
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
@@ -1649,26 +1560,16 @@ export default function Home() {
                           <Sparkles size={14} />
                           Create New Blueprint
                         </button>
-                        <button 
-                          onClick={() => setActiveTab('upgrade')}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '12.5px', padding: '10px 18px' }}
-                        >
-                          <UploadCloud size={14} />
-                          Upload Catalogue Draft
-                        </button>
                       </div>
                     </div>
                   ) : (
-                    /* Standard Success State with split columns */
-                    <div style={{ ...styles.roastFlexGrid, minHeight: 'auto', alignItems: 'start' }}>
-                      
-                      {/* Left Column: Visual Preview */}
-                      <div style={{ flex: 1, minWidth: '280px' }}>
+                    /* Standard Success State - Beautiful Centered Layout */
+                    <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginTop: '8px' }}>
+                      <div style={{ width: '100%', maxWidth: '640px' }}>
                         <Gallery 
                           imageUrl={imageUrl} 
                           isGenerating={isGenerating} 
-                          onAnalyze={() => setActiveTab('roast')}
+                          onAnalyze={() => {}}
                           originalImageUrl={originalImageUrl}
                           provider={provider}
                           isOptimized={isOptimized}
@@ -1678,30 +1579,12 @@ export default function Home() {
                           isSaved={isSaved}
                         />
                       </div>
-
-                      {/* Right Column: Roast critique panel */}
-                      <div style={{ flex: 1.2, minWidth: '320px' }}>
-                        {analysis ? (
-                          <CTRAnalysisPanel 
-                            analysisData={analysis}
-                            onOptimize={handleOptimize}
-                            isOptimizing={isOptimizing}
-                            originalTitle={inputs.title}
-                            onSelectTitle={(t) => setInputs(prev => ({ ...prev, title: t }))}
-                          />
-                        ) : (
-                          <div className="card-glass flex-center" style={{ height: '320px', flexDirection: 'column' }}>
-                            <Flame size={32} color="var(--text-muted)" style={{ marginBottom: '12px' }} />
-                            <h4 style={{ color: 'var(--text-secondary)' }}>No Roast Log Loaded</h4>
-                          </div>
-                        )}
-                      </div>
-
                     </div>
                   )}
                 </div>
               </div>
             )}
+
 
             {/* ==============================================================
                 TAB 5: FEED SIMULATOR (Task 3.2 Youtube Feed Simulator)
@@ -1856,8 +1739,8 @@ export default function Home() {
                             className="btn btn-primary"
                             style={{ width: '100%', marginTop: '16px' }}
                           >
-                            <Flame size={14} />
-                            Full CTR Roast Score Review
+                            <Eye size={14} />
+                            View Thumbnail Blueprint
                           </button>
                         </div>
                       ) : (
@@ -2072,7 +1955,7 @@ export default function Home() {
         <nav style={styles.mobileBottomNav}>
           {sidebarTabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+            const isActive = activeTab === tab.id || (tab.id === 'simulator' && activeTab === 'roast');
             return (
               <button
                 key={tab.id}
@@ -2183,8 +2066,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    maxWidth: '1440px',
-    margin: '0 auto',
+    maxWidth: 'none',
   },
   logoGroup: {
     display: 'flex',
@@ -2277,16 +2159,18 @@ const styles = {
     flex: 1,
     height: '90vh',
     width: '100%',
-    maxWidth: '1440px',
-    margin: '0 auto',
-    padding: '0 24px',
+    maxWidth: 'none',
+    margin: '0',
+    padding: '0',
     overflow: 'hidden',
   },
   sidebar: {
     width: '96px',
+    height: '100%',
+    alignSelf: 'stretch',
     background: 'var(--bg-surface)',
-    border: '1px solid var(--border-subtle)',
-    borderRadius: '24px',
+    borderRight: '1px solid var(--border-subtle)',
+    borderRadius: '0',
     boxShadow: '0 10px 30px rgba(0, 0, 0, 0.03)',
     display: 'flex',
     flexDirection: 'column',
@@ -2295,8 +2179,8 @@ const styles = {
     paddingBottom: '24px',
     gap: '8px',
     flexShrink: 0,
-    marginTop: '16px',
-    marginBottom: '16px',
+    marginTop: '0',
+    marginBottom: '0',
   },
   sidebarItem: {
     width: '84px',
@@ -2346,7 +2230,7 @@ const styles = {
   },
   workspace: {
     flex: 1,
-    padding: '16px 0 16px 24px',
+    padding: '24px 32px',
     display: 'flex',
     flexDirection: 'column',
     overflowY: 'auto',
@@ -2357,7 +2241,7 @@ const styles = {
     border: 'none',
     borderRadius: 'none',
     boxShadow: 'none',
-    padding: '0 24px 16px 0',
+    padding: '0',
     width: '100%',
     minHeight: 'calc(90vh - 100px)',
     flex: 1,

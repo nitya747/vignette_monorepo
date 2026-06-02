@@ -41,6 +41,9 @@ export interface ImageGenerationPayload {
   aspectRatio?: '16:9' | '9:16' | '4:5';
   userId?: string;
   image?: string;
+  title?: string;
+  topic?: string;
+  keywords?: string;
 }
 
 export interface ImageGenerationResponse {

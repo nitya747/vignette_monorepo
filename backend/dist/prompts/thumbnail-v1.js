@@ -19,21 +19,7 @@ export const MOCK_THUMBNAILS = {};
  * Injects the selected aspect ratio to instruct the model on spatial layout.
  */
 export function compilePrompt({ title, topic, keywords, niche = 'default', archetype = 'default', aspectRatio = '16:9', learningModifiers = '', usePhoto = false }) {
-    const coreSubject = title || topic || '';
-    // Format aspect ratio text dynamically based on selection
-    let ratioText = 'Widescreen 16:9 aspect ratio.';
-    if (aspectRatio === '9:16') {
-        ratioText = 'Vertical 9:16 aspect ratio.';
-    }
-    else if (aspectRatio === '4:5') {
-        ratioText = 'Portrait 4:5 aspect ratio.';
-    }
-    // Construct the prompt using the exact user-specified template
-    let finalPrompt = `Generate a ${aspectRatio} professional youtube thumbnail for a youtube video with the topic: ${coreSubject}`;
-    if (learningModifiers) {
-        finalPrompt += `\n\n${learningModifiers}`;
-    }
-    return finalPrompt.trim();
+    return (title || topic || '').trim();
 }
 /**
  * Custom local mock image resolver (independent of large hardcoded objects)

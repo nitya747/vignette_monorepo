@@ -15,7 +15,10 @@ const generateSchema = z.object({
   niche: z.string().default('default'),
   archetype: z.string().default('default'),
   aspectRatio: z.enum(['16:9', '9:16', '4:5']).default('16:9'),
-  image: z.string().url('Reference image must be a valid public or signed URL.').nullable().optional()
+  image: z.string().url('Reference image must be a valid public or signed URL.').nullable().optional(),
+  title: z.string().optional().nullable(),
+  topic: z.string().optional().nullable(),
+  keywords: z.string().optional().nullable()
 });
 
 generateRouter.post(
@@ -27,7 +30,7 @@ generateRouter.post(
   validate(generateSchema),
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { prompt, niche, archetype, aspectRatio, image } = req.body;
+      const { prompt, niche, archetype, aspectRatio, image, title, topic, keywords } = req.body;
       const userId = req.user?.id;
       if (!userId) {
         res.status(401).json({ 
@@ -36,7 +39,17 @@ generateRouter.post(
         return;
       }
 
-      const result = await generateImage({ prompt, niche, archetype, aspectRatio, userId, image });
+      const result = await generateImage({ 
+        prompt, 
+        niche, 
+        archetype, 
+        aspectRatio, 
+        userId, 
+        image,
+        title: title || undefined,
+        topic: topic || undefined,
+        keywords: keywords || undefined
+      });
       
       let remainingCredits = undefined;
       if (userId) {

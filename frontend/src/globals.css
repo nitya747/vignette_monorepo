@@ -50,6 +50,10 @@
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html, body, #root {
   background-color: var(--bg-base) !important;
   color: var(--text-primary);
