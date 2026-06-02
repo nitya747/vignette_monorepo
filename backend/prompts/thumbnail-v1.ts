@@ -34,14 +34,29 @@ export function compilePrompt({
   usePhoto = false
 }: CompilePromptPayload): string {
   const coreSubject = title || topic || '';
+  
+  // Format aspect ratio text dynamically based on selection
+  let ratioText = 'Widescreen 16:9 aspect ratio.';
+  if (aspectRatio === '9:16') {
+    ratioText = 'Vertical 9:16 aspect ratio.';
+  } else if (aspectRatio === '4:5') {
+    ratioText = 'Portrait 4:5 aspect ratio.';
+  }
 
-  let finalPrompt = `A masterfully composed, high-impact YouTube thumbnail designed for maximum CTR and visual storytelling, centered entirely around the topic: ${coreSubject}.
+  // Construct the prompt using the exact user-specified template
+  let finalPrompt = `Create a high-CTR YouTube thumbnail for a video about ${coreSubject}
+  
+Bold headline: 3–5 words, large and readable
 
-- Composition: Create a powerful visual hierarchy with one dominant focal point that immediately grabs attention. Design the scene to naturally incorporate a clean, uncluttered zone of negative space anywhere in the frame, and include a text overlay.
-- Style & Mood: Adapt the visual style to perfectly match the tone of the topic (e.g., cinematic and moody for drama/essays, vibrant and high-energy for entertainment, sleek and premium for tech/business).
-- Lighting & Color: Use professional cinematic lighting, rich textures, and a high-contrast, vibrant color palette optimized to stand out on mobile screens. 
-- Multimodal Input: [If a reference image is attached, seamlessly replicate its core artistic style, color grading, and structural composition while applying it to this new topic.]
-- Execution: Ultra-sharp focus, studio quality, ${aspectRatio}.`;
+High contrast colors (bright text on dark background)
+
+One strong focal point (expressive face, key object, or dramatic scene)
+
+Clean, uncluttered layout, ${aspectRatio}
+
+Professional lighting, vibrant colors
+
+[Optional: Keep style consistent with attached reference image, but adapt to ${coreSubject}.]`;
 
   if (learningModifiers) {
     finalPrompt += `\n\n${learningModifiers}`;
