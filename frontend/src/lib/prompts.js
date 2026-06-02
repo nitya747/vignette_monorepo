@@ -171,9 +171,21 @@ function extractVisualSubject(title) {
  * Compiles a structured, highly psychological prompt optimized for high CTR
  */
 export function compilePrompt({ title, topic, keywords, niche, archetype, aspectRatio = '16:9', learningModifiers = '', usePhoto = false }) {
-  // Direct raw prompting: let the image model interpret the visual description naturally
-  const prompt = title || topic || '';
-  return prompt.trim();
+  const coreSubject = title || topic || '';
+
+  let finalPrompt = `A masterfully composed, high-impact YouTube thumbnail designed for maximum CTR and visual storytelling, centered entirely around the topic: ${coreSubject}.
+
+- Composition: Create a powerful visual hierarchy with one dominant focal point that immediately grabs attention. Design the scene to naturally incorporate a clean, uncluttered zone of negative space anywhere in the frame, and include a text overlay.
+- Style & Mood: Adapt the visual style to perfectly match the tone of the topic (e.g., cinematic and moody for drama/essays, vibrant and high-energy for entertainment, sleek and premium for tech/business).
+- Lighting & Color: Use professional cinematic lighting, rich textures, and a high-contrast, vibrant color palette optimized to stand out on mobile screens. 
+- Multimodal Input: [If a reference image is attached, seamlessly replicate its core artistic style, color grading, and structural composition while applying it to this new topic.]
+- Execution: Ultra-sharp focus, studio quality, ${aspectRatio}.`;
+
+  if (learningModifiers) {
+    finalPrompt += `\n\n${learningModifiers}`;
+  }
+
+  return finalPrompt.trim();
 }
 
 /**
