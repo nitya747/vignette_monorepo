@@ -30,7 +30,7 @@ export async function generateImage(payload: ImageGenerationPayload): Promise<Im
     return {
       imageUrl: payload.image || mockUrl,
       revisedPrompt: payload.prompt,
-      provider: 'Mock Engine (gemini-25-flash-image Sandbox Fallback)',
+      provider: 'Mock Engine (gemini-3.1-flash-image-preview Sandbox Fallback)',
       latencyMs: 100
     };
   }
@@ -61,7 +61,7 @@ export async function generateImage(payload: ImageGenerationPayload): Promise<Im
     return {
       imageUrl: payload.image || mockUrl,
       revisedPrompt: payload.prompt,
-      provider: 'Mock Engine (gemini-25-flash-image Sandbox Fallback - API Timeout)',
+      provider: 'Mock Engine (gemini-3.1-flash-image-preview Sandbox Fallback - API Timeout)',
       latencyMs: 120
     };
   }

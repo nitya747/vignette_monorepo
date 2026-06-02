@@ -44,19 +44,7 @@ export function compilePrompt({
   }
 
   // Construct the prompt using the exact user-specified template
-  let finalPrompt = `Create a high-CTR YouTube thumbnail for a video about ${coreSubject}
-  
-Bold headline: 3–5 words, large and readable
-
-High contrast colors (bright text on dark background)
-
-One strong focal point (expressive face, key object, or dramatic scene)
-
-Clean, uncluttered layout, ${aspectRatio}
-
-Professional lighting, vibrant colors
-
-[Optional: Keep style consistent with attached reference image, but adapt to ${coreSubject}.]`;
+  let finalPrompt = `Generate a ${aspectRatio} professional youtube thumbnail for a youtube video with the topic: ${coreSubject}`;
 
   if (learningModifiers) {
     finalPrompt += `\n\n${learningModifiers}`;

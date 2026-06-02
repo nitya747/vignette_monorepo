@@ -55,7 +55,7 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
     return {
       imageUrl: data.imageUrl,
       revisedPrompt: data.revisedPrompt || prompt,
-      provider: data.provider || 'fal.ai (gemini-25-flash-image)',
+      provider: data.provider || 'fal.ai (gemini-3.1-flash-image-preview)',
       remainingCredits: data.remainingCredits
     };
   } catch (error) {

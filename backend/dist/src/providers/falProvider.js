@@ -19,7 +19,7 @@ export class FalProvider {
         }
         const compiledPrompt = compilePrompt({ title: prompt, niche, archetype, aspectRatio, learningModifiers, usePhoto: !!image });
         const startTime = Date.now();
-        const endpoint = image ? 'https://fal.run/fal-ai/gemini-25-flash-image/edit' : 'https://fal.run/fal-ai/gemini-25-flash-image';
+        const endpoint = image ? 'https://fal.run/fal-ai/gemini-3.1-flash-image-preview/edit' : 'https://fal.run/fal-ai/gemini-3.1-flash-image-preview';
         const body = {
             prompt: compiledPrompt,
             sync_mode: true,
@@ -52,7 +52,7 @@ export class FalProvider {
         return {
             imageUrl: data.images[0].url,
             revisedPrompt: data.revised_prompt || compiledPrompt,
-            provider: image ? 'fal.ai (gemini-25-flash-image/edit)' : 'fal.ai (gemini-25-flash-image)',
+            provider: image ? 'fal.ai (gemini-3.1-flash-image-preview/edit)' : 'fal.ai (gemini-3.1-flash-image-preview)',
             latencyMs
         };
     }
