@@ -37,7 +37,7 @@ export class FalProvider {
             body.image_urls = [image];
         }
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout for image generation
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for image generation
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: {

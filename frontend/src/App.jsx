@@ -123,6 +123,7 @@ export default function Home() {
   const [originalImageUrl, setOriginalImageUrl] = useState('');
   const [provider, setProvider] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isCooldown, setIsCooldown] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isOptimized, setIsOptimized] = useState(false);
   
@@ -409,6 +410,12 @@ export default function Home() {
       setImageUrl(result.imageUrl);
       setProvider(result.provider);
       
+      // Warn user if we fell back to a mock image due to an API error
+      if (result.provider && result.provider.startsWith('API Error Fallback')) {
+        console.warn('[Generate] API Error Fallback detected:', result.provider);
+        showToast('Image generation encountered an error — showing a placeholder. Check console for details.', 'error');
+      }
+      
       if (result.remainingCredits !== undefined) {
         setCredits(result.remainingCredits);
         if (result.remainingCredits === 0) {
@@ -449,6 +456,10 @@ export default function Home() {
       }
     } finally {
       setIsGenerating(false);
+      setIsCooldown(true);
+      setTimeout(() => {
+        setIsCooldown(false);
+      }, 3000);
     }
   };
 
@@ -1292,7 +1303,7 @@ export default function Home() {
                         {/* Generate button */}
                         <button
                           onClick={handleGenerate}
-                          disabled={isGenerating || !inputs.title.trim()}
+                          disabled={isGenerating || isCooldown || !inputs.title.trim()}
                           className="btn btn-primary"
                           style={{ background: 'var(--color-primary)', color: '#ffffff', border: 'none', borderRadius: '16px', padding: '12px 26px', fontSize: '13.5px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', boxShadow: '0 4px 14px rgba(99, 102, 241, 0.25)', transition: 'all 0.2s' }}
                         >
@@ -1300,6 +1311,10 @@ export default function Home() {
                             <>
                               <span style={styles.btnSpinner}></span>
                               Generat...
+                            </>
+                          ) : isCooldown ? (
+                            <>
+                              Cooldown...
                             </>
                           ) : (
                             <>

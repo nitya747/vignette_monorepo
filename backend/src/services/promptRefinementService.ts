@@ -24,8 +24,7 @@ export async function refinePromptWithLLM(payload: CompilePromptPayload): Promis
   const isKeyAvailable = config.visionApiKey && config.visionApiKey !== 'your_openai_api_key_here' && config.visionApiKey.trim() !== '';
   
   if (!isKeyAvailable) {
-    console.log('[promptRefinementService] OpenAI key not configured. Using high-fidelity local prompt builder fallback.');
-    return compileLocalFallback(payload);
+    throw new Error('LLM prompt refinement API key (VISION_API_KEY) is missing or not configured.');
   }
 
   const { title, topic, keywords, niche = 'gaming', archetype = 'hero', aspectRatio = '16:9', learningModifiers = '', usePhoto = false } = payload;
@@ -34,64 +33,79 @@ export async function refinePromptWithLLM(payload: CompilePromptPayload): Promis
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout for Layer 1 prompt refinement
+    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s timeout for Layer 1 prompt refinement
 
     const key = config.visionApiKey!.trim();
     const isGemini = key.startsWith('AQ.') || key.startsWith('AIzaSy');
 
-    let response;
-    if (isGemini) {
-      // Direct call to Gemini AI Studio generateContent endpoint
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${key}`;
-      response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: userContent }]
-            }
-          ],
-          systemInstruction: {
-            parts: [{ text: DEFAULT_MASTER_PROMPT }]
+    let response: any = null;
+    let attempt = 0;
+    const maxAttempts = 3;
+
+    while (attempt < maxAttempts) {
+      if (isGemini) {
+        // Direct call to Gemini AI Studio generateContent endpoint
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          generationConfig: {
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: userContent }]
+              }
+            ],
+            systemInstruction: {
+              parts: [{ text: DEFAULT_MASTER_PROMPT }]
+            },
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 8192
+            }
+          }),
+          signal: controller.signal as any
+        });
+      } else {
+        // Call OpenAI endpoint
+        response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${key}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: DEFAULT_MASTER_PROMPT },
+              { role: 'user', content: userContent }
+            ],
             temperature: 0.7,
-            maxOutputTokens: 8192
-          }
-        }),
-        signal: controller.signal as any
-      });
-    } else {
-      // Call OpenAI endpoint
-      response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${key}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: DEFAULT_MASTER_PROMPT },
-            { role: 'user', content: userContent }
-          ],
-          temperature: 0.7,
-          max_tokens: 500
-        }),
-        signal: controller.signal as any
-      });
+            max_tokens: 500
+          }),
+          signal: controller.signal as any
+        });
+      }
+
+      if (response && response.status === 429) {
+        attempt++;
+        if (attempt < maxAttempts) {
+          const delay = Math.pow(2, attempt) * 1000; // 2000ms, 4000ms
+          console.warn(`[promptRefinementService] API rate limited (429). Retrying in ${delay}ms (attempt ${attempt}/${maxAttempts})...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+      }
+      break;
     }
 
     clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.warn(`[promptRefinementService] LLM API completions failed (${response.status}: ${errorText}). Falling back to local builder.`);
-      return compileLocalFallback(payload);
+    if (!response || !response.ok) {
+      const errorText = response ? await response.text() : 'No response from LLM provider';
+      throw new Error(`LLM prompt refinement API failed (${response ? response.status : 'N/A'}): ${errorText}`);
     }
 
     const data: any = await response.json();
@@ -104,14 +118,13 @@ export async function refinePromptWithLLM(payload: CompilePromptPayload): Promis
     }
 
     if (!refined || refined.trim() === '') {
-      console.warn('[promptRefinementService] LLM returned empty completion. Falling back to local builder.');
-      return compileLocalFallback(payload);
+      throw new Error('LLM prompt refinement returned an empty completion.');
     }
 
     return refined.trim();
   } catch (error: any) {
-    console.warn(`[promptRefinementService] LLM prompt compilation error (${error?.message || error}). Falling back to local builder.`);
-    return compileLocalFallback(payload);
+    console.error(`[promptRefinementService] LLM prompt compilation error:`, error?.message || error);
+    throw error;
   }
 }
 

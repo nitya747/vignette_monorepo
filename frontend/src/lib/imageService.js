@@ -35,7 +35,10 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45-second timeout for image generation
+    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90-second timeout for image generation
+
+    // Strip local blob URLs — fal.ai cannot fetch them. Only send https:// or data: URLs.
+    const safeImage = image && !image.startsWith('blob:') ? image : null;
 
     const response = await fetch('/api/generate', {
       method: 'POST',
@@ -45,7 +48,7 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
         niche, 
         archetype, 
         aspectRatio, 
-        image,
+        image: safeImage,
         title: title || undefined,
         topic: topic || undefined,
         keywords: keywords || undefined
@@ -57,7 +60,7 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
 
     if (!response.ok) {
       const errBody = await response.json().catch(() => ({}));
-      throw new Error(errBody.error || 'Image generation endpoint reported an error');
+      throw new Error(`[${response.status}] ${errBody.error || 'Image generation endpoint reported an error'}`);
     }
 
     const data = await response.json();
@@ -68,15 +71,20 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
       remainingCredits: data.remainingCredits
     };
   } catch (error) {
-    console.error('Failed to generate image via live API, falling back to mock:', error);
+    const errMsg = error?.message || String(error);
+    console.error('[imageService] Failed to generate image via live API:', errMsg);
     // Propagate credit restriction errors immediately so they are handled by the UI
-    if (error.message.includes('credits') || error.message.includes('Insufficient') || error.message.includes('top up')) {
+    if (errMsg.includes('credits') || errMsg.includes('Insufficient') || errMsg.includes('top up')) {
       throw error;
+    }
+    // Propagate auth errors so the UI can prompt sign-in
+    if (errMsg.includes('401') || errMsg.includes('Authentication') || errMsg.includes('Unauthorized')) {
+      throw new Error('Authentication required. Please sign in again.');
     }
     return {
       imageUrl: image || getMockImageUrl(niche, archetype, aspectRatio),
       revisedPrompt: prompt,
-      provider: 'API Error Fallback (Mock)'
+      provider: `API Error Fallback (Mock) — ${errMsg.substring(0, 80)}`
     };
   }
 }
@@ -96,7 +104,7 @@ export async function analyzeThumbnailCTR(imageBlobOrUrl, title, topic, keywords
   // Phase 4 Live Integration Route
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000); // 45-second timeout for vision analysis
+    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90-second timeout for vision analysis
 
     const response = await fetch('/api/analyze', {
       method: 'POST',

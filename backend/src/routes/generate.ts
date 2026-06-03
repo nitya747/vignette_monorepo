@@ -15,7 +15,7 @@ const generateSchema = z.object({
   niche: z.string().default('default'),
   archetype: z.string().default('default'),
   aspectRatio: z.enum(['16:9', '9:16', '4:5']).default('16:9'),
-  image: z.string().url('Reference image must be a valid public or signed URL.').nullable().optional(),
+  image: z.string().min(1).nullable().optional(),
   title: z.string().optional().nullable(),
   topic: z.string().optional().nullable(),
   keywords: z.string().optional().nullable()
@@ -30,7 +30,9 @@ generateRouter.post(
   validate(generateSchema),
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { prompt, niche, archetype, aspectRatio, image, title, topic, keywords } = req.body;
+      const { prompt, niche, archetype, aspectRatio, image: rawImage, title, topic, keywords } = req.body;
+      // Strip blob: and data: URIs — fal.ai can only fetch public https:// URLs
+      const image = rawImage && rawImage.startsWith('https://') ? rawImage : null;
       const userId = req.user?.id;
       if (!userId) {
         res.status(401).json({ 

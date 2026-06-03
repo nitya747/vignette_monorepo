@@ -52,7 +52,14 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
   try {
     const { data: { user }, error } = await supabase.auth.getUser(token);
     if (error || !user) {
-      console.warn('[Auth Middleware] Supabase getUser failed for token (Length:', token.length, '):', token.substring(0, 30), '... Error:', error?.message || 'No user found');
+      console.warn('[Auth Middleware] Supabase getUser failed for token:', error?.message || 'No user found');
+      // Fallback: create a deterministic guest-style ID from token hash so user isn't completely blocked
+      const tokenHash = token.substring(token.length - 16).replace(/[^a-zA-Z0-9]/g, '0');
+      req.user = {
+        id: `guest-unverified-${tokenHash}`,
+        email: undefined,
+        isAnonymous: true
+      };
       return next();
     }
 
@@ -63,6 +70,13 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
     };
   } catch (error) {
     console.error('[Auth Middleware] JWT parsing failed:', error);
+    // Fallback to anonymous guest on parsing errors too
+    const tokenHash = token.substring(token.length - 16).replace(/[^a-zA-Z0-9]/g, '0');
+    req.user = {
+      id: `guest-error-${tokenHash}`,
+      email: undefined,
+      isAnonymous: true
+    };
   }
 
   next();
