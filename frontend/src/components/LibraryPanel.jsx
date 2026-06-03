@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, Calendar, Eye, Trash2, ChevronLeft, ChevronRight, FolderOpen, LogIn, Edit3, Download, ArrowLeft } from 'lucide-react';
+import { Sparkles, Calendar, Trash2, ChevronLeft, ChevronRight, FolderOpen, LogIn, Edit3, Download, ArrowLeft } from 'lucide-react';
 
 export default function LibraryPanel({ session, onSelect, onOpenAuth, onBack }) {
   const [items, setItems] = useState([]);
@@ -293,17 +293,6 @@ export default function LibraryPanel({ session, onSelect, onOpenAuth, onBack }) 
                       style={styles.image}
                     />
                     
-                    {/* Visual CTR Score Badge */}
-                    {item.analysis && (
-                      <div style={{
-                        ...styles.scoreBadge,
-                        background: item.analysis.score >= 80 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ff8138 0%, #ffbe0b 100%)'
-                      }}>
-                        <Eye size={10} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                        <span>{item.analysis.score}% CTR</span>
-                      </div>
-                    )}
-
                     {/* Download overlay button */}
                     <button 
                       onClick={(e) => handleDownloadThumbnail(e, item)}

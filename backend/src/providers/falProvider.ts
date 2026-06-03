@@ -76,7 +76,7 @@ export class FalProvider implements BaseImageProvider {
     return {
       imageUrl: data.images[0].url,
       revisedPrompt: data.revised_prompt || compiledPrompt,
-      provider: image ? 'fal.ai (gemini-3.1-flash-image-preview/edit)' : 'fal.ai (gemini-3.1-flash-image-preview)',
+      provider: 'fal.ai',
       latencyMs
     };
   }

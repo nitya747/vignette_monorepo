@@ -84,7 +84,9 @@ export default function Gallery({
       <div style={styles.header}>
         <div style={styles.titleGroup}>
           <h3 style={styles.title}>{isShorts ? 'Generated Shorts Blueprint' : 'Generated Thumbnail Blueprint'}</h3>
-          <span className="badge badge-primary">{provider || 'AI Engine'}</span>
+          {provider && !provider.toLowerCase().includes('fal.ai') && (
+            <span className="badge badge-primary">{provider}</span>
+          )}
         </div>
         
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>

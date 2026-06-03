@@ -34,7 +34,7 @@ export async function refinePromptWithLLM(payload) {
         while (attempt < maxAttempts) {
             if (isGemini) {
                 // Direct call to Gemini AI Studio generateContent endpoint
-                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${key}`;
                 response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
