@@ -760,17 +760,17 @@ export default function Home() {
               <button
                 onClick={() => { setActiveTab('maker'); handleReset(); }}
                 style={{
-                  width: '84px',
-                  height: '84px',
+                  width: '110px',
+                  height: '110px',
                   background: '#FF5B37',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '18px',
+                  borderRadius: '22px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '4px',
+                  gap: '8px',
                   cursor: 'pointer',
                   boxShadow: '0 8px 20px rgba(255, 91, 55, 0.25)',
                   transition: 'all 0.15s ease',
@@ -783,25 +783,25 @@ export default function Home() {
                 {/* Hand-drawn style inner border */}
                 <div style={{
                   position: 'absolute',
-                  inset: '5px',
-                  border: '1.5px dashed rgba(255, 255, 255, 0.65)',
-                  borderRadius: '13px',
+                  inset: '7px',
+                  border: '1.8px dashed rgba(255, 255, 255, 0.65)',
+                  borderRadius: '16px',
                   pointerEvents: 'none'
                 }}></div>
 
                 <div style={{
-                  border: '1.5px solid #ffffff',
-                  borderRadius: '6px',
-                  width: '24px',
-                  height: '24px',
+                  border: '1.8px solid #ffffff',
+                  borderRadius: '8px',
+                  width: '30px',
+                  height: '30px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   zIndex: 2
                 }}>
-                  <Plus size={16} strokeWidth={3.5} />
+                  <Plus size={20} strokeWidth={3.5} />
                 </div>
-                <span style={{ fontSize: '13px', fontWeight: 800, zIndex: 2 }}>New</span>
+                <span style={{ fontSize: '14px', fontWeight: 800, zIndex: 2 }}>New</span>
               </button>
             </div>
           </div>
