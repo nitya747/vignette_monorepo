@@ -720,17 +720,43 @@ const styles = {
     gap: '8px'
   },
   heroSection: {
+    position: 'relative',
+    zIndex: 1,
     padding: '80px 24px 60px 24px',
+    width: '100%',
+  },
+  heroContainer: {
+    display: 'grid',
+    gridTemplateColumns: '1.2fr 0.8fr',
+    gap: '64px',
+    alignItems: 'center',
     maxWidth: '1200px',
     margin: '0 auto',
     width: '100%',
+  },
+  heroLeft: {
     display: 'flex',
     flexDirection: 'column',
+    gap: '24px',
+    textAlign: 'left',
+  },
+  launchBadge: {
+    display: 'inline-flex',
+    alignSelf: 'flex-start',
     alignItems: 'center',
-    textAlign: 'center',
-    gap: '36px',
-    position: 'relative',
-    zIndex: 1,
+    gap: '6px',
+    background: 'var(--color-primary-glow)',
+    border: '1px solid rgba(99, 102, 241, 0.15)',
+    borderRadius: '20px',
+    padding: '6px 14px',
+  },
+  launchBadgeText: {
+    fontSize: '10px',
+    fontWeight: 800,
+    textTransform: 'uppercase',
+    color: 'var(--color-primary)',
+    letterSpacing: '0.05em',
+    fontFamily: "'Fredoka', sans-serif"
   },
   heroTitle: {
     fontSize: 'clamp(38px, 6vw, 56px)',
@@ -1044,6 +1070,14 @@ const styles = {
     transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
     cursor: 'pointer',
     overflow: 'hidden'
+  },
+  cardGlowBorder: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: '24px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    pointerEvents: 'none',
+    zIndex: 1,
   },
   featureIconBox: {
     width: '48px',
