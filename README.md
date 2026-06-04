@@ -9,10 +9,8 @@ Vignette.ai is a modern web application designed for YouTube creators to generat
 ## 🌟 Key Features
 
 *   **Interactive 3D Mascot (`Three.js`)**: A procedural 3D camera mascot on the landing page that dynamically tracks the user's cursor, floats organically, and projects interactive drop shadows to create a playful, high-depth visual introduction.
-*   **YouTube Metadata Extraction**: Automatically fetch the title, description, and keywords of any live video using just a YouTube URL, instantly prepping your design workspace.
 *   **AI-Powered Thumbnail Generation**: Generate custom thumbnails mapped to targeted YouTube **Niches** (Gaming, Finance, Documentary, Tech, Fitness, Education) and structured **Design Archetypes** (Reaction, Versus, Hero, Question) powered by high-fidelity image models (via `fal.ai`).
-*   **Automated CTR Critique & Analysis**: An AI vision director (powered by OpenAI Vision API) evaluates the final layout, scores its CTR potential, generates an attention hierarchy (Primary, Secondary, Tertiary), lists strengths/weaknesses, highlights layout flaws (like safe-zone violations), and roasts composition issues.
-*   **Contextual Title Recommendations**: Receive three hand-crafted, high-intrigue, bespoke titles optimized to pair seamlessly with your generated thumbnail composition.
+*   **Automated CTR Critique & Analysis**: An AI vision director (powered by OpenAI Vision API) evaluates the final layout, scores its CTR potential, generates an attention hierarchy (Primary, Secondary, Tertiary), lists strengths/weaknesses, and highlights layout flaws (like safe-zone violations).
 *   **YouTube Live Preview Canvas**: Toggle mockup mock templates to preview exactly how your thumbnail appears on the real YouTube Home Feed, Watch Page sidebar, search results, and mobile layouts before downloading.
 *   **User Library & Sandbox History**: Keep track of generated assets and past critiques using a local fallback database or a production Supabase project schema.
 
@@ -37,8 +35,8 @@ vignette_monorepo/
 │   │   ├── config/         # Environment variables & configurations
 │   │   ├── middleware/     # Rate limiter, auth parser, error handlers, Zod validation
 │   │   ├── providers/      # External client wrappers (OpenAI, Fal, Mock fallback)
-│   │   ├── routes/         # Router mounts (generate, analyze, extract, history)
-│   │   └── services/       # Image generation, analysis, and metadata extraction logic
+│   │   ├── routes/         # Router mounts (generate, analyze, history)
+│   │   └── services/       # Image generation and analysis logic
 │   ├── Dockerfile
 │   ├── railway.json
 │   └── package.json
@@ -64,9 +62,8 @@ vignette_monorepo/
 *   **Caching & Rate Limiting**: Upstash Redis & `@upstash/ratelimit`
 *   **Logging**: Pino HTTP (with `pino-pretty` console colors)
 *   **AI Integrations**:
-    *   **OpenAI GPT-4o Vision**: Image critique, attention mapping, title recommendations
+    *   **OpenAI GPT-4o Vision**: Image critique and attention mapping
     *   **Fal.ai**: Prompt-to-image and image-to-image Generation (Flux / SDXL models)
-*   **Metadata**: `node-fetch` for YouTube metadata retrieval
 
 ---
 
