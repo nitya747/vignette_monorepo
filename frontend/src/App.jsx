@@ -1554,7 +1554,7 @@ export default function Home() {
                                   background: 'var(--color-secondary)'
                                 }}></div>
                                 {/* Text inside Mug */}
-                                <span style={{ fontSize: '7.5px', fontWeight: 900, color: '#ffffff', fontFamily: "'Fredoka', sans-serif", textTransform: 'uppercase', letterSpacing: '0.02em', textAlign: 'center', lineHeight: '1.2' }}>Good Ideas Loading</span>
+                                <span style={{ fontSize: '7px', fontWeight: 800, color: '#ffffff', fontFamily: "'Plus Jakarta Sans', sans-serif", textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'center', lineHeight: '1.2' }}>Good Ideas Loading</span>
                                 {/* Progress bar inside Mug */}
                                 <div style={{ width: '48px', height: '6px', background: 'rgba(255,255,255,0.2)', border: '1.2px solid rgba(18, 27, 51, 0.15)', borderRadius: '3px', overflow: 'hidden', marginTop: '4px', display: 'flex', alignItems: 'center' }}>
                                   <div style={{ width: '65%', height: '100%', background: '#F2CC8F' }}></div>
