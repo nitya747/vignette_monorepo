@@ -1,8 +1,8 @@
 # Vignette.ai 🎨🎥
 
-> **AI-Powered YouTube Thumbnail Director & CTR Performance Optimizer**
+> **AI-Powered YouTube Thumbnail Director**
 
-Vignette.ai is a modern web application designed for YouTube creators to generate high-performing thumbnails and analyze their CTR (Click-Through Rate) potential. By blending AI-driven image generation, computer vision critique, and real-time template testing, Vignette.ai acts as a virtual art director to help creators stand out in the crowded YouTube feed.
+Vignette.ai is a modern web application designed for YouTube creators to generate high-performing thumbnails. By blending AI-driven image generation and real-time template testing, Vignette.ai acts as a virtual art director to help creators stand out in the crowded YouTube feed.
 
 ---
 
@@ -10,9 +10,9 @@ Vignette.ai is a modern web application designed for YouTube creators to generat
 
 *   **Interactive 3D Mascot (`Three.js`)**: A procedural 3D camera mascot on the landing page that dynamically tracks the user's cursor, floats organically, and projects interactive drop shadows to create a playful, high-depth visual introduction.
 *   **AI-Powered Thumbnail Generation**: Generate custom thumbnails powered by high-fidelity image models (via `fal.ai`).
-*   **Automated CTR Critique & Analysis**: An AI vision director (powered by OpenAI Vision API) evaluates the final layout, scores its CTR potential, generates an attention hierarchy (Primary, Secondary, Tertiary), lists strengths/weaknesses, and highlights layout flaws (like safe-zone violations).
 *   **YouTube Live Preview Canvas**: Toggle mockup mock templates to preview exactly how your thumbnail appears on the real YouTube Home Feed, Watch Page sidebar, search results, and mobile layouts before downloading.
-*   **User Library & Sandbox History**: Keep track of generated assets and past critiques using a local fallback database or a production Supabase project schema.
+*   **Credit-Based Access**: Operates on a credit-based system, providing 5 free credits for non-premium users.
+*   **User Library & Sandbox History**: Keep track of generated assets using a local fallback database or a production Supabase project schema.
 
 ---
 
@@ -35,8 +35,8 @@ vignette_monorepo/
 │   │   ├── config/         # Environment variables & configurations
 │   │   ├── middleware/     # Rate limiter, auth parser, error handlers, Zod validation
 │   │   ├── providers/      # External client wrappers (OpenAI, Fal, Mock fallback)
-│   │   ├── routes/         # Router mounts (generate, analyze, history)
-│   │   └── services/       # Image generation and analysis logic
+│   │   ├── routes/         # Router mounts (generate, history)
+│   │   └── services/       # Image generation logic
 │   ├── Dockerfile
 │   ├── railway.json
 │   └── package.json
@@ -62,7 +62,6 @@ vignette_monorepo/
 *   **Caching & Rate Limiting**: Upstash Redis & `@upstash/ratelimit`
 *   **Logging**: Pino HTTP (with `pino-pretty` console colors)
 *   **AI Integrations**:
-    *   **OpenAI GPT-4o Vision**: Image critique and attention mapping
     *   **Fal.ai**: Prompt-to-image and image-to-image Generation (Flux / SDXL models)
 
 ---
@@ -89,7 +88,6 @@ NODE_ENV=development
 
 # 1. AI APIs
 FAL_KEY=your_fal_api_key
-VISION_API_KEY=your_openai_api_key
 
 # 2. Redis Cache & Rate Limiting (Upstash)
 UPSTASH_REDIS_REST_URL=your_upstash_redis_rest_url
@@ -108,7 +106,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 > [!NOTE]
-> **Graceful Failbacks**: If API keys or databases are omitted, the application runs in a local sandbox mode using mocks. The generation will use high-quality placeholder layouts, and the critique engine will trigger a local rules-based visual analysis, remaining 100% usable for local debugging.
+> **Graceful Failbacks**: If API keys or databases are omitted, the application runs in a local sandbox mode using mocks. The generation will use high-quality placeholder layouts, remaining 100% usable for local debugging.
 
 ### 3. Run Locally
 Start the server and frontend concurrently from the root directory:
