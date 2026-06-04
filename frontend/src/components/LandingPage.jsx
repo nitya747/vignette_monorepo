@@ -1,27 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { 
   Sparkles, 
-  Flame, 
   Eye, 
-  UploadCloud, 
-  TextQuote, 
   FolderClosed, 
-  ChevronRight, 
   ArrowRight,
-  Shield,
   Layers,
-  CheckCircle2,
-  Tv
+  CheckCircle2
 } from 'lucide-react';
 import ThreeMascot from './ThreeMascot';
 
 export default function LandingPage({ 
   user, 
   onStartCreating, 
-  setIsAuthOpen, 
-  setActiveTab 
+  setIsAuthOpen
 }) {
   const [quickPrompt, setQuickPrompt] = useState('');
 
@@ -144,7 +137,7 @@ export default function LandingPage({
               <span className="pixel-accent-headline" style={styles.titleGradientText}>
                 Thumbnail Director.
               </span>
-              <span style={{ display: 'block', fontSize: '20px', fontWeight: 600, color: 'var(--text-secondary)', marginTop: '16px', lineHeight: '1.4', fontFamily: "'Inter', sans-serif" }}>
+              <span style={{ display: 'block', fontSize: '20px', fontWeight: 600, color: 'var(--text-secondary)', marginTop: '16px', lineHeight: '1.4', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 Predict visual performance, audit safe-zones, and unlock +18% higher click-through rates.
               </span>
             </h1>
@@ -196,7 +189,7 @@ export default function LandingPage({
             {/* Interactive floating dialogue */}
             <div className="floating-speech-bubble float-subtle" style={styles.speechBubble}>
               <span style={styles.speechText}>
-                <strong style={{ color: 'var(--color-primary)' }}>Vigi:</strong> "Give me your video headline, and I will scan boundaries, test legibility, and render maximum click retention!"
+                <strong style={{ color: 'var(--color-primary)' }}>Vigi:</strong> "What are we creating today? Describe your video idea..."
               </span>
               <div style={styles.speechTail} />
             </div>
@@ -587,7 +580,7 @@ const styles = {
     position: 'relative',
     overflowX: 'hidden',
     color: 'var(--text-primary)',
-    fontFamily: "'Inter', sans-serif"
+    fontFamily: "'Plus Jakarta Sans', sans-serif"
   },
   backgroundGrid: {
     position: 'absolute',
@@ -602,7 +595,7 @@ const styles = {
     width: '600px',
     height: '600px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
+    background: 'radial-gradient(circle, rgba(255, 178, 107, 0.12) 0%, transparent 70%)', // Peach
     zIndex: 0,
     pointerEvents: 'none',
   },
@@ -613,7 +606,7 @@ const styles = {
     width: '500px',
     height: '500px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(168, 85, 247, 0.1) 0%, transparent 70%)',
+    background: 'radial-gradient(circle, rgba(255, 122, 89, 0.1) 0%, transparent 70%)', // Coral
     zIndex: 0,
     pointerEvents: 'none',
   },
@@ -624,7 +617,7 @@ const styles = {
     width: '500px',
     height: '500px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 70%)',
+    background: 'radial-gradient(circle, rgba(122, 90, 248, 0.08) 0%, transparent 70%)', // Dusty Purple
     zIndex: 0,
     pointerEvents: 'none',
   },
@@ -632,8 +625,7 @@ const styles = {
     position: 'sticky',
     top: 0,
     zIndex: 100,
-    background: 'rgba(255, 255, 255, 0.85)',
-    backdropFilter: 'blur(20px)',
+    background: 'var(--bg-surface)',
     borderBottom: '1px solid var(--border-subtle)',
     height: '10vh',
     display: 'flex',
@@ -666,11 +658,11 @@ const styles = {
     boxShadow: '0 4px 12px var(--color-primary-glow)',
   },
   logoText: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '20px',
-    fontWeight: 900,
+    fontWeight: 800,
     color: 'var(--text-primary)',
-    letterSpacing: '-0.03em',
+    letterSpacing: '-0.02em',
   },
   nav: {
     display: 'flex',
@@ -678,12 +670,12 @@ const styles = {
     gap: '24px',
   },
   navLink: {
-    fontFamily: "'Inter', sans-serif",
-    fontSize: '14px',
+    fontSize: '14.5px',
     fontWeight: 600,
     color: 'var(--text-secondary)',
     textDecoration: 'none',
-    transition: 'color var(--transition-fast)',
+    transition: 'color 0.2s',
+    cursor: 'pointer',
   },
   headerActions: {
     display: 'flex',
@@ -691,10 +683,9 @@ const styles = {
     gap: '14px',
   },
   signInLink: {
-    fontFamily: "'Outfit', sans-serif",
-    fontSize: '14px',
+    fontSize: '14.5px',
     fontWeight: 700,
-    color: 'var(--text-secondary)',
+    color: 'var(--text-primary)',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
@@ -702,70 +693,44 @@ const styles = {
     transition: 'color 0.2s',
   },
   getStartedBtn: {
-    fontFamily: "'Outfit', sans-serif",
-    fontSize: '13px',
-    fontWeight: 700,
-    padding: '8px 18px',
-    borderRadius: '10px',
-    border: 'none',
-    cursor: 'pointer',
     background: 'var(--color-primary)',
     color: '#ffffff',
-    boxShadow: '0 4px 12px var(--color-primary-glow)',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '20px',
+    fontSize: '14px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 4px 14px var(--color-primary-glow)',
+    transition: 'all 0.2s',
   },
   goToAppBtn: {
-    fontFamily: "'Outfit', sans-serif",
-    fontSize: '13px',
-    fontWeight: 700,
-    padding: '8px 18px',
-    borderRadius: '10px',
-    border: 'none',
-    cursor: 'pointer',
     background: 'var(--color-primary)',
     color: '#ffffff',
-    boxShadow: '0 4px 12px var(--color-primary-glow)',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '20px',
+    fontSize: '14px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    boxShadow: '0 4px 14px var(--color-primary-glow)',
+    transition: 'all 0.2s',
     display: 'flex',
     alignItems: 'center',
     gap: '8px'
   },
   heroSection: {
-    position: 'relative',
-    zIndex: 1,
-    padding: '80px 24px',
-    width: '100%',
-  },
-  heroContainer: {
-    display: 'grid',
-    gridTemplateColumns: '1.2fr 0.8fr',
-    gap: '64px',
-    alignItems: 'center',
+    padding: '80px 24px 60px 24px',
     maxWidth: '1200px',
     margin: '0 auto',
     width: '100%',
-  },
-  heroLeft: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '24px',
-    textAlign: 'left'
-  },
-  launchBadge: {
-    display: 'inline-flex',
-    alignSelf: 'flex-start',
     alignItems: 'center',
-    gap: '6px',
-    background: 'var(--color-primary-glow)',
-    border: '1px solid rgba(99, 102, 241, 0.15)',
-    borderRadius: '20px',
-    padding: '6px 14px',
-  },
-  launchBadgeText: {
-    fontSize: '10px',
-    fontWeight: 800,
-    textTransform: 'uppercase',
-    color: 'var(--color-primary)',
-    letterSpacing: '0.05em',
-    fontFamily: "'Outfit', sans-serif"
+    textAlign: 'center',
+    gap: '36px',
+    position: 'relative',
+    zIndex: 1,
   },
   heroTitle: {
     fontSize: 'clamp(38px, 6vw, 56px)',
@@ -785,11 +750,10 @@ const styles = {
   },
   quickPromptCard: {
     padding: '10px 12px',
-    borderRadius: '16px',
-    border: '1px solid rgba(99, 102, 241, 0.18)',
-    background: 'rgba(255, 255, 255, 0.95)',
-    backdropFilter: 'blur(20px)',
-    boxShadow: '0 16px 40px rgba(99, 102, 241, 0.08)',
+    borderRadius: '24px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--bg-surface)',
+    boxShadow: 'var(--shadow-md)',
     width: '100%',
     maxWidth: '620px',
     position: 'relative',
@@ -808,7 +772,7 @@ const styles = {
     outline: 'none',
     fontSize: '14px',
     color: 'var(--text-primary)',
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
     padding: '8px 4px'
   },
   quickSubmitBtn: {
@@ -860,13 +824,12 @@ const styles = {
     top: '0px',
     left: '-20px',
     zIndex: 10,
-    background: 'rgba(239, 241, 249, 0.92)',
-    backdropFilter: 'blur(20px)',
-    border: '1px solid rgba(99, 102, 241, 0.12)',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
     borderRadius: '20px 20px 4px 20px',
     padding: '14px 18px',
     maxWidth: '240px',
-    boxShadow: '0 8px 32px rgba(99, 102, 241, 0.06)',
+    boxShadow: 'var(--shadow-md)',
     pointerEvents: 'none',
   },
   speechText: {
@@ -875,7 +838,7 @@ const styles = {
     color: 'var(--text-primary)',
     display: 'block',
     lineHeight: '1.4',
-    fontFamily: "'Inter', sans-serif"
+    fontFamily: "'Plus Jakarta Sans', sans-serif"
   },
   speechTail: {
     position: 'absolute',
@@ -883,9 +846,9 @@ const styles = {
     right: '-8px',
     width: '16px',
     height: '16px',
-    background: '#eff1f9',
-    borderRight: '1px solid rgba(99, 102, 241, 0.12)',
-    borderBottom: '1px solid rgba(99, 102, 241, 0.12)',
+    background: 'var(--bg-surface)',
+    borderRight: '1px solid var(--border-subtle)',
+    borderBottom: '1px solid var(--border-subtle)',
     transform: 'rotate(-45deg)',
     zIndex: -1
   },
@@ -936,7 +899,7 @@ const styles = {
     textTransform: 'uppercase',
     color: 'var(--color-primary)',
     letterSpacing: '0.05em',
-    fontFamily: "'Outfit', sans-serif"
+    fontFamily: "'Fredoka', sans-serif"
   },
   platformTitle: {
     fontSize: 'clamp(24px, 3.5vw, 36px)',
@@ -961,7 +924,10 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '24px',
-    borderRadius: '20px',
+    borderRadius: '24px',
+    border: '1px solid var(--border-subtle)',
+    background: 'var(--bg-surface)',
+    boxShadow: 'var(--shadow-sm)',
     cursor: 'pointer'
   },
   platformCardGlow: {
@@ -998,7 +964,7 @@ const styles = {
     fontSize: '16px',
     fontWeight: 800,
     color: 'var(--text-primary)',
-    fontFamily: "'Outfit', sans-serif"
+    fontFamily: "'Fredoka', sans-serif"
   },
   platformRatio: {
     fontSize: '11px',
@@ -1047,7 +1013,7 @@ const styles = {
     borderRadius: '20px',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
-    fontFamily: "'Outfit', sans-serif"
+    fontFamily: "'Fredoka', sans-serif"
   },
   sectionTitle: {
     fontSize: 'clamp(28px, 4vw, 42px)',
@@ -1072,8 +1038,9 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
-    background: 'rgba(255, 255, 255, 0.8)',
-    border: '1px solid rgba(99, 102, 241, 0.06)',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: '24px',
     transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
     cursor: 'pointer',
     overflow: 'hidden'
@@ -1124,7 +1091,9 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
-    background: '#ffffff'
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: '24px'
   },
   cardHeaderStrip: {
     display: 'flex',
@@ -1138,7 +1107,7 @@ const styles = {
     borderRadius: '20px',
   },
   nicheBadge: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '12px',
     fontWeight: 700,
     color: 'var(--text-secondary)'
@@ -1177,7 +1146,7 @@ const styles = {
     fontWeight: 700,
     padding: '2px 5px',
     borderRadius: '4px',
-    fontFamily: 'sans-serif'
+    fontFamily: "'Plus Jakarta Sans', sans-serif"
   },
   legibilityWarning: {
     position: 'absolute',
@@ -1231,7 +1200,7 @@ const styles = {
     borderTop: '1px solid var(--border-subtle)'
   },
   critiqueListTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '13px',
     fontWeight: 700,
     color: 'var(--text-secondary)',
@@ -1292,7 +1261,7 @@ const styles = {
     fontSize: '15px',
     fontWeight: 900,
     color: '#ffffff',
-    fontFamily: "'Outfit', sans-serif"
+    fontFamily: "'Fredoka', sans-serif"
   },
   stepConnectorLine: {
     position: 'absolute',
@@ -1344,11 +1313,12 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
-    background: '#ffffff',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
     borderRadius: '24px'
   },
   pricingPlanName: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '15px',
     fontWeight: 800,
     textTransform: 'uppercase',
@@ -1363,13 +1333,13 @@ const styles = {
     fontSize: '20px',
     fontWeight: 800,
     color: 'var(--text-primary)',
-    fontFamily: "'Outfit', sans-serif"
+    fontFamily: "'Fredoka', sans-serif"
   },
   priceValue: {
     fontSize: '44px',
     fontWeight: 900,
     color: 'var(--text-primary)',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     lineHeight: '1'
   },
   pricePeriod: {
@@ -1440,8 +1410,9 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     gap: '20px',
-    background: 'linear-gradient(135deg, rgba(99,102,241,0.06) 0%, rgba(168,85,247,0.06) 100%)',
-    border: '1px solid rgba(99, 102, 241, 0.15)',
+    background: 'linear-gradient(135deg, rgba(255, 122, 89, 0.08) 0%, rgba(255, 178, 107, 0.08) 100%)',
+    border: '1px solid rgba(255, 122, 89, 0.15)',
+    borderRadius: '24px',
     overflow: 'hidden',
     position: 'relative'
   },
@@ -1452,7 +1423,7 @@ const styles = {
     transform: 'translate(-50%,-50%)',
     width: '400px',
     height: '400px',
-    background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 60%)',
+    background: 'radial-gradient(circle, rgba(255, 122, 89, 0.08) 0%, transparent 60%)',
     pointerEvents: 'none',
     zIndex: 0
   },
@@ -1534,13 +1505,12 @@ const styles = {
     bottom: '-15px',
     right: '-15px',
     zIndex: 10,
-    background: 'rgba(255, 255, 255, 0.96)',
-    backdropFilter: 'blur(20px)',
-    border: '1px solid rgba(99, 102, 241, 0.2)',
-    borderRadius: '16px',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: '24px',
     padding: '14px 18px',
     width: '210px',
-    boxShadow: '0 12px 36px rgba(99, 102, 241, 0.12)',
+    boxShadow: 'var(--shadow-md)',
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
@@ -1567,7 +1537,7 @@ const styles = {
     fontSize: '13px',
     fontWeight: 800,
     color: 'var(--color-success)',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
   },
   proofCardBody: {
     display: 'flex',

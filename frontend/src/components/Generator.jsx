@@ -1,10 +1,7 @@
 'use strict';
 
-import React, { useState } from 'react';
-import { Sparkles, Upload, ArrowRight, RotateCcw, HelpCircle, Image as ImageIcon, Sliders, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
-import InputSection from './InputSection';
-import NichePicker from './NichePicker';
-import ArchetypePicker from './ArchetypePicker';
+import { useState } from 'react';
+import { Sparkles, RotateCcw, Search, X } from 'lucide-react';
 import Gallery from './Gallery';
 import CanvasEditor from './CanvasEditor';
 import CTRAnalysisPanel from './CTRAnalysisPanel';
@@ -12,7 +9,7 @@ import YoutubePreview from './YoutubePreview';
 
 import { compilePrompt, detectNicheAndArchetype } from '../lib/prompts';
 import { generateThumbnailImage, analyzeThumbnailCTR } from '../lib/imageService';
-import { savePerformanceRecord, compileLearningModifiers, getNicheInsights } from '../lib/database';
+import { savePerformanceRecord, compileLearningModifiers } from '../lib/database';
 import { supabase } from '../lib/supabase';
 
 // Pre-loaded premium aesthetic lofi start state to mimic the Canva screenshot
@@ -72,7 +69,6 @@ export default function Generator() {
   
   // 4. Editor Mode & Drawer States
   const [viewMode, setViewMode] = useState('generator'); // 'generator', 'editor'
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Sync state between Canva prompt box and Generator title
   const handleInputChange = (field, value) => {
@@ -87,10 +83,6 @@ export default function Generator() {
       setSelectedNiche(niche);
       setSelectedArchetype(archetype);
     }
-  };
-
-  const handleAutoFill = (extractedDetails) => {
-    setInputs(extractedDetails);
   };
 
   // Suggestion click handler from the Canva "Try these..." section
@@ -191,61 +183,7 @@ export default function Generator() {
     }
   };
 
-  // Preset quick picker selection from the under-image selector (Canva style)
-  const handlePresetSelect = (presetId) => {
-    if (presetId === 'anime') {
-      setSelectedNiche('gaming');
-      setSelectedArchetype('reaction');
-    } else if (presetId === 'filmic') {
-      setSelectedNiche('documentary');
-      setSelectedArchetype('reaction');
-    } else if (presetId === 'retrowave') {
-      setSelectedNiche('tech');
-      setSelectedArchetype('versus');
-    } else if (presetId === 'moody') {
-      setSelectedNiche('documentary');
-      setSelectedArchetype('question');
-    } else if (presetId === 'more') {
-      setShowAdvanced(prev => !prev);
-    }
-  };
 
-  // Upload an existing thumbnail for visual roasts (Thumbnail Rewrite Mode - Task 2.3)
-  const handleExistingUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target.result;
-      setOriginalImageUrl(dataUrl);
-      setImageUrl(dataUrl);
-      setIsOptimized(false);
-      
-      // Auto-trigger vision analysis on uploaded file
-      setIsGenerating(true);
-      setTimeout(async () => {
-        const critique = await analyzeThumbnailCTR(
-          dataUrl, 
-          inputs.title || 'My Underperforming Thumbnail', 
-          inputs.topic,
-          inputs.keywords,
-          selectedNiche, 
-          selectedArchetype
-        );
-        
-        // Lower the score for initial upload to simulate a dramatic clickability roast
-        critique.score = Math.max(35, Math.min(62, critique.score - 15));
-        critique.roast.unshift('Foreground contrast is critically low; subject blends too much with background details.');
-        critique.roast.push('Crucial graphics are obstructed by the bottom-right video duration badge.');
-        
-        setAnalysis(critique);
-        setIsGenerating(false);
-        setShowCritique(true);
-      }, 1000);
-    };
-    reader.readAsDataURL(file);
-  };
 
   // Compile and generate image blueprint
   const handleGenerate = async () => {
@@ -400,18 +338,7 @@ export default function Generator() {
     setProvider('');
   };
 
-  // Helper check to see if the active combination matches standard presets
-  const getActivePresetId = () => {
-    if (selectedNiche === 'gaming' && selectedArchetype === 'reaction') return 'anime';
-    if (selectedNiche === 'documentary' && selectedArchetype === 'reaction') return 'filmic';
-    if (selectedNiche === 'tech' && selectedArchetype === 'versus') return 'retrowave';
-    if (selectedNiche === 'documentary' && selectedArchetype === 'question') return 'moody';
-    return '';
-  };
 
-  const activePreset = getActivePresetId();
-  const nicheInsights = getNicheInsights(selectedNiche);
-  const learningModifiersActive = compileLearningModifiers(selectedNiche);
 
   return (
     <div style={styles.appWrapper}>
@@ -638,7 +565,7 @@ const styles = {
     width: '100%',
   },
   canvaTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: 'clamp(32px, 5.5vw, 56px)',
     fontWeight: 900,
     lineHeight: '1.05',
@@ -706,13 +633,13 @@ const styles = {
     paddingBottom: '12px',
   },
   drawerTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '18px',
     fontWeight: 800,
     color: 'var(--text-primary)',
   },
   closeDrawerBtn: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '12px',
     fontWeight: 700,
     color: 'var(--text-secondary)',
@@ -748,7 +675,7 @@ const styles = {
     gap: '8px',
   },
   rewriteTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '13px',
     fontWeight: 700,
     color: 'var(--text-primary)',
@@ -763,7 +690,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: '8px',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '12px',
     fontWeight: 600,
     color: 'var(--text-primary)',
@@ -812,7 +739,7 @@ const styles = {
     paddingBottom: '8px',
   },
   learningMoatBadge: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '11px',
     fontWeight: 800,
     color: 'var(--color-primary)',
@@ -844,7 +771,7 @@ const styles = {
     marginBottom: '4px',
   },
   formatPill: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '11px',
     fontWeight: 700,
     color: 'var(--text-muted)',

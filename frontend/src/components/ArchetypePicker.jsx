@@ -1,6 +1,6 @@
 'use strict';
 
-import React from 'react';
+
 import { Target, HelpCircle, Eye, RefreshCw, Sparkles } from 'lucide-react';
 import { ARCHETYPES } from '../lib/prompts';
 
@@ -41,11 +41,11 @@ export default function ArchetypePicker({ selectedArchetype, onSelect }) {
                   ...styles.iconWrapper,
                   ...(isSelected ? styles.iconActive : {})
                 }}>
-                  <Icon size={18} color={isSelected ? 'var(--color-primary)' : 'var(--text-secondary)'} />
+                  <Icon size={18} color={isSelected ? 'var(--color-secondary)' : 'var(--text-secondary)'} />
                 </div>
                 <span style={{
                   ...styles.archName,
-                  ...(isSelected ? { color: 'var(--color-primary-hover)' } : {})
+                  ...(isSelected ? { color: 'var(--color-secondary)' } : {})
                 }}>{arch.name}</span>
               </div>
               
@@ -71,7 +71,7 @@ const styles = {
     justifyContent: 'space-between',
   },
   sectionTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '16px',
     fontWeight: 600,
     color: 'var(--text-primary)',
@@ -97,9 +97,9 @@ const styles = {
     width: '100%',
   },
   cardActive: {
-    borderColor: 'var(--color-primary)',
-    boxShadow: '0 8px 24px var(--color-primary-glow)',
-    background: 'rgba(255, 255, 255, 0.02)',
+    borderColor: 'var(--color-secondary)',
+    boxShadow: '0 8px 24px var(--color-secondary-glow)',
+    background: 'var(--color-secondary-glow)',
   },
   header: {
     display: 'flex',
@@ -119,11 +119,11 @@ const styles = {
     transition: 'all var(--transition-fast)',
   },
   iconActive: {
-    borderColor: 'rgba(124, 58, 237, 0.3)',
-    backgroundColor: 'var(--color-primary-glow)',
+    borderColor: 'rgba(122, 90, 248, 0.3)',
+    backgroundColor: 'var(--color-secondary-glow)',
   },
   archName: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '14px',
     fontWeight: 700,
     color: 'var(--text-secondary)',

@@ -1,12 +1,11 @@
 'use strict';
 
-import React, { useState } from 'react';
-import { Eye, Download, Image as ImageIcon, Sparkles, RefreshCw, Monitor, Tablet, User, ThumbsUp, ThumbsDown, MessageSquare, Share2, CheckCircle2, Cloud } from 'lucide-react';
+import { useState } from 'react';
+import { Download, Image as ImageIcon, Sparkles, RefreshCw, Monitor, Tablet, User, ThumbsUp, ThumbsDown, MessageSquare, Share2, CheckCircle2, Cloud } from 'lucide-react';
 
 export default function Gallery({ 
   imageUrl, 
   isGenerating, 
-  onAnalyze, 
   originalImageUrl, 
   provider,
   isOptimized,
@@ -325,7 +324,7 @@ export default function Gallery({
       <div style={styles.actionGrid}>
         <button 
           onClick={handleDownload}
-          className="btn btn-secondary"
+          className="btn"
           style={styles.actionBtn}
         >
           <Download size={16} color="var(--color-primary)" />
@@ -334,7 +333,7 @@ export default function Gallery({
 
         <button 
           onClick={onSaveToLibrary}
-          className={isSaved ? "btn btn-success" : "btn btn-secondary"}
+          className="btn"
           style={{
             ...styles.actionBtn,
             ...(isSaved ? { borderColor: '#10b981', color: '#10b981', background: 'rgba(16, 185, 129, 0.05)', cursor: 'default' } : {})
@@ -375,7 +374,7 @@ const styles = {
     animation: 'spin 1.2s linear infinite',
   },
   loadingText: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '18px',
     fontWeight: 700,
     color: 'var(--text-primary)',
@@ -396,7 +395,7 @@ const styles = {
     maxWidth: '280px',
   },
   emptyText: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '16px',
     fontWeight: 600,
     color: 'var(--text-secondary)',
@@ -426,7 +425,7 @@ const styles = {
     gap: '10px',
   },
   title: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '16px',
     fontWeight: 600,
   },
@@ -442,7 +441,7 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '4px',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '10px',
     fontWeight: 700,
     color: 'var(--text-muted)',
@@ -467,7 +466,7 @@ const styles = {
     gap: '2px',
   },
   compareBtn: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '11px',
     fontWeight: 700,
     color: 'var(--text-muted)',
@@ -502,7 +501,7 @@ const styles = {
     position: 'absolute',
     top: '12px',
     left: '12px',
-    background: 'linear-gradient(135deg, var(--color-accent) 0%, #f43f5e 100%)',
+    background: 'linear-gradient(135deg, var(--color-accent) 0%, var(--color-primary) 100%)',
     color: '#ffffff',
     fontSize: '10px',
     fontWeight: 800,
@@ -511,7 +510,7 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '4px',
-    boxShadow: '0 2px 8px rgba(255, 107, 107, 0.4)',
+    boxShadow: '0 2px 8px rgba(255, 122, 89, 0.2)',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
   },
@@ -522,26 +521,32 @@ const styles = {
   },
   actionBtn: {
     width: '100%',
+    borderRadius: '20px',
+    border: '2px solid var(--color-primary)',
+    background: 'transparent',
+    color: 'var(--color-primary)',
+    fontWeight: 700,
+    fontFamily: "'Fredoka', sans-serif",
   },
 
   /* Beautiful CSS Smartphone frame styles */
   phoneMockupFrame: {
     width: '240px',
     height: '420px',
-    border: '8px solid #282828',
-    borderRadius: '32px',
+    border: '8px solid var(--text-primary)',
+    borderRadius: '24px',
     position: 'relative',
     overflow: 'hidden',
-    background: '#000000',
+    background: 'var(--bg-surface)',
     display: 'flex',
     flexDirection: 'column',
     margin: '0 auto',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+    boxShadow: 'var(--shadow-md)',
   },
   phoneNotch: {
     width: '80px',
     height: '16px',
-    background: '#282828',
+    background: 'var(--text-primary)',
     borderBottomLeftRadius: '10px',
     borderBottomRightRadius: '10px',
     position: 'absolute',
@@ -823,7 +828,7 @@ const styles = {
     textAlign: 'left',
   },
   desktopVideoTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '14px',
     fontWeight: 600,
     color: 'var(--text-primary)',

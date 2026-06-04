@@ -1,6 +1,6 @@
 'use strict';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Award, AlertTriangle, Sparkles, RefreshCw, Layers, CheckCircle } from 'lucide-react';
 
 export default function CTRAnalysisPanel({ 
@@ -202,7 +202,7 @@ export default function CTRAnalysisPanel({
                   borderRadius: '100px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.04em',
-                  fontFamily: "'Outfit', sans-serif"
+                  fontFamily: "'Fredoka', sans-serif"
                 }}>
                   OpenAI GPT-4.1 mini
                 </span>
@@ -243,11 +243,11 @@ export default function CTRAnalysisPanel({
         {isOptimizing ? (
           <>
             <RefreshCw size={14} className="spinner" style={{ animation: 'spin 1.2s linear infinite' }} />
-            Applying AI Improvements...
+            Applying Thumbnail Director Improvements...
           </>
         ) : (
           <>
-            Generate Higher CTR Version
+            Create Higher CTR Version
           </>
         )}
       </button>
@@ -266,11 +266,12 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '20px',
-    background: 'rgba(99, 102, 241, 0.04)',
-    border: '1px solid rgba(99, 102, 241, 0.08)',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
     padding: '16px 20px',
     borderRadius: 'var(--radius-lg)',
     width: '100%',
+    boxShadow: 'var(--shadow-sm)',
   },
   scoreCircleWrapper: {
     position: 'relative',
@@ -304,7 +305,7 @@ const styles = {
     zIndex: 2,
   },
   scoreNum: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '38px', /* enlarged from 36px */
     fontWeight: 950,
     lineHeight: '0.9',
@@ -327,7 +328,7 @@ const styles = {
     gap: '8px',
   },
   introTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '14px',
     fontWeight: 700,
   },
@@ -366,7 +367,7 @@ const styles = {
     marginBottom: '2px',
   },
   groupHeading: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '11px',
     fontWeight: 800,
     textTransform: 'uppercase',
@@ -489,7 +490,7 @@ const styles = {
     fontSize: '11px',
     fontWeight: 600,
     color: 'var(--text-secondary)',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
   },
   optimizeBtn: {
     width: '100%',

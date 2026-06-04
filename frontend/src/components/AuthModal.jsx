@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, Sparkles, LogIn, UserPlus, Mail, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -223,10 +223,9 @@ const styles = {
   },
   modal: {
     position: 'relative',
-    background: 'rgba(255, 255, 255, 0.85)',
-    border: '1px solid rgba(255, 255, 255, 0.5)',
-    boxShadow: '0 24px 60px rgba(0, 0, 0, 0.1)',
-    backdropFilter: 'blur(30px)',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
+    boxShadow: 'var(--shadow-md)',
     width: '100%',
     maxWidth: '400px',
     borderRadius: '24px',
@@ -242,7 +241,7 @@ const styles = {
     width: '300px',
     height: '300px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(255, 129, 56, 0.15) 0%, transparent 70%)',
+    background: 'radial-gradient(circle, rgba(255, 122, 89, 0.15) 0%, transparent 70%)',
     pointerEvents: 'none',
     zIndex: 0
   },
@@ -253,7 +252,7 @@ const styles = {
     width: '300px',
     height: '300px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%)',
+    background: 'radial-gradient(circle, rgba(122, 90, 248, 0.1) 0%, transparent 70%)',
     pointerEvents: 'none',
     zIndex: 0
   },
@@ -290,7 +289,7 @@ const styles = {
     boxShadow: '0 4px 12px rgba(255, 129, 56, 0.25)'
   },
   title: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '24px',
     fontWeight: 900,
     letterSpacing: '-0.02em',
@@ -319,7 +318,7 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '12px',
     fontWeight: 700,
     color: 'var(--text-muted)',
@@ -382,24 +381,33 @@ const styles = {
   },
   input: {
     width: '100%',
-    height: '40px',
+    height: '42px',
     padding: '0 12px 0 38px',
-    borderRadius: '10px',
-    border: '1px solid rgba(0, 0, 0, 0.08)',
-    background: 'rgba(255, 255, 255, 0.65)',
+    borderRadius: '24px',
+    border: '1px solid var(--border-subtle)',
+    background: '#ffffff',
     fontSize: '13px',
     outline: 'none',
-    fontFamily: 'Inter, sans-serif',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
     color: 'var(--text-primary)',
     transition: 'all var(--transition-fast)'
   },
   submitBtn: {
     marginTop: '6px',
-    height: '42px',
+    height: '44px',
+    borderRadius: '20px',
+    background: 'var(--color-primary)',
+    color: '#ffffff',
+    fontWeight: 700,
+    fontFamily: "'Fredoka', sans-serif",
+    border: 'none',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%'
+    width: '100%',
+    cursor: 'pointer',
+    boxShadow: 'var(--shadow-sm)',
+    transition: 'all var(--transition-fast)',
   },
   spinner: {
     width: '18px',

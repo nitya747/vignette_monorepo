@@ -149,27 +149,7 @@ const FALLBACK_NICHE_IMAGES = {
   education: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=1280&h=720',
 };
 
-/**
- * Preprocesses titles to extract clean visual nouns, preventing text-bleed bugs.
- */
-function extractVisualSubject(title) {
-  if (!title) return 'creative subject';
-  
-  // Clean YouTube separators (| , - , —) and emojis
-  let subject = title.split(/[|\-—]/)[0].replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '');
-  
-  // Clean clickbait action prefixes
-  subject = subject.replace(/^(how to|why you should|i tried to|i spent|this is why|what happens if|is this the)\s+/i, '');
-  
-  // Clean common video suffixes
-  subject = subject.replace(/\s+(at home|in \d{4}|for beginners|tutorial|vlog|guide|playlist|video|channel|revealed)$/i, '');
-  
-  return subject.trim();
-}
-
-/**
- * Compiles a structured, highly psychological prompt optimized for high CTR
- */
+// eslint-disable-next-line no-unused-vars
 export function compilePrompt({ title, topic, keywords, niche, archetype, aspectRatio = '16:9', learningModifiers = '', usePhoto = false }) {
   return (title || topic || '').trim();
 }
@@ -186,52 +166,6 @@ export function getMockImageUrl(niche, archetype, aspectRatio = '16:9') {
     return rawUrl.replace('w=1280&h=720', 'w=1080&h=1350');
   }
   return rawUrl;
-}
-
-/**
- * Generates highly realistic and constructive CTR Roast Critic details based on inputs
- */
-/**
- * Helper to extract a clean, punchy noun phrase or key terms from title, topic, or keywords
- */
-function extractContextPhrase(title, topic, keywords) {
-  const searchText = `${title || ''} ${topic || ''} ${keywords || ''}`.toLowerCase();
-  
-  if (/\b(lofi|chill|ambient|relax)\b/i.test(searchText)) {
-    return 'Lofi Sunset Beats';
-  }
-  if (/\b(ski|snow|mountain|travel|vlog)s?\b/i.test(searchText)) {
-    return 'Extreme Skiing';
-  }
-  if (/\b(cook|kitchen|chef|food|recipe)s?\b/i.test(searchText)) {
-    return 'Cooking Secrets';
-  }
-  if (/\b(invest|stock|finance|money|wealth)s?\b/i.test(searchText)) {
-    return 'Stock Investing';
-  }
-  if (/\b(game|gaming|cyberpunk|retro|setup)s?\b/i.test(searchText)) {
-    return 'Retro Gaming Setup';
-  }
-  if (/\b(gym|workout|athlete|athletics)\b/i.test(searchText) || /\bfit\b/i.test(searchText)) {
-    return 'Fitness Challenges';
-  }
-  if (/\b(tech(nology|nical)?|gadget|phone|future)s?\b/i.test(searchText)) {
-    return 'Futuristic Tech Gadgets';
-  }
-  
-  // Fallback: take a few key terms from topic or title
-  const sourceString = topic && topic.trim() ? topic : (title || '');
-  const words = sourceString.split(/\s+/);
-  const stopWords = new Set(['a', 'an', 'the', 'for', 'my', 'of', 'with', 'at', 'in', 'to', 'on', 'is', 'and', 'or', 'your', 'our', 'their', 'this', 'that', 'thumbnail', 'thumbnails', 'image', 'picture', 'photo', 'video', 'playlist']);
-  const filtered = words
-    .filter(w => !stopWords.has(w.toLowerCase()))
-    .map(w => w.replace(/[^\w]/g, ''))
-    .filter(Boolean);
-  
-  if (filtered.length > 0) {
-    return filtered.slice(0, 3).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-  }
-  return 'Creative Projects';
 }
 
 /**
@@ -345,7 +279,7 @@ export function getMockCTRScore(title, niche, archetype, topic = '', keywords = 
   }
 
   // Generate 3 highly contextual and viral titles
-  let suggested = [];
+  let suggested;
   
   const isSitcom = searchText.includes('taarak') || searchText.includes('mehta') || searchText.includes('ooltah') || searchText.includes('chashmah') || searchText.includes('jethalal') || searchText.includes('sab tv') || (searchText.includes('episode') && (searchText.includes('cooker') || searchText.includes('confusion') || searchText.includes('ep ')));
   const isCooking = !isSitcom && (searchText.includes('cook') || searchText.includes('kitchen') || searchText.includes('chef') || searchText.includes('food') || searchText.includes('recipe') || searchText.includes('jalebi') || searchText.includes('bake') || searchText.includes('fry'));

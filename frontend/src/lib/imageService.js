@@ -79,7 +79,7 @@ export async function generateThumbnailImage(prompt, niche, archetype, aspectRat
     }
     // Propagate auth errors so the UI can prompt sign-in
     if (errMsg.includes('401') || errMsg.includes('Authentication') || errMsg.includes('Unauthorized')) {
-      throw new Error('Authentication required. Please sign in again.');
+      throw new Error('Authentication required. Please sign in again.', { cause: error });
     }
     return {
       imageUrl: image || getMockImageUrl(niche, archetype, aspectRatio),
@@ -150,7 +150,7 @@ export async function uploadReferenceImage(file, userId = 'guest') {
     const filePath = `temp-uploads/${userId}/${Date.now()}-${uniqueId}.${fileExt}`;
 
     // 1. Upload raw binary to Supabase
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('vignette-temp-uploads')
       .upload(filePath, file, { cacheControl: '3600', upsert: true });
 

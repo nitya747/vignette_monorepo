@@ -1,7 +1,7 @@
 'use strict';
 
-import React, { useState } from 'react';
-import { Play, User, CheckCircle2, Tablet, Monitor, AlignLeft, ThumbsUp, ThumbsDown, MessageSquare, Share2 } from 'lucide-react';
+import { useState } from 'react';
+import { User, CheckCircle2, Tablet, Monitor, AlignLeft, ThumbsUp, ThumbsDown, MessageSquare, Share2 } from 'lucide-react';
 
 export default function YoutubePreview({ imageUrl, title, aspectRatio = '16:9' }) {
   const [feedMode, setFeedMode] = useState('desktop');
@@ -31,7 +31,7 @@ export default function YoutubePreview({ imageUrl, title, aspectRatio = '16:9' }
             {isShorts ? 'SHORTS MODE' : 'LANDSCAPE MODE'}
           </span>
           <h3 style={{ 
-            fontFamily: "'Outfit', sans-serif", 
+            fontFamily: "'Fredoka', sans-serif", 
             fontSize: '15px', 
             fontWeight: 800, 
             color: 'var(--text-primary)',
@@ -384,7 +384,7 @@ const styles = {
     letterSpacing: '0.05em',
   },
   sectionTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '16px',
     fontWeight: 600,
   },
@@ -400,7 +400,7 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '6px',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '11px',
     fontWeight: 700,
     color: 'var(--text-muted)',
@@ -418,14 +418,14 @@ const styles = {
     boxShadow: '0 2px 6px rgba(0, 0, 0, 0.05)',
   },
   feedBox: {
-    background: '#f8fafc', // Premium designer dotted canvas background
-    backgroundImage: 'radial-gradient(#e2e8f0 1.5px, transparent 1.5px)', // Subtle grid dots
+    background: 'var(--bg-base)', // Warm Cream
+    backgroundImage: 'radial-gradient(rgba(122, 90, 248, 0.06) 1.5px, transparent 1.5px)', // Subtle grid dots
     backgroundSize: '24px 24px',
     border: '1.5px solid var(--border-subtle)',
     borderTopLeftRadius: '0px',
     borderTopRightRadius: '0px',
-    borderBottomLeftRadius: '16px',
-    borderBottomRightRadius: '16px',
+    borderBottomLeftRadius: '24px', // updated to 24px
+    borderBottomRightRadius: '24px',
     padding: '48px 24px 36px 24px',
     display: 'flex',
     alignItems: 'center',
@@ -437,10 +437,10 @@ const styles = {
   },
   browserFrame: {
     width: '380px',
-    background: '#0f0f0f', // Youtube pitch black dark theme
-    borderRadius: '12px',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.3), 0 0 0 1px rgba(99, 102, 241, 0.05)',
+    background: 'var(--bg-surface)', // Soft Ivory outer frame
+    borderRadius: '24px', // 24px corners
+    border: '1.5px solid var(--border-subtle)',
+    boxShadow: 'var(--shadow-md)',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
@@ -448,8 +448,8 @@ const styles = {
   },
   browserHeader: {
     height: '36px',
-    background: '#1a1a1a', // standard browser chrome window header
-    borderBottom: '1px solid #282828',
+    background: 'var(--bg-base)', // Warm Cream browser chrome header
+    borderBottom: '1px solid var(--border-subtle)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -466,14 +466,14 @@ const styles = {
     display: 'inline-block',
   },
   browserAddressBar: {
-    background: '#0f0f0f',
+    background: 'var(--bg-surface)',
     borderRadius: '6px',
     padding: '3px 12px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     width: '200px',
-    border: '1px solid #282828',
+    border: '1px solid var(--border-subtle)',
   },
   browserBody: {
     padding: '20px 30px 24px 30px',
@@ -606,19 +606,19 @@ const styles = {
   phoneMockupFrame: {
     width: '240px',
     height: '420px',
-    border: '8px solid #282828',
-    borderRadius: '32px',
+    border: '8px solid var(--text-primary)',
+    borderRadius: '24px',
     position: 'relative',
     overflow: 'hidden',
-    background: '#000000',
+    background: 'var(--bg-surface)',
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+    boxShadow: 'var(--shadow-md)',
   },
   phoneNotch: {
     width: '80px',
     height: '16px',
-    background: '#282828',
+    background: 'var(--text-primary)',
     borderBottomLeftRadius: '10px',
     borderBottomRightRadius: '10px',
     position: 'absolute',

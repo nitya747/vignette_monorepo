@@ -1,6 +1,3 @@
-'use strict';
-
-import React from 'react';
 import { Gamepad2, TrendingUp, Film, Cpu, Dumbbell, Sparkles, GraduationCap } from 'lucide-react';
 import { NICHES } from '../lib/prompts';
 
@@ -11,15 +8,6 @@ const NICHE_ICONS = {
   tech: Cpu,
   fitness: Dumbbell,
   education: GraduationCap
-};
-
-const NICHE_THEMES = {
-  gaming: { border: 'rgba(6, 214, 160, 0.25)', activeBorder: '#06d6a0', glow: 'rgba(6, 214, 160, 0.15)' },
-  finance: { border: 'rgba(255, 190, 11, 0.25)', activeBorder: '#ffbe0b', glow: 'rgba(255, 190, 11, 0.15)' },
-  documentary: { border: 'rgba(217, 119, 6, 0.25)', activeBorder: '#d97706', glow: 'rgba(217, 119, 6, 0.15)' },
-  tech: { border: 'rgba(255, 122, 0, 0.25)', activeBorder: '#ff7a00', glow: 'rgba(255, 122, 0, 0.15)' },
-  fitness: { border: 'rgba(255, 107, 107, 0.25)', activeBorder: '#ff6b6b', glow: 'rgba(255, 107, 107, 0.15)' },
-  education: { border: 'rgba(99, 102, 241, 0.25)', activeBorder: '#6366f1', glow: 'rgba(99, 102, 241, 0.15)' }
 };
 
 export default function NichePicker({ selectedNiche, onSelect }) {
@@ -37,7 +25,6 @@ export default function NichePicker({ selectedNiche, onSelect }) {
         {Object.values(NICHES).map((niche) => {
           const Icon = NICHE_ICONS[niche.id] || Sparkles;
           const isSelected = selectedNiche === niche.id;
-          const theme = NICHE_THEMES[niche.id];
           
           return (
             <button
@@ -46,26 +33,26 @@ export default function NichePicker({ selectedNiche, onSelect }) {
               style={{
                 ...styles.card,
                 ...(isSelected ? {
-                  borderColor: theme.activeBorder,
-                  boxShadow: `0 8px 24px ${theme.glow}`,
-                  background: 'rgba(255, 255, 255, 0.02)'
+                  borderColor: 'var(--color-secondary)',
+                  boxShadow: '0 8px 24px var(--color-secondary-glow)',
+                  background: 'var(--color-secondary-glow)'
                 } : {})
               }}
             >
               <div style={{
                 ...styles.iconWrapper,
                 ...(isSelected ? {
-                  backgroundColor: theme.glow,
-                  borderColor: theme.activeBorder
+                  backgroundColor: 'var(--color-secondary-glow)',
+                  borderColor: 'var(--color-secondary)'
                 } : {})
               }}>
-                <Icon size={20} color={isSelected ? theme.activeBorder : 'var(--text-secondary)'} />
+                <Icon size={20} color={isSelected ? 'var(--color-secondary)' : 'var(--text-secondary)'} />
               </div>
               
               <div style={styles.textGroup}>
                 <span style={{
                   ...styles.nicheName,
-                  ...(isSelected ? { color: 'var(--color-primary-hover)' } : {})
+                  ...(isSelected ? { color: 'var(--color-secondary)' } : {})
                 }}>{niche.name}</span>
                 <span style={styles.nicheDesc}>{niche.description}</span>
               </div>
@@ -90,7 +77,7 @@ const styles = {
     justifyContent: 'space-between',
   },
   sectionTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '16px',
     fontWeight: 600,
     color: 'var(--text-primary)',
@@ -132,7 +119,7 @@ const styles = {
     gap: '2px',
   },
   nicheName: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '14px',
     fontWeight: 700,
     color: 'var(--text-secondary)',

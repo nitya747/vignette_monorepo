@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Sparkles, Calendar, Trash2, ChevronLeft, ChevronRight, FolderOpen, LogIn, Edit3, Download, ArrowLeft } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Calendar, Trash2, ChevronLeft, ChevronRight, FolderOpen, LogIn, Edit3, Download, ArrowLeft } from 'lucide-react';
 
 export default function LibraryPanel({ session, onSelect, onOpenAuth, onBack }) {
   const [items, setItems] = useState([]);
@@ -15,32 +15,31 @@ export default function LibraryPanel({ session, onSelect, onOpenAuth, onBack }) 
 
   useEffect(() => {
     if (!session) return;
-    fetchHistory();
-  }, [session, page]);
-
-  const fetchHistory = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`/api/history?page=${page}&limit=${limit}&_t=${Date.now()}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
+    const fetchHistory = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/history?page=${page}&limit=${limit}&_t=${Date.now()}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to retrieve history');
         }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to retrieve history');
-      }
 
-      const data = await response.json();
-      setItems(data.items || []);
-      setTotal(data.total || 0);
-    } catch (err) {
-      console.error('[Library Fetch Error]', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        const data = await response.json();
+        setItems(data.items || []);
+        setTotal(data.total || 0);
+      } catch (err) {
+        console.error('[Library Fetch Error]', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [session, page, limit]);
 
   const handleStartRename = (e, item) => {
     e.stopPropagation(); // Prevent card select click
@@ -193,7 +192,7 @@ export default function LibraryPanel({ session, onSelect, onOpenAuth, onBack }) 
             color: 'var(--color-primary)',
             cursor: 'pointer',
             alignSelf: 'flex-start',
-            fontFamily: "'Outfit', sans-serif"
+            fontFamily: "'Fredoka', sans-serif"
           }}
         >
           <ArrowLeft size={13} style={{ strokeWidth: 2.5 }} />
@@ -240,7 +239,7 @@ export default function LibraryPanel({ session, onSelect, onOpenAuth, onBack }) 
           cursor: 'pointer',
           marginBottom: '20px',
           alignSelf: 'flex-start',
-          fontFamily: "'Outfit', sans-serif",
+          fontFamily: "'Fredoka', sans-serif",
           width: 'fit-content'
         }}
       >
@@ -436,9 +435,9 @@ const styles = {
     height: '420px',
     borderRadius: '24px',
     textAlign: 'center',
-    background: 'rgba(255, 255, 255, 0.75)',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
-    boxShadow: '0 16px 40px rgba(0, 0, 0, 0.04)',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
+    boxShadow: 'var(--shadow-md)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -451,7 +450,7 @@ const styles = {
     alignItems: 'center'
   },
   guestTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '20px',
     fontWeight: 800,
     color: 'var(--text-primary)',
@@ -470,9 +469,9 @@ const styles = {
     borderRadius: '10px'
   },
   panel: {
-    background: 'rgba(255, 255, 255, 0.75)',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
-    boxShadow: '0 16px 40px rgba(0, 0, 0, 0.04)',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
+    boxShadow: 'var(--shadow-sm)',
     borderRadius: '24px',
     padding: '32px',
     width: '100%'
@@ -487,7 +486,7 @@ const styles = {
     textAlign: 'left'
   },
   title: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '20px',
     fontWeight: 800,
     color: 'var(--text-primary)',
@@ -499,10 +498,10 @@ const styles = {
     margin: 0
   },
   totalBadge: {
-    background: 'rgba(99, 102, 241, 0.08)',
-    border: '1px solid rgba(99, 102, 241, 0.15)',
+    background: 'var(--color-secondary-glow)',
+    border: '1px solid rgba(122, 90, 248, 0.15)',
     color: 'var(--color-primary)',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '11px',
     fontWeight: 800,
     padding: '6px 14px',
@@ -539,15 +538,15 @@ const styles = {
     marginBottom: '24px'
   },
   card: {
-    background: 'rgba(255, 255, 255, 0.65)',
-    border: '1px solid rgba(0, 0, 0, 0.04)',
-    borderRadius: '16px',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: '24px',
     overflow: 'hidden',
     cursor: 'pointer',
     transition: 'all var(--transition-fast)',
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.015)'
+    boxShadow: 'var(--shadow-sm)'
   },
   imageWrapper: {
     position: 'relative',
@@ -634,7 +633,7 @@ const styles = {
     borderRadius: '20px'
   },
   cardTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '13px',
     fontWeight: 600,
     color: 'var(--text-primary)',
@@ -686,7 +685,7 @@ const styles = {
     fontSize: '12px',
     color: 'var(--text-primary)',
     outline: 'none',
-    fontFamily: 'Inter, sans-serif'
+    fontFamily: "'Plus Jakarta Sans', sans-serif"
   },
   editBtnOk: {
     width: '24px',
@@ -729,7 +728,7 @@ const styles = {
     background: 'rgba(99, 102, 241, 0.06)',
     border: '1px solid rgba(99, 102, 241, 0.15)',
     color: 'var(--color-primary)',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '10px',
     fontWeight: 700,
     padding: '3px 8px',
@@ -750,7 +749,7 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '4px',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '11px',
     fontWeight: 800,
     color: 'var(--text-secondary)',

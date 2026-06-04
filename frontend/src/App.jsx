@@ -1,34 +1,23 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Sparkles, 
   FolderClosed, 
   Flame, 
-  Type, 
-  
   UploadCloud, 
-  TextQuote, 
-  TrendingUp, 
   Plus, 
-  
-  X, 
-  Sliders, 
   Activity, 
-  ChevronRight, 
   AlertTriangle,
   RotateCcw,
   Image as ImageIcon,
   CheckCircle,
-  Video,
-  Download,
   Eye
 } from 'lucide-react';
 
 // Subcomponents
 import Gallery from './components/Gallery';
-import CTRAnalysisPanel from './components/CTRAnalysisPanel';
 import YoutubePreview from './components/YoutubePreview';
 import ThreeMascot from './components/ThreeMascot';
 import AuthModal from './components/AuthModal';
@@ -41,7 +30,7 @@ import { supabase } from './lib/supabase';
 // Library utilities
 import { compilePrompt } from './lib/prompts';
 import { generateThumbnailImage, analyzeThumbnailCTR, uploadReferenceImage } from './lib/imageService';
-import { savePerformanceRecord, compileLearningModifiers } from './lib/database';
+import { compileLearningModifiers } from './lib/database';
 
 // Pre-loaded premium aesthetic lofi start state matching lofi preset
 const PRESET_LOFI_IMAGE = 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&q=80&w=1280&h=720';
@@ -124,13 +113,25 @@ export default function Home() {
   const [provider, setProvider] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCooldown, setIsCooldown] = useState(false);
-  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isOptimizing] = useState(false);
   const [isOptimized, setIsOptimized] = useState(false);
   
   const [analysis, setAnalysis] = useState(null);
-  const [showCritique, setShowCritique] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [analysisError, setAnalysisError] = useState(null);
+  const setShowCritique = () => {};
+  const setAnalysisError = () => {};
+
+  const getVigiMessage = () => {
+    if (isOptimizing) {
+      return "Let's make it more clickable.";
+    }
+    if (isGenerating) {
+      return "Cooking something interesting...";
+    }
+    if (imageUrl) {
+      return "This one might perform well.";
+    }
+    return "Describe your topic on the left to craft art!";
+  };
 
   // Supabase Auth and History States
   const [user, setUser] = useState(null);
@@ -148,7 +149,7 @@ export default function Home() {
     localStorage.setItem('vignette_credits', credits.toString());
   }, [credits]);
 
-  const [guestId, setGuestId] = useState(() => {
+  const [guestId] = useState(() => {
     let id = localStorage.getItem('vignette_guest_id');
     if (!id) {
       id = 'guest-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -159,7 +160,7 @@ export default function Home() {
 
   const fetchCreditsIdRef = useRef(0);
 
-  const fetchUserCredits = async (currentSession) => {
+  const fetchUserCredits = useCallback(async (currentSession) => {
     const activeSession = currentSession || session;
     const token = activeSession?.access_token || guestId;
     if (!token) return;
@@ -218,7 +219,7 @@ export default function Home() {
         console.error('[Credits Fetch Error]', err);
       }
     }
-  };
+  }, [session, guestId]);
 
   // Sync Supabase Auth listener
   useEffect(() => {
@@ -228,8 +229,10 @@ export default function Home() {
       if (savedUser) {
         try {
           const parsed = JSON.parse(savedUser);
-          setUser(parsed);
-          setSession({ access_token: 'sandbox-jwt-token-secret-123456789', user: parsed });
+          setTimeout(() => {
+            setUser(parsed);
+            setSession({ access_token: 'sandbox-jwt-token-secret-123456789', user: parsed });
+          }, 0);
         } catch (e) {
           console.error('[Auth Sandbox] Failed to parse saved mock user:', e);
         }
@@ -253,8 +256,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetchUserCredits(session);
-  }, [user, session, guestId]);
+    setTimeout(() => {
+      fetchUserCredits(session);
+    }, 0);
+  }, [user, session, guestId, fetchUserCredits]);
 
   // Real-time subscription to user credits in profiles table
   useEffect(() => {
@@ -333,16 +338,10 @@ export default function Home() {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const profileDropdownRef = useRef(null);
 
-  const [showNicheDropdown, setShowNicheDropdown] = useState(false);
-  const nicheDropdownRef = useRef(null);
-
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
         setShowProfileDropdown(false);
-      }
-      if (nicheDropdownRef.current && !nicheDropdownRef.current.contains(event.target)) {
-        setShowNicheDropdown(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -358,15 +357,11 @@ export default function Home() {
   const [userPhotoUrl, setUserPhotoUrl] = useState(null);
   const userPhotoInputRef = useRef(null);
 
-  // DOM ref to scroll focus to input
-  const inputRef = useRef(null);
-
   // Sync window viewport for mobile responsiveness
   const [viewportWidth, setViewportWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 768);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setViewportWidth(window.innerWidth);
       const handleResize = () => setViewportWidth(window.innerWidth);
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
@@ -374,7 +369,6 @@ export default function Home() {
   }, []);
 
   const isDesktop = viewportWidth >= 992;
-  const isTablet = viewportWidth >= 768 && viewportWidth < 992;
   const isMobile = viewportWidth < 768;
 
   // Compile and generate thumbnail image based on prompt state (Task 1.3 / 1.4)
@@ -463,104 +457,7 @@ export default function Home() {
     }
   };
 
-  // One-click clickability optimizer (Task 2.4)
-  const handleOptimize = async () => {
-    if (!analysis) return;
-    if (credits < 1) {
-      showToast(user ? 'Insufficient credits. Please upgrade your plan or top up to optimize thumbnails.' : 'Insufficient credits. Please sign in or register to optimize thumbnails!', 'error');
-      return;
-    }
-    
-    setIsOptimizing(true);
-    setIsSaved(false);
-    
-    let learningModifiersStr = 'Boost primary subject color saturation by 25%. Zoom in on human face macro elements to occupy 60% of frame width. Ensure background details are completely blurred for extreme bokeh depth separation.';
-    if (userPhotoUrl) {
-      learningModifiersStr += " Blend the user's uploaded subject photo into the design naturally as the main foreground element, color-correcting it to merge with the background lighting.";
-    }
 
-    const optimizedPrompt = compilePrompt({
-      title: inputs.title,
-      topic: inputs.topic,
-      keywords: inputs.keywords,
-      niche: selectedNiche,
-      archetype: selectedArchetype,
-      aspectRatio: aspectRatio,
-      learningModifiers: learningModifiersStr
-    });
-
-    try {
-      const result = await generateThumbnailImage(optimizedPrompt, selectedNiche, selectedArchetype, aspectRatio, userPhotoUrl, session?.access_token || guestId, inputs.title, inputs.topic, inputs.keywords);
-      
-      setImageUrl(result.imageUrl);
-      setProvider(result.provider);
-      setIsOptimized(true);
-
-      if (result.remainingCredits !== undefined) {
-        setCredits(result.remainingCredits);
-        if (result.remainingCredits === 0) {
-          showToast('You have used your last thumbnail credit!', 'warning');
-        }
-      } else {
-        // Fallback: Decrement locally and directly update Supabase from frontend if logged in
-        setCredits(prev => {
-          const next = Math.max(0, prev - 1);
-          if (supabase && user) {
-            supabase
-              .from('profiles')
-              .update({ credits: next })
-              .eq('id', user.id)
-              .then(({ error }) => {
-                if (error) console.error('[Supabase Frontend] Direct credit decrement failed:', error);
-                else console.log('[Supabase Frontend] Direct credit decrement succeeded. New balance:', next);
-              });
-          }
-          if (next === 0) {
-            showToast('You have used your last thumbnail credit!', 'warning');
-          }
-          return next;
-        });
-      }
-      
-      const originalScore = analysis.score;
-      const optimizedScore = Math.min(94, Math.round(originalScore + (100 - originalScore) * 0.45));
-      
-      const newCritique = {
-        score: optimizedScore,
-        roast: [
-          'Excellent! Primary focal subject is heavily rim-lit, popping crisply on dark backgrounds.',
-          'Mobile readability check: High font-contrast and safe-zone allocation is 100% clear of durations badges.',
-          'Atmospheric blur successfully separates background details, maximizing foreground eye attention.'
-        ],
-        attentionHierarchy: [
-          'Primary: Prominent, high-saturation focal subject',
-          'Secondary: Clear, high-contrast, safe-zone typography overlay space',
-          'Tertiary: Blurred atmospheric rim light background'
-        ],
-        suggestedTitles: analysis.suggestedTitles
-      };
-      
-      setAnalysis(newCritique);
-      
-      // Save high performance generation to learning loop database (Task 4.2)
-      savePerformanceRecord({
-        score: optimizedScore,
-        niche: selectedNiche,
-        archetype: selectedArchetype,
-        title: inputs.title,
-        colorMood: 'energetic'
-      });
-      
-    } catch (error) {
-      console.error('Optimizing failure:', error);
-      if (error.message.includes('credits') || error.message.includes('Insufficient') || error.message.includes('top up')) {
-        showToast(error.message, 'error');
-        setCredits(0);
-      }
-    } finally {
-      setIsOptimizing(false);
-    }
-  };
 
   const handleSaveToLibrary = async (currentSession = session, customPayload = null) => {
     // If the first argument is a React/DOM event, ignore it and use the actual session state
@@ -767,102 +664,7 @@ export default function Home() {
   };
 
   // Auto fill suggestions from landing grids (Screenshot 1 items)
-  const handleSuggestionClick = (type) => {
-    if (type === 'lofi') {
-      setInputs({
-        title: 'An ambient thumbnail for my lofi playlist',
-        topic: 'Relaxed cozy loft window view at sunset with city skyscrapers',
-        keywords: 'lofi, chill, sunset, music, aesthetic'
-      });
-      setSelectedNiche('documentary');
-      setSelectedArchetype('question');
-      setImageUrl(PRESET_LOFI_IMAGE);
-      setAnalysis(PRESET_LOFI_CRITIQUE);
-      setShowCritique(true);
-      setIsOptimized(false);
-      setProvider('Vignette Preset');
-    } else if (type === 'ski') {
-      setInputs({
-        title: 'A thumbnail for my ski travel vlog',
-        topic: 'Extreme ski jump action in snowy mountains with bright orange jacket',
-        keywords: 'ski, vlog, mountains, snow, extreme'
-      });
-      setSelectedNiche('fitness');
-      setSelectedArchetype('hero');
-      setImageUrl('https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&q=80&w=1280&h=720');
-      setAnalysis({
-        score: 76,
-        strengths: [
-          'High grit dynamic athletic pose provides strong kinetic energy.',
-          'Snowy white backdrop provides high-contrast negative space for header text overlays.'
-        ],
-        weaknesses: [
-          'Subject framing blends too much with white snow or sky details in the background.'
-        ],
-        suggestions: [
-          'Add a bright orange rim light to separate the skier from the white background details.'
-        ],
-        roast: [
-          'High grit dynamic athletic pose provides strong kinetic energy.',
-          'Snowy white backdrop provides high-contrast negative space for header text overlays.',
-          'Add a bright orange rim light to separate the skier from the white background details.'
-        ],
-        attentionHierarchy: [
-          'Primary: Athlete isolated in center peak action frame',
-          'Secondary: Textured snow spray spray elements',
-          'Tertiary: Distant clean white mountain peak silhouettes'
-        ],
-        suggestedTitles: [
-          'I Skied Down the Most Dangerous Mountain in Europe!',
-          'How to Ski Like a Professional in 48 Hours',
-          'The Ultimate Ski Travel Guide (What They Hide From You)'
-        ]
-      });
-      setShowCritique(true);
-      setIsOptimized(false);
-      setProvider('Vignette Preset');
-    } else if (type === 'cooking') {
-      setInputs({
-        title: 'A cooking series called "$10 Dinners"',
-        topic: 'Luxury high-contrast modern kitchen with glowing ambient light and a central steel chef bowl',
-        keywords: 'cooking, chef, luxury, kitchen, food'
-      });
-      setSelectedNiche('tech');
-      setSelectedArchetype('versus');
-      setImageUrl('https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=1280&h=720');
-      setAnalysis({
-        score: 82,
-        strengths: [
-          'Outstanding high-tech glass highlights. The metal reflections look extremely premium.',
-          'The vertical split provides a brilliant comparison outline for a before/after recipe showcase.'
-        ],
-        weaknesses: [
-          'Minor detail safe-zone warning: Bottom-right quadrant has negative elements near duration badges.'
-        ],
-        suggestions: [
-          'Mobile safe-zone: Keep the bottom-right quadrant as negative space, free of duration badges.'
-        ],
-        roast: [
-          'Outstanding high-tech glass highlights. The metal reflections look extremely premium.',
-          'The vertical split provides a brilliant comparison outline for a before/after recipe showcase.',
-          'Mobile safe-zone: The bottom-right quadrant has negative space, free of duration badges.'
-        ],
-        attentionHierarchy: [
-          'Primary: Symmetrical split neon light boundary',
-          'Secondary: Highly polished stainless steel utensil accents',
-          'Tertiary: Warm wood panel backing reflections'
-        ],
-        suggestedTitles: [
-          'Professional Chef vs Home Cook: Luxury Kitchen Battle!',
-          'How to Design the Ultimate High-Tech Kitchen',
-          '10 Cooking Secrets Only Five-Star Chefs Know'
-        ]
-      });
-      setShowCritique(true);
-      setIsOptimized(false);
-      setProvider('Vignette Preset');
-    }
-  };
+
 
   const sidebarTabs = [
     { id: 'gallery', label: 'Projects', icon: FolderClosed, subText: 'Projects' },
@@ -906,7 +708,7 @@ export default function Home() {
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             color: '#ffffff',
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "'Fredoka', sans-serif",
             fontSize: '14px',
             fontWeight: 700,
             padding: '12px 24px',
@@ -926,212 +728,86 @@ export default function Home() {
   }
 
   return (
-    <div style={{ ...styles.appContainer, height: '100vh', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', background: 'var(--bg-base)' }}>
       
-      {/* 1. HORIZONTAL TOP HEADER NAV (Quillbot Inspired Layout) */}
-      <header style={styles.header}>
-        <div style={styles.headerContainer}>
-          {/* Logo group */}
-          <div style={styles.logoGroup} onClick={() => { setActiveTab('landing'); }}>
-            <div style={styles.logoIcon}>
+      {/* 1. LEFT SIDEBAR NAVIGATION (Wide, full height matching reference) */}
+      {!isMobile && (
+        <aside style={{
+          ...styles.sidebar,
+          background: '#FFFDF9',
+          borderRight: '1.5px solid rgba(18, 27, 51, 0.06)'
+        }}>
+          {/* Logo Group */}
+          <div style={{ ...styles.logoGroup, padding: '24px 20px', width: '100%', display: 'flex', gap: '10px' }} onClick={() => { setActiveTab('landing'); }}>
+            <div style={{ ...styles.logoIcon, background: 'var(--color-secondary)', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2 22C2 22 8 20 12 16C16 12 22 6 22 2C22 2 16 2 12 6C8 10 2 16 2 22Z"></path>
-                <path d="M12 6L18 12"></path>
-                <path d="M8 10L14 16"></path>
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
               </svg>
             </div>
-            <span style={styles.logoText}>vignette.ai</span>
+            <span style={{ ...styles.logoText, fontFamily: "'Fredoka', sans-serif", fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>vignette.ai</span>
           </div>
 
-
-
-          {/* Right actions */}
-          <div style={styles.headerActions}>
-            <button 
-              onClick={() => setActiveTab('analytics')}
-              style={styles.upgradeBtn}
-            >
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="#ffbe0b" stroke="#ffbe0b" strokeWidth="2" style={{ marginRight: '8px', verticalAlign: 'middle', display: 'inline-block' }}>
-                <path d="M2 4L5 12L12 6L19 12L22 4L17 18H7L2 4Z" />
+          {/* Stacked New Button with doodle loops */}
+          <div style={{ width: '100%', padding: '0 20px', marginBottom: '24px', display: 'flex', justifyContent: 'flex-start' }}>
+            <div style={{ position: 'relative' }}>
+              {/* Hand-drawn curly loops SVG */}
+              <svg viewBox="0 0 30 30" width="30" height="30" style={{ position: 'absolute', top: '-12px', right: '-24px', overflow: 'visible', pointerEvents: 'none', zIndex: 10 }}>
+                <path d="M2,24 C8,18 5,10 12,12 C18,14 14,22 10,20 C6,18 8,8 18,6" fill="none" stroke="var(--text-primary)" strokeWidth="2" strokeLinecap="round" />
+                <path d="M8,26 C14,20 11,12 18,14 C24,16 20,24 16,22 C12,20 14,10 24,8" fill="none" stroke="var(--text-primary)" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
               </svg>
-              Upgrade to Premium
-            </button>
 
-            {(user || guestId) && (
-              <div style={styles.creditsBadge} title="Your available generation credits">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="var(--color-primary)" stroke="var(--color-primary)" strokeWidth="2" style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }}>
-                  <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" />
-                </svg>
-                <span style={{ fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>{credits}</span>
-                <span style={{ fontSize: '10px', marginLeft: '4px', opacity: 0.8, fontWeight: 700, fontFamily: "'Outfit', sans-serif", textTransform: 'uppercase', letterSpacing: '0.05em' }}>⚡ Credits</span>
-              </div>
-            )}
-            
-            {user ? (
-              /* Logged In View: Profile Avatar with dropdown */
-              <div ref={profileDropdownRef} style={{ position: 'relative' }}>
-                <button 
-                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    borderRadius: '8px',
-                    transition: 'background 0.2s',
-                  }}
-                >
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%)',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontFamily: "'Outfit', sans-serif",
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    boxShadow: '0 2px 8px rgba(255, 129, 56, 0.2)'
-                  }}>
-                    {user.email ? user.email.charAt(0).toUpperCase() : 'G'}
-                  </div>
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.2s', transform: showProfileDropdown ? 'rotate(180deg)' : 'rotate(0)' }}>
-                    <path d="m6 9 6 6 6-6"></path>
-                  </svg>
-                </button>
+              <button
+                onClick={() => { setActiveTab('maker'); handleReset(); }}
+                style={{
+                  width: '84px',
+                  height: '84px',
+                  background: '#FF5B37',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '18px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 20px rgba(255, 91, 55, 0.25)',
+                  transition: 'all 0.15s ease',
+                  fontFamily: "'Fredoka', sans-serif",
+                  padding: '0',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                {/* Hand-drawn style inner border */}
+                <div style={{
+                  position: 'absolute',
+                  inset: '5px',
+                  border: '1.5px dashed rgba(255, 255, 255, 0.65)',
+                  borderRadius: '13px',
+                  pointerEvents: 'none'
+                }}></div>
 
-                {showProfileDropdown && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '42px',
-                    right: 0,
-                    width: '200px',
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    border: '1px solid rgba(0, 0, 0, 0.08)',
-                    boxShadow: '0 12px 32px rgba(0, 0, 0, 0.1)',
-                    borderRadius: '14px',
-                    backdropFilter: 'blur(10px)',
-                    padding: '12px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                    zIndex: 1000
-                  }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '4px 8px', textAlign: 'left' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>{user.email}</span>
-                      <span style={{ fontSize: '9px', color: 'var(--color-primary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Authenticated</span>
-                    </div>
-                    <div style={{ height: '1px', background: 'rgba(0, 0, 0, 0.05)', margin: '4px 0' }}></div>
-                    <button 
-                      onClick={() => { handleSignOut(); setShowProfileDropdown(false); }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        background: 'none',
-                        border: 'none',
-                        fontFamily: "'Outfit', sans-serif",
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        color: 'var(--text-secondary)',
-                        padding: '8px',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.2s',
-                        width: '100%'
-                      }}
-                      className="dropdown-item-hover"
-                    >
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                      </svg>
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* Guest View: Sign In & Join CTAs */
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <button 
-                  onClick={() => setIsAuthOpen(true)} 
-                  style={{
-                    fontFamily: "'Outfit', sans-serif",
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    color: 'var(--text-secondary)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '8px 12px',
-                    transition: 'color 0.2s',
-                  }}
-                >
-                  Sign In
-                </button>
-                <button 
-                  onClick={() => setIsAuthOpen(true)}
-                  className="btn btn-primary"
-                  style={{
-                    fontFamily: "'Outfit', sans-serif",
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    padding: '8px 16px',
-                    borderRadius: '10px',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Join Free
-                </button>
-              </div>
-            )}
+                <div style={{
+                  border: '1.5px solid #ffffff',
+                  borderRadius: '6px',
+                  width: '24px',
+                  height: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 2
+                }}>
+                  <Plus size={16} strokeWidth={3.5} />
+                </div>
+                <span style={{ fontSize: '13px', fontWeight: 800, zIndex: 2 }}>New</span>
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
 
-      {/* 2. DASHBOARD SPLIT BODY (Sidebar + Active Workspace Card) */}
-      <div style={styles.dashboardBody}>
-        
-        {/* LEFT VERTICAL SIDEBAR NAVIGATION */}
-        {!isMobile && (
-          <aside style={styles.sidebar}>
-            {/* 1. Integrated Cohesive Action Button styled in the same nav system */}
-            <button
-              onClick={() => { setActiveTab('maker'); handleReset(); }}
-              style={{
-                ...styles.sidebarItem,
-                background: activeTab === 'maker' ? 'var(--color-primary)' : 'rgba(99, 102, 241, 0.06)',
-                border: activeTab === 'maker' ? 'none' : '1px solid rgba(99, 102, 241, 0.15)',
-                boxShadow: activeTab === 'maker' ? '0 4px 12px var(--color-primary-glow)' : 'none',
-                marginBottom: '16px',
-                height: '74px',
-                width: '84px',
-                borderRadius: '12px',
-                transition: 'all 0.2s',
-              }}
-              className="sidebar-btn-hover"
-              title="New Thumbnail"
-            >
-              {activeTab === 'maker' && <div style={{ ...styles.activeBar, background: '#ffffff' }}></div>}
-              <Plus size={20} color={activeTab === 'maker' ? '#ffffff' : 'var(--color-primary)'} style={{ strokeWidth: 3 }} />
-              <span style={{ 
-                ...styles.sidebarText, 
-                color: activeTab === 'maker' ? '#ffffff' : 'var(--color-primary)', 
-                fontWeight: 900 
-              }}>
-                New
-              </span>
-            </button>
-
-            {/* 2. Map other Quillbot-inspired tools with strong active/inactive differentiation */}
+          {/* Navigation Items */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', padding: '0 20px', alignItems: 'flex-start' }}>
             {sidebarTabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id || (tab.id === 'simulator' && activeTab === 'roast');
@@ -1140,25 +816,47 @@ export default function Home() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   style={{
-                    ...styles.sidebarItem,
-                    ...(isActive ? styles.sidebarItemActive : {}),
-                    opacity: isActive ? 1 : 0.65,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    width: '100%',
+                    height: '42px',
+                    padding: '0 8px',
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                    textAlign: 'left'
                   }}
-                  className="sidebar-btn-hover"
-                  title={tab.label}
                 >
-                  {isActive && <div style={styles.activeBar}></div>}
-                  <Icon 
-                    size={20} 
-                    style={{
-                      ...styles.sidebarIcon,
-                      ...(isActive ? styles.sidebarIconActive : {})
-                    }} 
-                  />
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative'
+                  }}>
+                    <Icon 
+                      size={20} 
+                      style={{
+                        color: isActive ? 'var(--color-secondary)' : 'var(--text-primary)',
+                        strokeWidth: isActive ? 2.5 : 2,
+                      }} 
+                    />
+                    {/* Tiny hand-drawn star above active icon */}
+                    {isActive && (
+                      <svg viewBox="0 0 10 10" width="8" height="8" fill="var(--color-primary)" style={{ position: 'absolute', top: '-6px', right: '-4px' }}>
+                        <polygon points="5 0 6.1 3.5 9.7 3.5 6.8 5.7 7.9 9.2 5 7.1 2.1 9.2 3.2 5.7 0.3 3.5 3.9 3.5" />
+                      </svg>
+                    )}
+                  </div>
                   <span 
                     style={{
-                      ...styles.sidebarText,
-                      ...(isActive ? styles.sidebarTextActive : {})
+                      fontFamily: "'Fredoka', sans-serif",
+                      fontSize: '15px',
+                      fontWeight: isActive ? 800 : 700,
+                      color: isActive ? 'var(--color-secondary)' : 'var(--text-primary)',
+                      paddingBottom: '2px',
+                      transition: 'color 0.2s'
                     }}
                   >
                     {tab.subText}
@@ -1166,15 +864,245 @@ export default function Home() {
                 </button>
               );
             })}
+          </div>
 
-          </aside>
-        )}
+          {/* Pro Tip Card */}
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: '2px dashed var(--color-accent)',
+            borderRadius: '16px',
+            padding: '14px',
+            margin: 'auto 20px 20px 20px',
+            width: 'calc(100% - 40px)',
+            position: 'relative',
+            boxShadow: 'none',
+            textAlign: 'left',
+            zIndex: 2
+          }}>
+            {/* Hand-drawn yellow outline star sticker at top right */}
+            <svg viewBox="0 0 24 24" width="22" height="22" style={{ position: 'absolute', top: '-10px', right: '12px', transform: 'rotate(15deg)' }}>
+              <path d="M12,2 L15,9 L22,9 L17,14 L19,21 L12,17 L5,21 L7,14 L2,9 L9,9 Z" fill="none" stroke="var(--color-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <h4 style={{
+              fontFamily: "'Fredoka', sans-serif",
+              fontSize: '13px',
+              fontWeight: 800,
+              color: 'var(--color-secondary)',
+              margin: '0 0 4px 0'
+            }}>Pro Tip</h4>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: '11.5px',
+              color: 'var(--text-secondary)',
+              lineHeight: '1.45',
+              margin: 0
+            }}>Great thumbnails tell a story before the click.</p>
+            {/* Red hand-drawn squiggle doodle at bottom */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '6px' }}>
+              <svg viewBox="0 0 100 20" width="50" height="10" fill="none" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round" opacity="0.6">
+                <path d="M5,12 C25,4 45,15 65,8 C75,5 85,12 95,9" />
+              </svg>
+            </div>
+          </div>
 
-        {/* CENTRAL WORKSPACE MAIN AREA */}
-        <main style={{ ...styles.workspace, overflowY: activeTab === 'maker' ? 'hidden' : 'auto' }}>
+          {/* Bottom Crayon Scribbles */}
+          <svg viewBox="0 0 120 120" width="100" height="100" style={{ position: 'absolute', bottom: 0, left: 0, pointerEvents: 'none', zIndex: 0 }}>
+            <path d="M5,110 C20,90 10,70 30,50 C40,40 50,60 40,80 C30,100 50,90 70,70" fill="none" stroke="rgba(255, 91, 55, 0.45)" strokeWidth="8" strokeLinecap="round" />
+            <path d="M15,115 C25,105 35,95 45,85" fill="none" stroke="rgba(255, 178, 107, 0.45)" strokeWidth="12" strokeLinecap="round" />
+            <path d="M5,120 C15,115 35,105 45,95" fill="none" stroke="rgba(126, 91, 250, 0.35)" strokeWidth="10" strokeLinecap="round" />
+            <path d="M25,125 C35,115 55,105 65,95" fill="none" stroke="rgba(71, 193, 163, 0.35)" strokeWidth="8" strokeLinecap="round" />
+          </svg>
+        </aside>
+      )}
+
+      {/* 2. RIGHT MAIN CONTENT COLUMN */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+        
+        {/* Redesigned Floating top header actions row */}
+        <header style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          padding: '16px 24px',
+          height: '64px',
+          width: '100%',
+        }}>
+          <div style={styles.headerActions}>
+            <button 
+              onClick={() => setActiveTab('roast')}
+              style={{
+                ...styles.upgradeBtn,
+                background: '#7E5BFA',
+                boxShadow: '0 6px 16px rgba(126, 91, 250, 0.25)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="#ffbe0b" stroke="#ffbe0b" strokeWidth="2" style={{ marginRight: '2px', verticalAlign: 'middle', display: 'inline-block' }}>
+                <path d="M2 4L5 12L12 6L19 12L22 4L17 18H7L2 4Z" />
+              </svg>
+              Upgrade to Premium
+            </button>
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: '#FFEEDC',
+              borderRadius: '999px',
+              padding: '6px 14px',
+              gap: '4px',
+              height: '34px',
+              border: 'none',
+              boxShadow: 'none'
+            }} title="Your available generation credits">
+              <span style={{ color: '#FF8800', marginRight: '4px', fontWeight: 800, fontSize: '13px', display: 'flex', alignItems: 'center' }}>
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" stroke="none">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+              </span>
+              <span style={{ fontWeight: 800, fontFamily: "'Fredoka', sans-serif", color: 'var(--text-primary)', fontSize: '13px' }}>{credits}</span>
+              <span style={{ fontSize: '9px', fontWeight: 800, fontFamily: "'Fredoka', sans-serif", textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginLeft: '4px' }}>Credits</span>
+            </div>
+            
+            {/* Profile Avatar with dropdown */}
+            <div ref={profileDropdownRef} style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '8px',
+                  transition: 'background 0.2s',
+                }}
+              >
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: '#5E80F9',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: "'Fredoka', sans-serif",
+                  fontSize: '15px',
+                  fontWeight: 800,
+                  boxShadow: '0 4px 10px rgba(94, 128, 249, 0.25)',
+                  border: 'none'
+                }}>
+                  {user && user.email ? user.email.charAt(0).toUpperCase() : 'N'}
+                </div>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.2s', transform: showProfileDropdown ? 'rotate(180deg)' : 'rotate(0)' }}>
+                  <path d="m6 9 6 6 6-6"></path>
+                </svg>
+              </button>
+
+              {showProfileDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '42px',
+                  right: 0,
+                  width: '200px',
+                  background: '#ffffff',
+                  border: '1px solid rgba(18, 27, 51, 0.08)',
+                  boxShadow: '0 12px 32px rgba(18, 27, 51, 0.08)',
+                  borderRadius: '14px',
+                  backdropFilter: 'blur(10px)',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                  zIndex: 1000
+                }}>
+                  {user ? (
+                    <>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '4px 8px', textAlign: 'left' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>{user.email}</span>
+                        <span style={{ fontSize: '9px', color: 'var(--color-primary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Authenticated</span>
+                      </div>
+                      <div style={{ height: '1px', background: 'rgba(18, 27, 51, 0.08)', margin: '4px 0' }}></div>
+                      <button 
+                        onClick={() => { handleSignOut(); setShowProfileDropdown(false); }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          background: 'none',
+                          border: 'none',
+                          fontFamily: "'Fredoka', sans-serif",
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: 'var(--text-secondary)',
+                          padding: '8px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'all 0.2s',
+                          width: '100%'
+                        }}
+                      >
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '4px 8px', textAlign: 'left' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>Guest Mode</span>
+                        <span style={{ fontSize: '9px', color: 'var(--color-primary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Temporary Session</span>
+                      </div>
+                      <div style={{ height: '1.5px', background: 'var(--text-primary)', margin: '4px 0' }}></div>
+                      <button 
+                        onClick={() => { setIsAuthOpen(true); setShowProfileDropdown(false); }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          background: 'none',
+                          border: 'none',
+                          fontFamily: "'Fredoka', sans-serif",
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: 'var(--text-secondary)',
+                          padding: '8px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'all 0.2s',
+                          width: '100%'
+                        }}
+                      >
+                        Sign In / Join
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <main style={{
+          ...(activeTab === 'maker' ? {
+            flex: 1,
+            margin: '0',
+            padding: '12px 48px 24px 48px',
+            background: 'transparent',
+            border: 'none',
+            borderRadius: '0',
+            boxShadow: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+          } : styles.workspace),
+          overflowY: 'auto'
+        }}>
           
           {activeTab === 'maker' ? (
-            <div className="tech-dot-grid" style={{ ...styles.makerContainer, position: 'relative', overflow: 'hidden', padding: '0', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+            <div className="tech-dot-grid" style={{ ...styles.makerContainer, position: 'relative', overflow: 'hidden', padding: '0', width: '100%', minHeight: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
               
               {/* Glowing decorative background gradient shapes (Reference Inspired) */}
               <div style={{
@@ -1184,7 +1112,7 @@ export default function Home() {
                 width: '600px',
                 height: '600px',
                 borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(255, 178, 107, 0.1) 0%, transparent 70%)',
                 zIndex: 0,
                 pointerEvents: 'none',
               }}></div>
@@ -1195,7 +1123,7 @@ export default function Home() {
                 width: '500px',
                 height: '500px',
                 borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(168, 85, 247, 0.08) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(255, 122, 89, 0.08) 0%, transparent 70%)',
                 zIndex: 0,
                 pointerEvents: 'none',
               }}></div>
@@ -1208,51 +1136,92 @@ export default function Home() {
                 zIndex: 1, 
                 padding: '40px 48px', 
                 width: '100%',
-                height: '100%',
+                minHeight: '100%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxSizing: 'border-box'
               }}>
                 <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: isDesktop ? '1.25fr 0.75fr' : '1fr', 
-                  gap: '48px', 
-                  alignItems: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '40px',
                   maxWidth: '1200px',
-                  margin: '0 auto',
                   width: '100%',
-                  height: '100%'
+                  margin: '0 auto'
                 }}>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: isDesktop ? '1.25fr 0.75fr' : '1fr', 
+                    gap: '48px', 
+                    alignItems: 'center',
+                    width: '100%'
+                  }}>
                   
                   {/* Left Column: Value Proposition & Glass Prompt compiler */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', height: '100%', justifyContent: 'center' }}>
-
-                    {/* Brand Title & Intro (Grouped for readability and to avoid congestion) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minHeight: '100%', justifyContent: 'center', position: 'relative' }}>
+                    {/* Brand Title & Intro with custom SVGs */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <h1 style={{ ...styles.makerHeadline, fontSize: 'clamp(32px, 4.5vw, 48px)', fontWeight: 900, color: 'var(--text-primary)', lineHeight: '1.25', letterSpacing: '-0.01em', margin: 0 }}>
-                        Imagine AI as your<br />
-                        <span className="pixel-accent-headline" style={{ backgroundImage: 'linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%)' }}>
-                          Thumbnail Director.
-                        </span>
-                      </h1>
+                      <div style={{ position: 'relative', display: 'inline-block', alignSelf: 'flex-start' }}>
+                        {/* Purple Sparks above "Create" */}
+                        <svg viewBox="0 0 30 30" width="30" height="30" strokeLinecap="round" style={{ position: 'absolute', top: '-22px', left: '160px', pointerEvents: 'none', fill: 'none', stroke: 'var(--color-secondary)', strokeWidth: '2.5' }}>
+                          <path d="M10,24 L6,14 M15,22 L15,10 M20,24 L24,14" />
+                        </svg>
+
+                        {/* Purple star next to "Thumbnails." */}
+                        <svg viewBox="0 0 24 24" width="22" height="22" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', bottom: '15px', right: '-32px', pointerEvents: 'none', fill: 'none', stroke: 'var(--color-secondary)', strokeWidth: '2' }}>
+                          <path d="M12,2 L15,9 L22,9 L17,14 L19,21 L12,17 L5,21 L7,14 L2,9 L9,9 Z" />
+                        </svg>
+                        
+                        {/* Purple star above the main section in the empty gap */}
+                        <svg viewBox="0 0 24 24" width="18" height="18" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', top: '-25px', right: '-40px', pointerEvents: 'none', fill: 'none', stroke: 'var(--color-secondary)', strokeWidth: '1.8', opacity: 0.8 }}>
+                          <path d="M12,2 L15,9 L22,9 L17,14 L19,21 L12,17 L5,21 L7,14 L2,9 L9,9 Z" />
+                        </svg>
+
+                        <h1 style={{ 
+                          fontFamily: "'Fredoka', sans-serif",
+                          fontSize: 'clamp(44px, 5.2vw, 62px)', 
+                          fontWeight: 900, 
+                          color: 'var(--text-primary)', 
+                          lineHeight: '1.08', 
+                          letterSpacing: '-0.02em', 
+                          margin: 0 
+                        }}>
+                          Create<br />
+                          <span style={{ color: '#FF5B37' }}>Scroll-Stopping</span><br />
+                          <span style={{ position: 'relative', display: 'inline-block' }}>
+                            Thumbnails.
+                            {/* Purple hand-drawn style underline */}
+                            <svg viewBox="0 0 100 10" width="100%" height="8" style={{ position: 'absolute', bottom: '-8px', left: 0, overflow: 'visible' }}>
+                              <path d="M5,4 C35,1 70,6 95,3" fill="none" stroke="var(--color-secondary)" strokeWidth="3.5" strokeLinecap="round" />
+                            </svg>
+                          </span>
+                        </h1>
+                      </div>
                       
-                      <p style={{ ...styles.makerSubhead, fontSize: '15.5px', color: 'var(--text-secondary)', lineHeight: '1.6', maxWidth: '560px', margin: 0 }}>
+                      <p style={{ ...styles.makerSubhead, fontSize: '15.5px', color: 'var(--text-secondary)', lineHeight: '1.6', maxWidth: '560px', margin: '8px 0 0 0' }}>
                         Secure, serverless platform to generate powerful AI thumbnails and performance optimization. What will you create today?
                       </p>
                     </div>
 
-                    {/* Search & Generate Glass Bar */}
-                    <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '780px', marginTop: '4px' }}>
-                      {/* Glass backdrop layer (handles background blur, color, border, shadow) */}
-                      <div className="card-glass" style={{ position: 'absolute', inset: 0, padding: 0, borderRadius: '24px', border: '1px solid rgba(99, 102, 241, 0.15)', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(25px)', boxShadow: '0 16px 40px rgba(99, 102, 241, 0.08)', zIndex: -1, pointerEvents: 'none' }}></div>
-                      
-                      {/* Content layer (no backdrop-filter to prevent browser clipping of absolute dropdown children!) */}
-                      <div style={{ padding: '12px 18px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', width: '100%', position: 'relative' }}>
+                    {/* Redesigned Search & Generate Capsule Bar */}
+                    <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '720px', marginTop: '4px' }}>
+                      <div style={{ 
+                        padding: '6px 8px 6px 18px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '12px', 
+                        width: '100%', 
+                        position: 'relative',
+                        background: '#ffffff',
+                        border: '1px solid rgba(18, 27, 51, 0.08)',
+                        borderRadius: '999px',
+                        boxShadow: '0 16px 36px rgba(18, 27, 51, 0.06), 0 4px 10px rgba(18, 27, 51, 0.02)'
+                      }}>
                         
                         {/* Prompt Input */}
-                        <div style={{ flex: 1, minWidth: '280px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '4px' }}>
+                        <div style={{ flex: 1, minWidth: '240px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                             <circle cx="11" cy="11" r="8"></circle>
                             <path d="m21 21-4.3-4.3"></path>
                           </svg>
@@ -1261,34 +1230,36 @@ export default function Home() {
                             value={inputs.title}
                             onChange={handleSearchInputChange}
                             placeholder="Describe your video topic..."
-                            style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '15.5px', color: 'var(--text-primary)', fontFamily: 'Inter, sans-serif' }}
+                            style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '15.5px', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                           />
                         </div>
 
-                        {/* Use Your Photo button */}
+                        {/* Use Your Photo button styled with soft outline */}
                         <label
                           title="Upload your own photo to use as thumbnail"
                           style={{
-                            display: 'flex',
+                            display: 'inline-flex',
                             alignItems: 'center',
                             gap: '6px',
-                            background: userPhotoUrl ? 'rgba(99, 102, 241, 0.08)' : 'var(--bg-surface)',
-                            border: `1px solid ${userPhotoUrl ? 'var(--color-primary)' : 'var(--border-subtle)'}`,
-                            borderRadius: '16px',
-                            padding: '12px 20px',
+                            background: '#ffffff',
+                            border: '1.5px solid rgba(18, 27, 51, 0.15)',
+                            borderRadius: '999px',
+                            padding: '8px 18px',
                             fontSize: '13.5px',
                             fontWeight: 700,
-                            color: userPhotoUrl ? 'var(--color-primary)' : 'var(--text-secondary)',
+                            color: 'var(--text-secondary)',
                             cursor: 'pointer',
-                            transition: 'all 0.2s',
+                            transition: 'all 0.15s ease',
                             whiteSpace: 'nowrap',
-                            flexShrink: 0
+                            flexShrink: 0,
+                            boxShadow: '0 2px 5px rgba(18, 27, 51, 0.03)'
                           }}
                           className="user-photo-upload-btn"
                         >
                           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                            <circle cx="12" cy="7" r="4"/>
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <polyline points="21 15 16 10 5 21" />
                           </svg>
                           {userPhotoUrl ? 'Photo Added ✓' : 'Use My Photo'}
                           <input
@@ -1300,27 +1271,34 @@ export default function Home() {
                           />
                         </label>
 
-                        {/* Generate button */}
+                        {/* Generate button styled with linear-gradient and four-point sparkle */}
                         <button
                           onClick={handleGenerate}
                           disabled={isGenerating || isCooldown || !inputs.title.trim()}
-                          className="btn btn-primary"
-                          style={{ background: 'var(--color-primary)', color: '#ffffff', border: 'none', borderRadius: '16px', padding: '12px 26px', fontSize: '13.5px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', boxShadow: '0 4px 14px rgba(99, 102, 241, 0.25)', transition: 'all 0.2s' }}
+                          style={{ 
+                            background: 'linear-gradient(135deg, #FF5B37 0%, #FF7A59 100%)', 
+                            color: '#ffffff', 
+                            border: 'none', 
+                            borderRadius: '999px', 
+                            padding: '10px 24px', 
+                            fontSize: '14.5px', 
+                            fontWeight: 700, 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '6px', 
+                            cursor: 'pointer', 
+                            boxShadow: '0 6px 18px rgba(255, 91, 55, 0.3)', 
+                            transition: 'all 0.15s ease',
+                            fontFamily: "'Fredoka', sans-serif" 
+                          }}
                         >
                           {isGenerating ? (
-                            <>
-                              <span style={styles.btnSpinner}></span>
-                              Generat...
-                            </>
-                          ) : isCooldown ? (
-                            <>
-                              Cooldown...
-                            </>
+                            'Craftin...'
                           ) : (
                             <>
                               Generate
-                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M5 12h14M12 5l7 7-7 7"></path>
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none">
+                                <path d="M12,2 Q12,12 2,12 Q12,12 12,22 Q12,12 22,12 Q12,12 12,2 Z" />
                               </svg>
                             </>
                           )}
@@ -1330,50 +1308,103 @@ export default function Home() {
                     </div>
 
                     {/* FORMAT TYPE ASPECT RATIO SELECTOR */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', width: '100%', maxWidth: '780px', marginTop: '12px', paddingLeft: '8px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', minWidth: '110px', fontFamily: "'Outfit', sans-serif" }}>
-                        Format Type:
-                      </span>
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <button
-                          onClick={() => setAspectRatio('16:9')}
-                          style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            fontSize: '12.5px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            border: '1.5px solid ' + (aspectRatio === '16:9' ? 'var(--color-primary)' : 'var(--border-subtle)'),
-                            background: aspectRatio === '16:9' ? 'var(--color-primary-glow)' : 'var(--bg-surface)',
-                            color: aspectRatio === '16:9' ? 'var(--color-primary)' : 'var(--text-secondary)'
-                          }}
-                        >
-                          Standard (16:9)
-                        </button>
-                        <button
-                          onClick={() => setAspectRatio('9:16')}
-                          style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            fontSize: '12.5px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            border: '1.5px solid ' + (aspectRatio === '9:16' ? 'var(--color-primary)' : 'var(--border-subtle)'),
-                            background: aspectRatio === '9:16' ? 'var(--color-primary-glow)' : 'var(--bg-surface)',
-                            color: aspectRatio === '9:16' ? 'var(--color-primary)' : 'var(--text-secondary)'
-                          }}
-                        >
-                          YouTube Shorts (9:16)
-                        </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap', width: '100%', maxWidth: '780px', marginTop: '10px', paddingLeft: '8px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                        <span style={{ 
+                          fontSize: '12px', 
+                          fontWeight: 800, 
+                          color: 'var(--text-primary)', 
+                          textTransform: 'uppercase', 
+                          letterSpacing: '0.08em', 
+                          fontFamily: "'Fredoka', sans-serif",
+                        }}>
+                          FORMAT TYPE:
+                        </span>
+                        {/* Purple hand-drawn underline */}
+                        <svg viewBox="0 0 100 10" width="70" height="6" style={{ position: 'absolute', bottom: '-4px', left: 0, overflow: 'visible' }}>
+                          <path d="M2,5 Q50,2 98,6" fill="none" stroke="var(--color-secondary)" strokeWidth="2.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginLeft: '12px' }}>
+                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                          <button
+                            onClick={() => setAspectRatio('16:9')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '8px 20px',
+                              borderRadius: '999px',
+                              fontSize: '13.5px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              border: '2px solid ' + (aspectRatio === '16:9' ? '#7E5BFA' : 'rgba(18, 27, 51, 0.08)'),
+                              background: aspectRatio === '16:9' ? 'rgba(126, 91, 250, 0.06)' : '#ffffff',
+                              color: aspectRatio === '16:9' ? '#7E5BFA' : 'var(--text-secondary)',
+                              boxShadow: 'none',
+                            }}
+                          >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                              <polygon points="10 8 16 11 10 14 10 8" fill="currentColor" />
+                            </svg>
+                            Standard (16:9)
+                          </button>
+                          {aspectRatio === '16:9' && (
+                            <svg viewBox="0 0 100 10" width="100%" height="8" style={{ position: 'absolute', bottom: '-8px', left: 0, overflow: 'visible' }}>
+                              <path d="M5,4 C35,1 70,6 95,3" fill="none" stroke="#7E5BFA" strokeWidth="2.5" strokeLinecap="round" />
+                            </svg>
+                          )}
+                        </div>
+
+                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                          <button
+                            onClick={() => setAspectRatio('9:16')}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '8px 20px',
+                              borderRadius: '999px',
+                              fontSize: '13.5px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              border: '2px solid ' + (aspectRatio === '9:16' ? '#8B5A2B' : 'rgba(18, 27, 51, 0.08)'),
+                              background: aspectRatio === '9:16' ? 'rgba(139, 90, 43, 0.06)' : '#ffffff',
+                              color: aspectRatio === '9:16' ? '#8B5A2B' : 'var(--text-secondary)',
+                              boxShadow: 'none',
+                            }}
+                          >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                              <line x1="12" y1="18" x2="12.01" y2="18" />
+                            </svg>
+                            YouTube Shorts (9:16)
+                          </button>
+                          {aspectRatio === '9:16' && (
+                            <svg viewBox="0 0 100 10" width="100%" height="8" style={{ position: 'absolute', bottom: '-8px', left: 0, overflow: 'visible' }}>
+                              <path d="M5,4 C35,1 70,6 95,3" fill="none" stroke="#8B5A2B" strokeWidth="2.5" strokeLinecap="round" />
+                            </svg>
+                          )}
+                        </div>
+
+                        {/* Hand-drawn style curved arrow pointing to selectors */}
+                        <div style={{ display: 'flex', alignItems: 'center', marginLeft: '12px', transform: 'rotate(-5deg) translateY(-2px)' }} title="Select format ratios!">
+                          <svg viewBox="0 0 30 20" width="30" height="20" fill="none" stroke="var(--color-secondary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M25,3 C18,12 8,14 3,11" />
+                            <polyline points="7,6 2,11 8,16" />
+                          </svg>
+                        </div>
                       </div>
                     </div>
 
                   </div>
 
                   {/* Right Column: Interactive Thumbnail Preview or 3D Mascot */}
-                  <div style={{ flex: 1.0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '380px', height: '100%' }}>
+                  <div style={{ flex: 1.0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '380px', height: 'auto' }}>
 
                     {isGenerating ? (
                       <div style={{ width: '100%', maxWidth: '520px' }}>
@@ -1397,7 +1428,7 @@ export default function Home() {
                           <div className="card-glass" style={{ width: '100%', maxWidth: '340px', display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', textAlign: 'center', animation: 'dropdownFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ffbe0b', animation: 'pulse 1.5s infinite' }}></div>
-                              <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'Outfit, sans-serif' }}>Subject Photo Loaded</span>
+                              <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Fredoka', sans-serif" }}>Subject Photo Loaded</span>
                             </div>
 
                             <div style={{ position: 'relative', width: '110px', height: '110px', borderRadius: '16px', overflow: 'hidden', margin: '0 auto', border: '2.5px solid var(--color-primary-glow)', boxShadow: '0 8px 20px rgba(99, 102, 241, 0.12)' }}>
@@ -1409,7 +1440,7 @@ export default function Home() {
                             </div>
 
                             <div>
-                              <h4 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>AI Composite Source Active</h4>
+                              <h4 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>AI Composite Source Active</h4>
                               <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: '1.4', margin: 0 }}>
                                 Vignette AI will seamlessly extract this subject, apply professional rim lighting, and compose a premium high-CTR thumbnail layout.
                               </p>
@@ -1435,45 +1466,100 @@ export default function Home() {
                         ) : (
                           /* === DEFAULT 3D MASCOT === */
                           <>
-                            {/* Premium glassmorphic speech bubble */}
+                            {/* Premium speech bubble with custom doodle style */}
                             <div 
                               className="floating-speech-bubble"
                               style={{
                                 position: 'absolute',
                                 top: '0px',
-                                left: isDesktop ? '-20px' : '10px',
+                                left: isDesktop ? '-30px' : '10px',
                                 zIndex: 10,
-                                background: 'rgba(239, 241, 249, 0.85)',
-                                backdropFilter: 'blur(20px)',
-                                border: '1px solid rgba(99, 102, 241, 0.12)',
+                                background: '#ffffff',
+                                border: '1.5px solid rgba(18, 27, 51, 0.08)',
                                 borderRadius: '16px 16px 4px 16px',
-                                padding: '8px 14px',
-                                maxWidth: '180px',
-                                boxShadow: '0 6px 18px rgba(99, 102, 241, 0.05)',
+                                padding: '10px 16px',
+                                maxWidth: '200px',
+                                boxShadow: '0 8px 24px rgba(18, 27, 51, 0.05)',
                                 pointerEvents: 'none'
                               }}
                             >
-                              <span style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary)', display: 'block', lineHeight: '1.35', fontFamily: 'Inter, sans-serif' }}>
-                                <strong style={{ color: 'var(--color-primary)' }}>Vigi:</strong> "Describe your topic on the left to craft art!"
+                              {/* Yellow outline star doodle above the speech bubble */}
+                              <svg viewBox="0 0 24 24" width="20" height="20" style={{ position: 'absolute', top: '-14px', left: '120px', transform: 'rotate(10deg)', fill: 'none', stroke: 'var(--color-accent)', strokeWidth: '2.5', strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                                <path d="M12,2 L15,9 L22,9 L17,14 L19,21 L12,17 L5,21 L7,14 L2,9 L9,9 Z" />
+                              </svg>
+
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)', display: 'block', lineHeight: '1.4', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                                <strong style={{ color: 'var(--color-primary)', fontFamily: "'Fredoka', sans-serif", fontSize: '12px' }}>Vigi: </strong>
+                                {getVigiMessage()}
                               </span>
-                              {/* Little tail pointing towards the left */}
+                              {/* Little tail pointing towards Vigi */}
                               <div style={{
                                 position: 'absolute',
-                                bottom: '8px',
-                                left: '-6px',
+                                bottom: '10px',
+                                right: '-8px',
                                 width: '12px',
                                 height: '12px',
-                                background: '#eff1f9',
-                                borderLeft: '1px solid rgba(99, 102, 241, 0.12)',
-                                borderBottom: '1px solid rgba(99, 102, 241, 0.12)',
-                                transform: 'rotate(45deg)',
-                                zIndex: -1
+                                background: '#ffffff',
+                                borderRight: '1.5px solid rgba(18, 27, 51, 0.08)',
+                                borderBottom: '1.5px solid rgba(18, 27, 51, 0.08)',
+                                transform: 'rotate(-45deg)',
+                                zIndex: 1
                               }}></div>
                             </div>
 
                             {/* The 3D Canvas mascot wrapper */}
                             <div style={{ zIndex: 2, position: 'relative', width: '100%', maxWidth: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <ThreeMascot />
+                            </div>
+
+                            {/* Potted Plant Accessory */}
+                            <div style={{ position: 'absolute', bottom: '25px', right: '0px', zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none' }}>
+                              <svg viewBox="0 0 40 50" width="40" height="50" style={{ overflow: 'visible' }}>
+                                {/* Terracotta Pot */}
+                                <path d="M10,32 L30,32 L26,50 L14,50 Z" fill="#E07A5F" stroke="var(--text-primary)" strokeWidth="1.8" />
+                                <rect x="8" y="27" width="24" height="6" rx="2" fill="#F4F1DE" stroke="var(--text-primary)" strokeWidth="1.8" />
+                                {/* Green Leaves */}
+                                <path d="M20,27 C15,10 12,20 10,12 C8,22 15,22 20,27 Z" fill="#47C1A3" stroke="var(--text-primary)" strokeWidth="1.5" />
+                                <path d="M20,27 C25,10 28,20 30,12 C32,22 25,22 20,27 Z" fill="#47C1A3" stroke="var(--text-primary)" strokeWidth="1.5" />
+                                <path d="M20,27 C20,5 18,15 17,8 C23,12 21,22 20,27 Z" fill="#2E8B57" stroke="var(--text-primary)" strokeWidth="1.5" opacity="0.8" />
+                              </svg>
+                            </div>
+
+                            {/* Coffee Mug Accessory */}
+                            <div style={{ position: 'absolute', bottom: '15px', right: '50px', zIndex: 3, pointerEvents: 'none' }}>
+                              <div style={{
+                                background: 'var(--color-secondary)',
+                                border: '1.5px solid rgba(18, 27, 51, 0.15)',
+                                borderRadius: '8px 8px 12px 12px',
+                                width: '74px',
+                                height: '56px',
+                                padding: '4px 6px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                position: 'relative',
+                                boxShadow: '0 4px 10px rgba(18, 27, 51, 0.04)'
+                              }}>
+                                {/* Handle */}
+                                <div style={{
+                                  position: 'absolute',
+                                  right: '-10px',
+                                  top: '12px',
+                                  width: '10px',
+                                  height: '24px',
+                                  border: '1.5px solid rgba(18, 27, 51, 0.15)',
+                                  borderLeft: 'none',
+                                  borderRadius: '0 8px 8px 0',
+                                  background: 'var(--color-secondary)'
+                                }}></div>
+                                {/* Text inside Mug */}
+                                <span style={{ fontSize: '7.5px', fontWeight: 900, color: '#ffffff', fontFamily: "'Fredoka', sans-serif", textTransform: 'uppercase', letterSpacing: '0.02em', textAlign: 'center', lineHeight: '1.2' }}>Good Ideas Loading</span>
+                                {/* Progress bar inside Mug */}
+                                <div style={{ width: '48px', height: '6px', background: 'rgba(255,255,255,0.2)', border: '1.2px solid rgba(18, 27, 51, 0.15)', borderRadius: '3px', overflow: 'hidden', marginTop: '4px', display: 'flex', alignItems: 'center' }}>
+                                  <div style={{ width: '65%', height: '100%', background: '#F2CC8F' }}></div>
+                                </div>
+                              </div>
                             </div>
                           </>
                         )}
@@ -1483,7 +1569,160 @@ export default function Home() {
                   </div>
 
                 </div>
-              </section>
+
+                {/* Redesigned Bottom Feature Cards Row & Sticky Note - Spans full width */}
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '24px', 
+                  width: '100%', 
+                  marginTop: '16px', 
+                  position: 'relative',
+                  background: '#ffffff',
+                  border: '1px solid rgba(18, 27, 51, 0.06)',
+                  borderRadius: '20px',
+                  padding: '18px 24px',
+                  boxShadow: '0 16px 36px rgba(18, 27, 51, 0.04)',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  boxSizing: 'border-box',
+                  zIndex: 2
+                }}>
+                  
+                  {/* Card 1: AI-Powered Creativity */}
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: '1 1 200px', minWidth: '160px' }}>
+                    <div style={{ 
+                      width: '36px', 
+                      height: '36px', 
+                      borderRadius: '10px', 
+                      background: '#FFD700', 
+                      color: 'var(--text-primary)', 
+                      border: 'none',
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 10px rgba(255, 215, 0, 0.25)',
+                      flexShrink: 0 
+                    }}>
+                      <Sparkles size={18} fill="currentColor" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Fredoka', sans-serif" }}>AI-Powered Creativity</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>Smart AI that understands what gets more clicks.</span>
+                    </div>
+                  </div>
+
+                  {/* Divider 1 */}
+                  {isDesktop && <div style={{ width: '0px', height: '40px', borderLeft: '2px dotted var(--text-muted)', opacity: 0.5, flexShrink: 0 }}></div>}
+
+                  {/* Card 2: Performance Focused */}
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: '1 1 200px', minWidth: '160px' }}>
+                    <div style={{ 
+                      width: '36px', 
+                      height: '36px', 
+                      borderRadius: '10px', 
+                      background: '#7E5BFA', 
+                      color: '#ffffff', 
+                      border: 'none',
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 10px rgba(126, 91, 250, 0.25)',
+                      flexShrink: 0 
+                    }}>
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5L17.5 5.5c.75-.75.75-2 0-2.75s-2-.75-2.75 0z" />
+                        <path d="M12 9l3 3" />
+                        <path d="M9 15l-3-3" />
+                      </svg>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Fredoka', sans-serif" }}>Performance Focused</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>Built to maximize CTR and audience engagement.</span>
+                    </div>
+                  </div>
+
+                  {/* Divider 2 */}
+                  {isDesktop && <div style={{ width: '0px', height: '40px', borderLeft: '2px dotted var(--text-muted)', opacity: 0.5, flexShrink: 0 }}></div>}
+
+                  {/* Card 3: Secure & Serverless */}
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flex: '1 1 200px', minWidth: '160px' }}>
+                    <div style={{ 
+                      width: '36px', 
+                      height: '36px', 
+                      borderRadius: '10px', 
+                      background: '#FF5B37', 
+                      color: '#ffffff', 
+                      border: 'none',
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 10px rgba(255, 91, 55, 0.25)',
+                      flexShrink: 0 
+                    }}>
+                      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                      </svg>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', fontFamily: "'Fredoka', sans-serif" }}>Secure & Serverless</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.3' }}>Your data is protected and never stored.</span>
+                    </div>
+                  </div>
+
+                  {/* Divider 3 */}
+                  {isDesktop && <div style={{ width: '0px', height: '40px', borderLeft: '2px dotted var(--text-muted)', opacity: 0.5, flexShrink: 0 }}></div>}
+
+                  {/* Lavender sticky note with diagonal yellow tape */}
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    width: '190px', 
+                    height: '42px', 
+                    position: 'relative', 
+                    flexShrink: 0,
+                    marginTop: isDesktop ? '0' : '20px'
+                  }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: '-32px',
+                      width: '190px',
+                      background: '#eae6ff',
+                      border: '1.5px solid rgba(126, 91, 250, 0.3)',
+                      borderRadius: '12px',
+                      padding: '10px 14px',
+                      transform: 'rotate(2.5deg)',
+                      boxShadow: '0 8px 24px rgba(126, 91, 250, 0.12)',
+                      zIndex: 10
+                    }}>
+                      <div className="tape-strip-yellow-tr"></div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                        <p style={{
+                          fontFamily: "'Fredoka', sans-serif",
+                          fontSize: '11.5px',
+                          fontWeight: 800,
+                          color: 'var(--color-secondary)',
+                          margin: 0,
+                          lineHeight: '1.3',
+                          textAlign: 'center'
+                        }}>
+                          Let's make something awesome!
+                        </p>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--color-secondary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginTop: '2px' }}>
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                          <line x1="9" y1="9" x2="9.01" y2="9" />
+                          <line x1="15" y1="9" x2="15.01" y2="9" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+            </section>
 
             </div>
           ) : (
@@ -1540,7 +1779,7 @@ export default function Home() {
                         <Sparkles size={36} color="var(--color-primary)" className="spinner" style={{ animation: 'spin-slow 8s linear infinite' }} />
                       </div>
                       <div style={{ textAlign: 'center', zIndex: 1 }}>
-                        <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                        <h3 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
                           Synthesizing Layout Visuals...
                         </h3>
                         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '320px', margin: '0 auto', lineHeight: '1.5' }}>
@@ -1559,7 +1798,7 @@ export default function Home() {
                         <Flame size={32} color="var(--color-primary)" />
                       </div>
                       <div>
-                        <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                        <h3 style={{ fontFamily: "'Fredoka', sans-serif", fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
                           Workspace is Empty
                         </h3>
                         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '380px', margin: '0 auto', lineHeight: '1.5' }}>
@@ -1963,6 +2202,81 @@ export default function Home() {
           )}
 
         </main>
+
+        {/* 4. REDESIGNED FOOTER */}
+        <footer style={{
+          padding: '16px 24px',
+          borderTop: '1px solid rgba(18, 27, 51, 0.06)',
+          background: 'transparent',
+          zIndex: 5,
+          position: 'relative'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+            maxWidth: '1200px',
+            margin: '0 auto',
+            width: '100%'
+          }}>
+            <p style={{
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: '11.5px',
+              color: 'var(--text-muted)',
+              fontWeight: 500,
+              margin: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              &copy; {new Date().getFullYear()} Vignette.ai &bull; AI-Powered YouTube Thumbnail Generator & CTR Optimizer. All rights reserved.
+              {/* Heart doodle outline SVG */}
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--color-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'inline-block', marginLeft: '2px' }}>
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+            </p>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: '#ffffff',
+              border: '1px solid rgba(18, 27, 51, 0.08)',
+              borderRadius: '999px',
+              padding: '4px 12px',
+              boxShadow: '0 2px 6px rgba(18, 27, 51, 0.02)',
+              gap: '6px'
+            }}>
+              <span style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: '#47C1A3',
+                display: 'inline-block'
+              }}></span>
+              <span style={{
+                fontFamily: "'Fredoka', sans-serif",
+                fontSize: '11px',
+                fontWeight: 700,
+                color: 'var(--text-secondary)'
+              }}>Serverless Active</span>
+            </div>
+          </div>
+
+          {/* Orange loop doodle at the footer center */}
+          <div style={{ 
+            position: 'absolute', 
+            bottom: '16px', 
+            left: '50%', 
+            transform: 'translateX(-50%)', 
+            pointerEvents: 'none', 
+            opacity: 0.8 
+          }}>
+            <svg viewBox="0 0 60 20" width="40" height="15" fill="none" stroke="var(--color-accent)" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M5,10 C20,3 25,17 35,10 C45,3 50,17 55,10" />
+            </svg>
+          </div>
+        </footer>
       </div>
 
       {/* 3. MOBILE RESPONSIVE BOTTOM NAVIGATION SYSTEM */}
@@ -1998,19 +2312,6 @@ export default function Home() {
         </nav>
       )}
 
-      {/* 4. FOOTER */}
-      <footer style={styles.footer}>
-        <div style={styles.footerContainer}>
-          <p style={styles.footerText}>
-            &copy; {new Date().getFullYear()} Vignette.ai • AI-Powered YouTube Thumbnail Generator & CTR Optimizer. All rights reserved.
-          </p>
-          <div style={styles.footerBadges}>
-            <span style={styles.footerStatusDot}></span>
-            <span style={styles.footerStatusText}>Serverless Active</span>
-          </div>
-        </div>
-      </footer>
-
       {/* 5. AUTHENTICATION DIALOG (AuthModal) */}
       <AuthModal 
         isOpen={isAuthOpen} 
@@ -2033,7 +2334,7 @@ export default function Home() {
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255, 255, 255, 0.2)',
           color: '#ffffff',
-          fontFamily: "'Outfit', sans-serif",
+          fontFamily: "'Fredoka', sans-serif",
           fontSize: '14px',
           fontWeight: 700,
           padding: '12px 24px',
@@ -2100,7 +2401,7 @@ const styles = {
     boxShadow: '0 4px 12px var(--color-primary-glow)',
   },
   logoText: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '20px',
     fontWeight: 900,
     color: 'var(--text-primary)',
@@ -2115,7 +2416,7 @@ const styles = {
     gap: '20px',
   },
   navLink: {
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
     fontSize: '14px',
     fontWeight: 500,
     color: 'var(--text-secondary)',
@@ -2133,29 +2434,29 @@ const styles = {
     gap: '16px',
   },
   upgradeBtn: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '13px',
     fontWeight: 700,
     color: '#ffffff',
-    background: 'var(--color-primary)',
+    background: 'var(--color-secondary)',
     border: 'none',
     borderRadius: '20px',
     padding: '8px 18px',
     cursor: 'pointer',
-    boxShadow: '0 4px 12px var(--color-primary-glow)',
+    boxShadow: '0 4px 12px rgba(122, 90, 248, 0.2)',
     transition: 'all var(--transition-fast)',
   },
   creditsBadge: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '13px',
     color: 'var(--text-primary)',
-    background: 'rgba(255, 129, 56, 0.08)',
-    border: '1px solid rgba(255, 129, 56, 0.25)',
+    background: '#FFF0E0',
+    border: '1.5px solid #FFDAB9',
     borderRadius: '20px',
     padding: '6px 14px',
     display: 'flex',
     alignItems: 'center',
-    boxShadow: '0 2px 10px rgba(255, 129, 56, 0.05)',
+    boxShadow: '0 2px 8px rgba(255, 178, 107, 0.1)',
   },
   profileAvatar: {
     width: '36px',
@@ -2180,77 +2481,72 @@ const styles = {
     overflow: 'hidden',
   },
   sidebar: {
-    width: '96px',
-    height: '100%',
-    alignSelf: 'stretch',
-    background: 'var(--bg-surface)',
-    borderRight: '1px solid var(--border-subtle)',
-    borderRadius: '0',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.03)',
+    width: '240px',
+    height: '100vh',
+    background: '#FCF8F2',
+    borderRight: '2px solid var(--text-primary)',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    paddingTop: '24px',
-    paddingBottom: '24px',
-    gap: '8px',
+    alignItems: 'flex-start',
+    paddingTop: '8px',
+    paddingBottom: '16px',
     flexShrink: 0,
-    marginTop: '0',
-    marginBottom: '0',
+    margin: '0',
+    position: 'relative',
+    overflowY: 'auto',
   },
-  sidebarItem: {
-    width: '84px',
-    height: '74px',
+  proTipCard: {
+    background: '#FFF8F0',
+    border: '1.5px solid #FFDAB9',
+    borderRadius: '16px',
+    padding: '14px',
+    margin: 'auto 16px 16px 16px',
+    width: 'calc(100% - 32px)',
+    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '4px', /* reduced from 8px to improve scanability */
-    cursor: 'pointer',
-    borderRadius: '12px',
-    border: 'none',
-    background: 'none',
-    transition: 'all var(--transition-fast)',
-    position: 'relative',
+    gap: '4px',
+    boxShadow: '0 4px 12px rgba(255, 178, 107, 0.06)',
+    textAlign: 'left'
   },
-  sidebarItemActive: {
-    background: 'var(--color-primary-glow)',
+  proTipTitle: {
+    fontFamily: "'Fredoka', sans-serif",
+    fontSize: '13px',
+    fontWeight: 800,
+    color: 'var(--color-primary)',
+    margin: 0,
   },
-  activeBar: {
+  proTipText: {
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontSize: '11px',
+    color: 'var(--text-secondary)',
+    lineHeight: '1.4',
+    margin: 0,
+  },
+  proTipStar: {
     position: 'absolute',
-    left: 0,
-    top: '15%',
-    height: '70%',
-    width: '4px',
-    background: 'var(--color-accent)',
-    borderRadius: '0 4px 4px 0',
+    top: '-10px',
+    right: '12px',
+    transform: 'rotate(15deg)',
   },
-  sidebarIcon: {
-    color: 'var(--text-secondary)',
-    transition: 'color var(--transition-fast)',
-  },
-  sidebarIconActive: {
-    color: 'var(--color-primary)',
-  },
-  sidebarText: {
-    fontSize: '10.5px', /* increased from 9px for scanability */
-    fontWeight: 700,
-    color: 'var(--text-secondary)',
-    textAlign: 'center',
-    lineHeight: '1.2',
-    transition: 'color var(--transition-fast)',
-    fontFamily: "'Outfit', sans-serif",
-  },
-  sidebarTextActive: {
-    color: 'var(--color-primary)',
+  proTipSquiggle: {
+    marginTop: '4px',
+    alignSelf: 'center',
   },
   workspace: {
     flex: 1,
+    margin: '0 24px 24px 24px',
     padding: '24px 32px',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
+    borderRadius: '24px',
+    boxShadow: 'var(--shadow-sm)',
     display: 'flex',
     flexDirection: 'column',
     overflowY: 'auto',
     minHeight: 0,
   },
+
   mainCard: {
     background: 'transparent',
     border: 'none',
@@ -2283,7 +2579,7 @@ const styles = {
     gap: '32px',
   },
   makerHeadline: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: 'clamp(28px, 4vw, 42px)',
     fontWeight: 900,
     lineHeight: '1.15',
@@ -2344,7 +2640,7 @@ const styles = {
     gap: '8px',
   },
   fieldLabel: {
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
     fontSize: '13px',
     fontWeight: 600,
     color: 'var(--text-secondary)',
@@ -2356,7 +2652,7 @@ const styles = {
     borderRadius: '8px',
     border: '1px solid var(--border-subtle)',
     padding: '14px 16px',
-    fontFamily: 'Inter, sans-serif',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
     fontSize: '14px',
     color: 'var(--text-primary)',
     background: 'var(--bg-surface)',
@@ -2377,7 +2673,7 @@ const styles = {
     borderRadius: '8px',
     border: '1px solid var(--border-subtle)',
     padding: '12px 16px',
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
     fontSize: '14px',
     color: 'var(--text-primary)',
     background: 'var(--bg-surface)',
@@ -2386,7 +2682,7 @@ const styles = {
     WebkitAppearance: 'none',
   },
   makerSubmitBtn: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '15px',
     fontWeight: 700,
     color: '#ffffff',
@@ -2430,7 +2726,7 @@ const styles = {
     gap: '36px',
   },
   howToTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '28px',
     fontWeight: 900,
     color: 'var(--text-primary)',
@@ -2456,7 +2752,7 @@ const styles = {
     transition: 'all var(--transition-fast)',
   },
   howToHeaderCut: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '18px',
     fontWeight: 800,
     color: 'var(--text-primary)',
@@ -2467,7 +2763,7 @@ const styles = {
     lineHeight: '1.6',
   },
   howToBtn: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '14px',
     fontWeight: 700,
     color: '#ffffff',
@@ -2488,7 +2784,7 @@ const styles = {
     gap: '36px',
   },
   whyTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '28px',
     fontWeight: 900,
     color: 'var(--text-primary)',
@@ -2511,7 +2807,7 @@ const styles = {
     textAlign: 'left',
   },
   whyColHeader: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '18px',
     fontWeight: 800,
     color: 'var(--text-primary)',
@@ -2532,7 +2828,7 @@ const styles = {
     paddingBottom: '16px',
   },
   workspaceTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '22px',
     fontWeight: 800,
     color: 'var(--text-primary)',
@@ -2603,7 +2899,7 @@ const styles = {
   roastMetaVal: {
     fontSize: '12px',
     color: 'var(--text-primary)',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
   },
 
   // Simulator View
@@ -2619,7 +2915,7 @@ const styles = {
     alignItems: 'start',
   },
   simulatorCardTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '15px',
     fontWeight: 800,
     color: 'var(--text-primary)',
@@ -2688,7 +2984,7 @@ const styles = {
     background: 'rgba(255, 129, 56, 0.03)',
   },
   dragText: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '14px',
     fontWeight: 700,
     color: 'var(--text-secondary)',
@@ -2700,7 +2996,7 @@ const styles = {
     marginBottom: '16px',
   },
   upgradeUploadLabel: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '12px',
     fontWeight: 700,
     color: '#ffffff',
@@ -2718,7 +3014,7 @@ const styles = {
     gap: '16px',
   },
   compareTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '14px',
     fontWeight: 800,
     color: 'var(--text-primary)',
@@ -2801,7 +3097,7 @@ const styles = {
     alignItems: 'start',
   },
   titleCardHeading: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '14px',
     fontWeight: 800,
     color: 'var(--text-primary)',
@@ -2865,7 +3161,7 @@ const styles = {
     display: 'block',
   },
   pairedVideoTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '14px',
     fontWeight: 800,
     lineHeight: '1.3',
@@ -2918,7 +3214,7 @@ const styles = {
     alignItems: 'center',
   },
   analyticsHeadTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '28px',
     fontWeight: 900,
     lineHeight: '1.1',
@@ -2945,7 +3241,7 @@ const styles = {
     padding: '16px',
   },
   metricsPromoVal: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '24px',
     fontWeight: 900,
     color: 'var(--color-primary)',
@@ -2988,7 +3284,7 @@ const styles = {
     gap: '4px',
   },
   statsPreTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '11px',
     fontWeight: 700,
     color: 'var(--color-primary)',
@@ -2996,7 +3292,7 @@ const styles = {
     letterSpacing: '0.05em',
   },
   statsTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '22px',
     fontWeight: 900,
     color: 'var(--text-primary)',
@@ -3067,13 +3363,13 @@ const styles = {
     fontSize: '9px',
     fontWeight: 700,
     color: 'var(--text-muted)',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
   },
   chartGroupLabel: {
     fontSize: '10px',
     fontWeight: 700,
     color: 'var(--text-secondary)',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     textTransform: 'uppercase',
   },
 
@@ -3104,7 +3400,7 @@ const styles = {
     fontSize: '8px',
     fontWeight: 700,
     color: 'var(--text-muted)',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
   },
 
   // General buttons spinner
@@ -3141,7 +3437,7 @@ const styles = {
   footerText: {
     fontSize: '12px',
     color: 'var(--text-muted)',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
   },
   footerBadges: {
     display: 'flex',
@@ -3159,6 +3455,6 @@ const styles = {
     fontSize: '11px',
     color: 'var(--text-muted)',
     fontWeight: 600,
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
   }
 };

@@ -1,7 +1,7 @@
 'use strict';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, LogOut, User, ChevronDown } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Sparkles, LogOut, ChevronDown } from 'lucide-react';
 
 export default function Header({ user, onOpenAuth, onSignOut }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -99,9 +99,8 @@ const styles = {
     position: 'sticky',
     top: 0,
     zIndex: 100,
-    background: 'rgba(245, 243, 235, 0.85)',
-    backdropFilter: 'blur(20px)',
-    borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+    background: 'var(--bg-surface)',
+    borderBottom: '1px solid var(--border-subtle)',
     height: '10vh',
     display: 'flex',
     alignItems: 'center',
@@ -130,7 +129,7 @@ const styles = {
     boxShadow: '0 4px 12px rgba(255, 129, 56, 0.25)',
   },
   logoText: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '22px',
     fontWeight: 900,
     color: 'var(--text-primary)',
@@ -149,7 +148,7 @@ const styles = {
     borderRadius: '24px',
   },
   navLink: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '13px',
     fontWeight: 600,
     color: 'var(--text-secondary)',
@@ -170,7 +169,7 @@ const styles = {
     gap: '12px',
   },
   loginBtn: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '13px',
     fontWeight: 700,
     color: 'var(--text-secondary)',
@@ -181,7 +180,7 @@ const styles = {
     transition: 'color var(--transition-fast)',
   },
   registerBtn: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '13px',
     fontWeight: 700,
     padding: '8px 16px',
@@ -207,7 +206,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '14px',
     fontWeight: 700,
     boxShadow: '0 2px 8px rgba(255, 129, 56, 0.2)'
@@ -217,11 +216,10 @@ const styles = {
     top: '42px',
     right: 0,
     width: '200px',
-    background: 'rgba(255, 255, 255, 0.95)',
-    border: '1px solid rgba(0, 0, 0, 0.08)',
-    boxShadow: '0 12px 32px rgba(0, 0, 0, 0.1)',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border-subtle)',
+    boxShadow: 'var(--shadow-md)',
     borderRadius: '14px',
-    backdropFilter: 'blur(10px)',
     padding: '12px',
     display: 'flex',
     flexDirection: 'column',
@@ -260,7 +258,7 @@ const styles = {
     alignItems: 'center',
     background: 'none',
     border: 'none',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '12px',
     fontWeight: 600,
     color: 'var(--text-secondary)',

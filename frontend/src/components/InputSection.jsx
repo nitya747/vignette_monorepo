@@ -1,6 +1,6 @@
 'use strict';
 
-import React from 'react';
+
 import { AlignLeft } from 'lucide-react';
 
 export default function InputSection({ values, onChange }) {
@@ -76,7 +76,7 @@ const styles = {
     marginBottom: '4px',
   },
   headerTitle: {
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Fredoka', sans-serif",
     fontSize: '14px',
     fontWeight: 700,
     color: 'var(--text-primary)',

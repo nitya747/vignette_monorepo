@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 
 export default function ThreeMascot() {
@@ -216,8 +216,10 @@ export default function ThreeMascot() {
 
     } catch (e) {
       console.error("Three.js initialization failed", e);
-      setHasError(true);
-      setLoading(false);
+      setTimeout(() => {
+        setHasError(true);
+        setLoading(false);
+      }, 0);
     }
   }, []);
 
