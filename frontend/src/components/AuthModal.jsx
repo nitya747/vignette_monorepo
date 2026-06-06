@@ -100,10 +100,13 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         {/* Brand Logo header */}
         <div style={styles.header}>
           <div style={styles.logoIcon}>
-            <Sparkles size={16} color="#ffffff" style={{ strokeWidth: 2.5 }} />
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+            </svg>
           </div>
           <h2 style={styles.title}>
-            vignette<span style={{ color: 'var(--color-primary)' }}>.ai</span>
+            vignette<span style={{ color: 'var(--color-secondary)' }}>.ai</span>
           </h2>
           <p style={styles.subtitle}>Unlock CTR Optimizations & Saved Generations Library</p>
         </div>
@@ -279,14 +282,14 @@ const styles = {
     marginBottom: '24px'
   },
   logoIcon: {
-    background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%)',
+    background: 'var(--color-secondary)',
     width: '28px',
     height: '28px',
     borderRadius: '10px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 12px rgba(255, 129, 56, 0.25)'
+    boxShadow: '0 4px 12px rgba(126, 91, 250, 0.25)'
   },
   title: {
     fontFamily: "'Fredoka', sans-serif",

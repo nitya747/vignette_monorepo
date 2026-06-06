@@ -739,7 +739,7 @@ export default function Home() {
         }}>
           {/* Logo Group */}
           <div style={{ ...styles.logoGroup, padding: '24px 20px', width: '100%', display: 'flex', gap: '10px' }} onClick={() => { setActiveTab('landing'); }}>
-            <div style={{ ...styles.logoIcon, background: 'var(--color-secondary)', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={styles.logoIcon}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 20h9"></path>
                 <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
@@ -2391,14 +2391,14 @@ const styles = {
     cursor: 'pointer',
   },
   logoIcon: {
-    background: 'var(--color-primary)',
+    background: 'var(--color-secondary)',
     width: '32px',
     height: '32px',
     borderRadius: '10px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 12px var(--color-primary-glow)',
+    boxShadow: '0 4px 12px rgba(126, 91, 250, 0.25)',
   },
   logoText: {
     fontFamily: "'Fredoka', sans-serif",
@@ -2408,7 +2408,7 @@ const styles = {
     letterSpacing: '-0.03em',
   },
   logoHighlight: {
-    color: 'var(--color-primary)',
+    color: 'var(--color-secondary)',
   },
   nav: {
     display: 'flex',

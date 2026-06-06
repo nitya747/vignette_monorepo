@@ -73,9 +73,8 @@ export default function LandingPage({
           <div style={styles.logoGroup} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
             <div style={styles.logoIcon}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2 22C2 22 8 20 12 16C16 12 22 6 22 2C22 2 16 2 12 6C8 10 2 16 2 22Z"></path>
-                <path d="M12 6L18 12"></path>
-                <path d="M8 10L14 16"></path>
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
               </svg>
             </div>
             <span style={styles.logoText}>vignette.ai</span>
@@ -548,9 +547,8 @@ export default function LandingPage({
             <div style={styles.logoGroup}>
               <div style={styles.logoIcon}>
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2 22C2 22 8 20 12 16C16 12 22 6 22 2C22 2 16 2 12 6C8 10 2 16 2 22Z"></path>
-                  <path d="M12 6L18 12"></path>
-                  <path d="M8 10L14 16"></path>
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
                 </svg>
               </div>
               <span style={styles.logoText}>vignette.ai</span>
@@ -648,14 +646,14 @@ const styles = {
     cursor: 'pointer',
   },
   logoIcon: {
-    background: 'var(--color-primary)',
+    background: 'var(--color-secondary)',
     width: '32px',
     height: '32px',
     borderRadius: '10px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 12px var(--color-primary-glow)',
+    boxShadow: '0 4px 12px rgba(126, 91, 250, 0.25)',
   },
   logoText: {
     fontFamily: "'Fredoka', sans-serif",

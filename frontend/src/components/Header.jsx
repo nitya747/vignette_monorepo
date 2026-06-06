@@ -28,7 +28,10 @@ export default function Header({ user, onOpenAuth, onSignOut }) {
         {/* Left: Logo */}
         <div style={styles.logoGroup} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <div style={styles.logoIcon}>
-            <Sparkles size={18} color="#ffffff" style={{ strokeWidth: 2.5 }} />
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+            </svg>
           </div>
           <span style={styles.logoText}>Vignette<span style={styles.logoHighlight}>.ai</span></span>
         </div>
@@ -119,14 +122,14 @@ const styles = {
     cursor: 'pointer',
   },
   logoIcon: {
-    background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%)',
+    background: 'var(--color-secondary)',
     width: '36px',
     height: '36px',
     borderRadius: '12px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 12px rgba(255, 129, 56, 0.25)',
+    boxShadow: '0 4px 12px rgba(126, 91, 250, 0.25)',
   },
   logoText: {
     fontFamily: "'Fredoka', sans-serif",
@@ -136,7 +139,7 @@ const styles = {
     letterSpacing: '-0.03em',
   },
   logoHighlight: {
-    color: 'var(--color-primary)',
+    color: 'var(--color-secondary)',
   },
   nav: {
     display: 'none',
