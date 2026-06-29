@@ -1,4 +1,4 @@
-# Vignette.ai 🎨🎥
+# Vignette.ai
 
 > **AI-Powered YouTube Thumbnail Director**
 
@@ -6,7 +6,7 @@ Vignette.ai is a modern web application designed for YouTube creators to generat
 
 ---
 
-## 🌟 Key Features
+## Key Features
 
 *   **Interactive 3D Mascot (`Three.js`)**: A procedural 3D camera mascot on the landing page that dynamically tracks the user's cursor, floats organically, and projects interactive drop shadows to create a playful, high-depth visual introduction.
 *   **AI-Powered Thumbnail Generation**: Generate custom thumbnails powered by high-fidelity image models (via `fal.ai`).
@@ -16,7 +16,7 @@ Vignette.ai is a modern web application designed for YouTube creators to generat
 
 ---
 
-## 🏗️ Monorepo Structure
+##  Monorepo Structure
 
 Vignette.ai is organized as a private monorepo to separate concerns clearly while simplifying local development:
 
@@ -47,7 +47,7 @@ vignette_monorepo/
 
 ---
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 ### Frontend
 *   **Core**: React 19, Vite (High-performance HMR bundling)
@@ -66,7 +66,7 @@ vignette_monorepo/
 
 ---
 
-## 🚀 Setup & Installation
+##  Setup & Installation
 
 ### Prerequisites
 Make sure you have [Node.js](https://nodejs.org/) installed (v18+ recommended).
@@ -119,7 +119,7 @@ npm run dev
 
 ---
 
-## 🚢 Production Deployment
+##  Production Deployment
 
 The backend contains a production-ready `Dockerfile` and `railway.json` schema configuration for instant cloud deployment (e.g. on [Railway](https://railway.app)).
 
